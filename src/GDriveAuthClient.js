@@ -88,6 +88,12 @@ class GDriveAuthClient {
     console.assert(isGapiLoaded());
     let auth_instance = window.gapi.auth2.getAuthInstance();
     auth_instance.signOut();
+  }
+
+  disconnect() {
+    console.assert(isGapiLoaded());
+    let auth_instance = window.gapi.auth2.getAuthInstance();
+    auth_instance.signOut();
     auth_instance.disconnect();
   }
 
