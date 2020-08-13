@@ -15,22 +15,29 @@
 //   );
 //
 //   describe("your mocha stuff", function () {
-//     it("does something", async () => {
-//       // ...
+//     it("does something with foo and bar", async () => {
+//       foo(bar);
 //     });
 //   });
 // });
 //
 export async function realBrowserTest(testFile, testBody) {
+  // A script can contain several realBrowserTest sections.
+  // They should be independant.
+  let id = generateTestId(testFile);
+
   if (window.location.href.endsWith("realBrowserTest.html")) {
     // The function is called from a real browser.
-    window.realBrowserTestBodyPromise = testBody();
+    if (id === window.realBrowserTest_TestId) {
+      window.realBrowserTest_TestBodyPromise = testBody();
+    }
+
     return;
   }
 
   // The function is called from jest. Create real browser and run
   // the test there.
-  test(`Running "${testFile}" in real-browser.`, async () => {
+  test(`Running "${testFile}" #${id} in real-browser.`, async () => {
     let puppeteer = (await import("puppeteer")).default;
 
     const browser = await puppeteer.launch({
@@ -43,9 +50,9 @@ export async function realBrowserTest(testFile, testBody) {
     await new Promise((resolve, reject) => {
       page.goto(`localhost:3000/src/realBrowserTest.html`);
       page.on("load", async () => {
-        const failures = await injectTestsToPage(page, testFile);
+        const failures = await injectTestsToPage(page, testFile, id);
         if (failures === 0) {
-          setTimeout(resolve, 3000);
+          setTimeout(resolve, 500);
         } else {
           console.log(
             `${failures} tests failed. See the browser window for more info.`
@@ -59,6 +66,14 @@ export async function realBrowserTest(testFile, testBody) {
 
     await browser.close();
   }, 999999999);
+}
+
+export function realBrowserTest_DISABLED(testFile) {
+  if (!window.location.href.endsWith("realBrowserTest.html")) {
+    test(`${testFile} has disabled tests.`, () => {
+      throw new Error("ENABLE ME PLEASE!");
+    });
+  }
 }
 
 (() => {
@@ -80,20 +95,34 @@ export async function realBrowserTest(testFile, testBody) {
 })();
 
 // returns number of failures.
-async function injectTestsToPage(page, testFile) {
-  return await page.evaluate((testFile) => {
-    return new Promise((resolve) => {
-      var test_script = document.createElement("script");
-      test_script.src = testFile;
-      test_script.type = "module";
-      document.body.appendChild(test_script);
+async function injectTestsToPage(page, testFile, id) {
+  return await page.evaluate(
+    ({ testFile, id }) => {
+      return new Promise((resolve) => {
+        window.addEventListener("beforeunload", resolve);
+        window.realBrowserTest_TestId = id;
 
-      test_script.onload = async () => {
-        await window.realBrowserTestBodyPromise;
-        window.mocha.run((failures) => {
-          resolve(failures);
-        });
-      };
-    });
-  }, testFile);
+        var test_script = document.createElement("script");
+        test_script.src = testFile;
+        test_script.type = "module";
+        document.body.appendChild(test_script);
+
+        test_script.onload = async () => {
+          // We shouldn't start tests until they are loaded.
+          await window.realBrowserTest_TestBodyPromise;
+          window.mocha.run((failures) => {
+            resolve(failures);
+          });
+        };
+      });
+    },
+    { testFile, id }
+  );
+}
+
+function generateTestId(testFile) {
+  if (generateTestId.idMap === undefined) generateTestId.idMap = new Map();
+  if (!Number.isFinite(generateTestId.idMap[testFile]))
+    generateTestId.idMap[testFile] = 0;
+  return generateTestId.idMap[testFile]++;
 }
