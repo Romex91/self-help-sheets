@@ -52,7 +52,6 @@ class GDriveAuthClient {
         );
 
         await window.gapi.client.init({
-          apiKey: "AIzaSyC1eoc0kDr1xZkqA8BcUsMdpzwg2dJ2V3k",
           clientId:
             "479709565206-4ek8a502261s9sussiehpa5v146ns2ku.apps.googleusercontent.com",
           discoveryDocs: [
