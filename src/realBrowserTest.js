@@ -50,12 +50,16 @@ export async function realBrowserTest(testFile, testBody) {
     await new Promise((resolve, reject) => {
       page.goto(`localhost:3000/src/realBrowserTest.html`);
       page.on("load", async () => {
-        const failures = await injectTestsToPage(page, testFile, id);
-        if (failures === 0) {
+        const { total, failures } = await injectTestsToPage(page, testFile, id);
+        if (failures === 0 && total > 0) {
           setTimeout(resolve, 500);
+        } else if (total === 0) {
+          console.log(
+            "the page has 0 tests total. Tests contain syntax errors?"
+          );
         } else {
           console.log(
-            `${failures} tests failed. See the browser window for more info.`
+            `${failures}/${total} tests failed. See the browser window for more info.`
           );
         }
       });
@@ -110,9 +114,15 @@ async function injectTestsToPage(page, testFile, id) {
         test_script.onload = async () => {
           // We shouldn't start tests until they are loaded.
           await window.realBrowserTest_TestBodyPromise;
-          window.mocha.run((failures) => {
-            resolve(failures);
+          let runner;
+
+          let failures = await new Promise((resolve) => {
+            runner = window.mocha.run((failures) => {
+              resolve(failures);
+            });
           });
+
+          resolve({ total: runner.total, failures });
         };
       });
     },
