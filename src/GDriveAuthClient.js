@@ -132,7 +132,7 @@ function loadGapi(ondone) {
 }
 
 function isGapiLoaded() {
-  return window.gapi && window.gapi.auth2;
+  return window.gapi && window.gapi.auth2 && window.gapi.client;
 }
 
 function isSignedIn() {
