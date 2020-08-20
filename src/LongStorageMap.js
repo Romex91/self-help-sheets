@@ -23,4 +23,7 @@ export class LongStorageMap {
   setSettings() {
     throw Error("not implemented");
   }
+  setDescription(key, description) {
+    throw Error("not implemented");
+  }
 }

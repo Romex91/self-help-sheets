@@ -26,7 +26,7 @@ export async function realBrowserTest(testFile, testBody) {
   // They should be independant.
   let id = generateTestId(testFile);
 
-  if (window.location.href.endsWith("realBrowserTest.html")) {
+  if (isInRealBrowser()) {
     // The function is called from a real browser.
     if (id === window.realBrowserTest_TestId) {
       window.realBrowserTest_TestBodyPromise = testBody();
@@ -73,7 +73,7 @@ export async function realBrowserTest(testFile, testBody) {
 }
 
 export function realBrowserTest_DISABLED(testFile) {
-  if (!window.location.href.endsWith("realBrowserTest.html")) {
+  if (!isInRealBrowser()) {
     test(`${testFile} has disabled tests.`, () => {
       throw new Error("ENABLE ME PLEASE!");
     });
@@ -81,7 +81,7 @@ export function realBrowserTest_DISABLED(testFile) {
 }
 
 (() => {
-  if (window.location.href.endsWith("realBrowserTest.html")) return;
+  if (isInRealBrowser()) return;
 
   beforeAll(async () => {
     let { setup } = await import("jest-dev-server");
@@ -135,4 +135,8 @@ function generateTestId(testFile) {
   if (!Number.isFinite(generateTestId.idMap[testFile]))
     generateTestId.idMap[testFile] = 0;
   return generateTestId.idMap[testFile]++;
+}
+
+function isInRealBrowser() {
+  return window.location.pathname.endsWith("realBrowserTest.html");
 }

@@ -1,9 +1,6 @@
 /* eslint-disable no-undef */
 // These tests require a Google account with enabled 'less secure apps' option.
-import {
-  realBrowserTest,
-  realBrowserTest_DISABLED,
-} from "./realBrowserTest.js";
+import { realBrowserTest } from "./realBrowserTest.js";
 
 realBrowserTest("GDrive.test.js", async () => {
   let assert = window.chai.assert;
@@ -101,7 +98,7 @@ realBrowserTest("GDrive.test.js", async () => {
     });
 
     it("deletes keys", async () => {
-      keys = await gdriveMap.getAllKeys();
+      keys = (await gdriveMap.getAllKeys()).map((x) => x.id);
 
       assert.isAtLeast(keys.length, 2);
       let delete_promises = [];
@@ -114,7 +111,7 @@ realBrowserTest("GDrive.test.js", async () => {
         assert((await gdriveMap.get(key)) === undefined);
       }
 
-      keys = await gdriveMap.getAllKeys();
+      keys = (await gdriveMap.getAllKeys()).map((x) => x.id);
       assert.equal(keys.length, 0);
     });
 
@@ -136,7 +133,7 @@ realBrowserTest("GDrive.test.js", async () => {
         gdriveMap.set(keys[9], "bar9".repeat(100)),
       ]);
 
-      const fetched_keys = await gdriveMap.getAllKeys();
+      const fetched_keys = (await gdriveMap.getAllKeys()).map((x) => x.id);
       assert.equal(fetched_keys.length, keys.length);
       for (let i = 0; i < keys.length; i++) {
         assert.equal(fetched_keys[i], keys[i]);
@@ -210,7 +207,7 @@ realBrowserTest("GDrive.test.js", async () => {
 
       assert.equal(await gdriveMap.getSettings(), "settings");
 
-      const fetched_keys = await gdriveMap.getAllKeys();
+      const fetched_keys = (await gdriveMap.getAllKeys()).map((x) => x.id);
       assert.equal(fetched_keys.length, keys.length);
       for (let i = 0; i < keys.length; i++) {
         assert.equal(fetched_keys[i], keys[i]);
@@ -229,11 +226,31 @@ realBrowserTest("GDrive.test.js", async () => {
       assert.equal(await gdriveMap.get(keys[8]), "bar8".repeat(200));
       assert.equal(await gdriveMap.get(keys[9]), "bar9".repeat(100));
     });
+
+    it("sets file description", async () => {
+      await gdriveMap.setDescription(keys[0], "01321");
+      await gdriveMap.setDescription(keys[3], "33321");
+      await gdriveMap.setDescription(keys[7], "35622");
+      await gdriveMap.setDescription(keys[5], "64390");
+
+      const fetched_keys = await gdriveMap.getAllKeys();
+
+      assert.equal(fetched_keys[0].description, "01321");
+      assert.equal(fetched_keys[1].description, undefined);
+      assert.equal(fetched_keys[2].description, undefined);
+      assert.equal(fetched_keys[3].description, "33321");
+      assert.equal(fetched_keys[4].description, "64390");
+      assert.equal(fetched_keys[5].description, undefined);
+      assert.equal(fetched_keys[6].description, "35622");
+      assert.equal(fetched_keys[7].description, undefined);
+      assert.equal(fetched_keys[8].description, undefined);
+    });
   });
 });
 
 realBrowserTest("GDrive.test.js", async () => {
   let assert = window.chai.assert;
+
   let before = window.before;
   let { gdriveAuthClient, GDriveStates } = await import(
     "./GDriveAuthClient.js"
@@ -257,7 +274,7 @@ realBrowserTest("GDrive.test.js", async () => {
     it("works after browser restart", async () => {
       assert.equal(await gdriveMap.getSettings(), "settings");
 
-      const keys = await gdriveMap.getAllKeys();
+      const keys = (await gdriveMap.getAllKeys()).map((x) => x.id);
       assert.equal(keys.length, 9);
 
       assert.equal(await gdriveMap.get(keys[0]), "foo0".repeat(100));
@@ -272,7 +289,7 @@ realBrowserTest("GDrive.test.js", async () => {
     });
 
     it("deletes keys again", async () => {
-      let keys = await gdriveMap.getAllKeys();
+      let keys = (await gdriveMap.getAllKeys()).map((x) => x.id);
 
       assert.equal(keys.length, 9);
       let delete_promises = [];
@@ -285,7 +302,7 @@ realBrowserTest("GDrive.test.js", async () => {
       for (let key of keys) {
         assert((await gdriveMap.get(key)) === undefined);
       }
-      keys = await gdriveMap.getAllKeys();
+      keys = (await gdriveMap.getAllKeys()).map((x) => x.id);
       assert.equal(keys.length, 0);
     });
   });

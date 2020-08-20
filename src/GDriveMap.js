@@ -13,7 +13,7 @@ class GDriveMap extends LongStorageMap {
       return await createEmptyFile("settings.json");
     }
     if (keys.length === 1) {
-      return keys[0];
+      return keys[0].id;
     }
 
     console.error("Illegal state. Multiple settings.json. ");
@@ -57,6 +57,11 @@ class GDriveMap extends LongStorageMap {
   async setSettings(settingsContent) {
     throwIfNotSignedIn();
     await upload(await this._getSettingsKey(), settingsContent);
+  }
+
+  async setDescription(key, description) {
+    throwIfNotSignedIn();
+    return patchDescription(key, description);
   }
 }
 
@@ -104,6 +109,30 @@ async function createEmptyFile(name, mimeType) {
   return resp.result.id;
 }
 
+async function patchDescription(fileId, description) {
+  console.assert(typeof description === "string");
+
+  const boundary = "-------314159265358979323846";
+  const delimiter = "\r\n--" + boundary + "\r\n";
+  const close_delim = "\r\n--" + boundary + "--";
+
+  let multipartRequestBody =
+    delimiter +
+    "Content-Type: application/json\r\n\r\n" +
+    JSON.stringify({ description }) +
+    close_delim;
+
+  return prom(window.gapi.client.request, {
+    path: `/upload/drive/v3/files/${fileId}`,
+    method: "PATCH",
+    params: { uploadType: "multipart" },
+    body: multipartRequestBody,
+    headers: {
+      "Content-Type": 'multipart/mixed; boundary="' + boundary + '"',
+    },
+  });
+}
+
 async function upload(fileId, content) {
   console.assert(typeof content === "string");
   return prom(window.gapi.client.request, {
@@ -135,7 +164,7 @@ async function find(query) {
     do {
       const resp = await prom(window.gapi.client.drive.files.list, {
         spaces: "appDataFolder",
-        fields: "files(id), nextPageToken",
+        fields: "files(id, description, md5Checksum), nextPageToken",
         pageSize: 1000,
         pageToken: token,
         orderBy: "createdTime",
@@ -144,7 +173,7 @@ async function find(query) {
       ret = ret.concat(resp.result.files);
       token = resp.result.nextPageToken;
     } while (token);
-    return ret.map((x) => x.id);
+    return ret;
   } catch {
     return [];
   }
