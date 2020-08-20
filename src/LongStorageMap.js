@@ -6,6 +6,8 @@ export class LongStorageMap {
   delete(key) {
     throw Error("not implemented");
   }
+
+  // Returns md5sum
   set(key, value) {
     throw Error("not implemented");
   }

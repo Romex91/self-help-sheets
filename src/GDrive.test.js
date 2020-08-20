@@ -93,6 +93,13 @@ realBrowserTest("GDrive.test.js", async () => {
       assert.equal(await gdriveMap.get(keys[1]), "bar");
     });
 
+    it("provides md5 for set and getAll", async () => {
+      let md5 = await gdriveMap.set(keys[0], "barbor");
+      let allKeys = await gdriveMap.getAllKeys();
+
+      assert.equal(md5, allKeys.find((x) => x.id === keys[0]).md5Checksum);
+    });
+
     it("returns undefined for not existing elements", async () => {
       assert.equal(await gdriveMap.get("666_MADE_IN_HELL_666", undefined));
     });

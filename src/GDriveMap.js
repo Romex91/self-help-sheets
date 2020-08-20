@@ -35,7 +35,7 @@ class GDriveMap extends LongStorageMap {
 
   async set(key, value) {
     throwIfNotSignedIn();
-    await upload(key, value);
+    return await upload(key, value);
   }
 
   async get(key) {
@@ -135,12 +135,21 @@ async function patchDescription(fileId, description) {
 
 async function upload(fileId, content) {
   console.assert(typeof content === "string");
-  return prom(window.gapi.client.request, {
+  await prom(window.gapi.client.request, {
     path: `/upload/drive/v3/files/${fileId}`,
     method: "PATCH",
     params: { uploadType: "media" },
+    fields: "md5Checksum",
     body: content,
   });
+
+  let result = await prom(window.gapi.client.request, {
+    path: `/drive/v3/files/${fileId}`,
+    method: "GET",
+    params: { fields: "md5Checksum" },
+  });
+
+  return result.result.md5Checksum;
 }
 
 async function download(fileId) {
