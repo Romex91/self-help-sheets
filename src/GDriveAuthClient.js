@@ -89,13 +89,6 @@ class GDriveAuthClient {
     auth_instance.signOut();
   }
 
-  disconnect() {
-    console.assert(isGapiLoaded());
-    let auth_instance = window.gapi.auth2.getAuthInstance();
-    auth_instance.signOut();
-    auth_instance.disconnect();
-  }
-
   _notifyStateChanged() {
     for (let listener of this.#stateListeners) {
       listener(this.#state);
@@ -112,8 +105,6 @@ class GDriveAuthClient {
       this._notifyStateChanged();
     }
   }
-
-  async _onScriptLoaded() {}
 }
 
 export const gdriveAuthClient = new GDriveAuthClient();
