@@ -1,4 +1,5 @@
 import React from "react";
+import _ from "lodash";
 
 export class EntriesTableChunk extends React.PureComponent {
   state = {
@@ -7,34 +8,35 @@ export class EntriesTableChunk extends React.PureComponent {
   };
 
   #containerRef = React.createRef();
-  #intersectionObserver = new IntersectionObserver(
-    (entries) => {
-      if (this.state.isVisible !== entries[0].isIntersecting) {
-        let height = this.state.isVisible
-          ? this.#containerRef.current.clientHeight
-          : this.state.height;
-
-        this.setState({
-          isVisible: entries[0].isIntersecting,
-          height,
-        });
-      }
-    },
-    {
-      threshold: [0, 0.25, 0.5, 0.75, 1],
-      rootMargin: "200%",
+  #onScroll = _.throttle(() => {
+    let isVisible = true;
+    let {
+      top,
+      bottom,
+      height,
+    } = this.#containerRef.current.getBoundingClientRect();
+    if (top > 1.5 * window.innerHeight || bottom < -1.5 * window.innerHeight) {
+      isVisible = false;
     }
-  );
+
+    if (this.state.isVisible !== isVisible) {
+      this.setState({
+        isVisible,
+        height,
+      });
+    }
+  }, 200);
 
   #onPlaceholderInteraction = () => {
     this.setState({ ...this.state, isVisible: true });
   };
 
   componentDidMount() {
-    this.#intersectionObserver.observe(this.#containerRef.current);
+    this.#onScroll();
+    window.addEventListener("scroll", this.#onScroll);
   }
   componentWillUnmount() {
-    this.#intersectionObserver.unobserve(this.#containerRef.current);
+    window.removeEventListener("scroll", this.#onScroll);
   }
 
   render() {
@@ -44,15 +46,7 @@ export class EntriesTableChunk extends React.PureComponent {
           this.props.children
         ) : (
           <tr>
-            <td>
-              <div
-                className="placeholder"
-                onMouseOver={this.#onPlaceholderInteraction}
-                onClick={this.#onPlaceholderInteraction}
-                style={{ height: this.state.height }}
-              />
-            </td>
-            <td>
+            <td colSpan="2">
               <div
                 className="placeholder"
                 onMouseOver={this.#onPlaceholderInteraction}

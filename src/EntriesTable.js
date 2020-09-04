@@ -80,7 +80,7 @@ export class EntriesTable extends React.PureComponent {
   }
 
   render() {
-    const chunkSize = 30;
+    const chunkSize = 10;
     let chunks = [];
     for (let i = 0; i < this.state.entries.length; i += chunkSize) {
       chunks.push(this.state.entries.slice(i, i + chunkSize));
