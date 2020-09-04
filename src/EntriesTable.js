@@ -1,160 +1,26 @@
 import React from "react";
 import { Entry } from "./Entry.js";
-import Grid from "@material-ui/core/Grid";
-import Hidden from "@material-ui/core/Hidden";
-import Slider from "@material-ui/core/Slider";
-import { withStyles } from "@material-ui/core/styles";
-import Divider from "@material-ui/core/Divider";
+import { EntriesTableChunk } from "./EntriesTableChunk.js";
 import Container from "@material-ui/core/Container";
+import ColumnResizer from "column-resizer";
 
 import _ from "lodash";
 
-const ColumnsWidthSlider = withStyles({
-  root: {
-    color: "#52af77",
-    height: 8,
-  },
-  active: {},
-  valueLabel: {
-    left: "calc(-50% + 4px)",
-  },
-  track: {
-    height: 8,
-    borderRadius: 4,
-  },
-  rail: {
-    height: 16,
-    borderRadius: 4,
-  },
-
-  thumb: {
-    height: 0,
-    width: 0,
-    marginLeft: "0",
-  },
-
-  mark: {
-    height: 16,
-    color: "black",
-    width: 1,
-  },
-})(Slider);
-
-function ThumbComponent(props) {
-  return (
-    <div {...props}>
-      <div
-        style={{
-          height: "100vh",
-          width: "20px",
-          top: 0,
-          backgroundColor: "#0000",
-          cursor: "col-resize",
-          position: "fixed",
-        }}
-      ></div>
-      <Divider
-        orientation="vertical"
-        style={{
-          margin: 10,
-          padding: 0,
-          width: 3,
-          display: "block",
-          cursor: "col-resize",
-
-          top: 0,
-          height: "100vh",
-          position: "fixed",
-        }}
-      ></Divider>
-    </div>
-  );
-}
-
 export class EntriesTable extends React.PureComponent {
   state = {
-    sliderPosition: 6,
-    entries: [
-      {
-        key: "1",
+    entries: _.range(0, 1000).map((x) => {
+      return {
+        key: x,
         left:
           "Lorem ipsum dolo'r sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-        right: "О сколько нам открытий чудных готовит просвещенья дух?",
-      },
-      //   {
-      //     key: "2",
-      //     left:
-      //       "Lorem ipsum dolo'r sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      //     right: "О сколько нам открытий чудных готовит просвещенья дух?",
-      //   },
-      //   {
-      //     key: "3",
-      //     left:
-      //       "Lorem ipsum dolo'r sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      //     right: "О сколько нам открытий чудных готовит просвещенья дух?",
-      //   },
-      //   {
-      //     key: "4",
-      //     left:
-      //       "Lorem ipsum dolo'r sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      //     right: "О сколько нам открытий чудных готовит просвещенья дух?",
-      //   },
-      //   {
-      //     key: "5",
-      //     left:
-      //       "Lorem ipsum dolo'r sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      //     right: "О сколько нам открытий чудных готовит просвещенья дух?",
-      //   },
-      //   {
-      //     key: "6",
-      //     left:
-      //       "Lorem ipsum dolo'r sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      //     right: "О сколько нам открытий чудных готовит просвещенья дух?",
-      //   },
-      //   {
-      //     key: "7",
-      //     left:
-      //       "Lorem ipsum dolo'r sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      //     right: "О сколько нам открытий чудных готовит просвещенья дух?",
-      //   },
-      //   {
-      //     key: "8",
-      //     left:
-      //       "Lorem ipsum dolo'r sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      //     right: "О сколько нам открытий чудных готовит просвещенья дух?",
-      //   },
-      //   {
-      //     key: "9",
-      //     left:
-      //       "Lorem ipsum dolo'r sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      //     right: "О сколько нам открытий чудных готовит просвещенья дух?",
-      //   },
-      //   {
-      //     key: "10",
-      //     left:
-      //       "Lorem ipsum dolo'r sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      //     right: "О сколько нам открытий чудных готовит просвещенья дух?",
-      //   },
-      //   {
-      //     key: "11",
-      //     left:
-      //       "Lorem ipsum dolo'r sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      //     right: "О сколько нам открытий чудных готовит просвещенья дух?",
-      //   },
-      //   {
-      //     key: "12",
-      //     left:
-      //       "Lorem ipsum dolo'r sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      //     right: "О сколько нам открытий чудных готовит просвещенья дух?",
-      //   },
-    ],
+        right: x + ". О сколько нам открытий чудных готовит просвещенья дух?",
+      };
+    }),
   };
 
-  #onSliderPosition = (sender, sliderPosition) => {
-    if (this.state.sliderPosition !== sliderPosition) {
-      this.setState({ ...this.state, sliderPosition });
-    }
-  };
+  #tableRef = React.createRef();
+  #columnResizer = null;
+  #resizeObserver = null;
 
   #onLeftChanged = (key, left) => {
     this.setState({
@@ -176,44 +42,79 @@ export class EntriesTable extends React.PureComponent {
     });
   };
 
+  componentDidMount() {
+    this.#columnResizer = new ColumnResizer(this.#tableRef.current, {
+      liveDrag: true,
+      minWidth: 100,
+      gripInnerHtml: "<div class='grip'></div>",
+      draggingClass: "dragging",
+      onResize: (e) => {
+        // TextArea adjusts its height only when the browser window
+        // resizes. It ignores resize of its parent.
+        // This logic is encapsulated badly, you cannot change
+        // it without modifying library sources.
+        //
+        // So, the esiest way of forcing TextArea height adjustment is
+        // to dispatch a window resize event hoping that it
+        // won't break anything.
+        window.dispatchEvent(new Event("resize"));
+      },
+    });
+
+    // this.#columnResizer doesn't observe resizes of the table.
+    // It listens for browser window "resize" events instead.
+    // This doesn't play well when table content asynchronously adjusts
+    // its height listening for the same "resize" event.
+    window.removeEventListener("resize", this.#columnResizer.onResize);
+    this.#resizeObserver = new ResizeObserver(
+      _.throttle(() => {
+        this.#columnResizer.onResize();
+      }, 200)
+    );
+    this.#resizeObserver.observe(this.#tableRef.current);
+  }
+
+  componentWillUnmount() {
+    this.#columnResizer.destroy();
+    this.#resizeObserver.unobserve(this.#tableRef.current);
+  }
+
   render() {
+    const chunkSize = 30;
+    let chunks = [];
+    for (let i = 0; i < this.state.entries.length; i += chunkSize) {
+      chunks.push(this.state.entries.slice(i, i + chunkSize));
+    }
+
+    let chunkCounter = 0;
+
     return (
       <Container>
-        <Grid container>
-          <Hidden only="xs">
-            <Grid
-              item
-              xs={12}
-              height={0}
-              style={{ left: 0, top: 0, position: "sticky", zIndex: 0 }}
-            >
-              <Slider
-                ThumbComponent={ThumbComponent}
-                track={false}
-                value={this.state.sliderPosition}
-                valueLabelDisplay="off"
-                onChange={this.#onSliderPosition}
-                step={null}
-                marks={_.range(2, 11).map((value) => {
-                  return {
-                    value,
-                  };
-                })}
-                min={0}
-                max={12}
-              />
-            </Grid>
-          </Hidden>
-          {this.state.entries.map((entry) => (
-            <Entry
-              key={entry.key}
-              entry={entry}
-              onLeftChanged={this.#onLeftChanged}
-              onRightChanged={this.#onRightChanged}
-              sliderPosition={this.state.sliderPosition}
-            />
+        <table className="entriesTable" ref={this.#tableRef}>
+          <thead>
+            <tr>
+              <th>
+                <div>issue</div>
+              </th>
+              <th>
+                <div>resolution</div>
+              </th>
+            </tr>
+          </thead>
+
+          {chunks.map((chunk) => (
+            <EntriesTableChunk key={chunkCounter++}>
+              {chunk.map((entry) => (
+                <Entry
+                  key={entry.key}
+                  entry={entry}
+                  onLeftChanged={this.#onLeftChanged}
+                  onRightChanged={this.#onRightChanged}
+                />
+              ))}
+            </EntriesTableChunk>
           ))}
-        </Grid>
+        </table>
       </Container>
     );
   }
