@@ -13,6 +13,7 @@ export class Entry extends React.PureComponent {
     return (
       <tr>
         <td key="issueElement">
+          <h5>issue</h5>
           <TextField
             className="issueElement"
             fullWidth
@@ -25,6 +26,7 @@ export class Entry extends React.PureComponent {
         </td>
 
         <td key="resolutionElement">
+          <h5>resolution</h5>
           <TextField
             className="resolutionElement"
             fullWidth

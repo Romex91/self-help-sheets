@@ -44,18 +44,22 @@ export class EntriesTableChunk extends React.PureComponent {
           this.props.children
         ) : (
           <tr>
-            <td
-              className="placeholder"
-              onMouseOver={this.#onPlaceholderInteraction}
-              onClick={this.#onPlaceholderInteraction}
-              style={{ height: this.state.height }}
-            ></td>
-            <td
-              className="placeholder"
-              onMouseOver={this.#onPlaceholderInteraction}
-              onClick={this.#onPlaceholderInteraction}
-              style={{ height: this.state.height }}
-            ></td>
+            <td>
+              <div
+                className="placeholder"
+                onMouseOver={this.#onPlaceholderInteraction}
+                onClick={this.#onPlaceholderInteraction}
+                style={{ height: this.state.height }}
+              />
+            </td>
+            <td>
+              <div
+                className="placeholder"
+                onMouseOver={this.#onPlaceholderInteraction}
+                onClick={this.#onPlaceholderInteraction}
+                style={{ height: this.state.height }}
+              />
+            </td>
           </tr>
         )}
       </tbody>
