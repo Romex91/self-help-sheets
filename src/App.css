@@ -17,6 +17,7 @@
 }
 
 .entriesTable td {
+  padding: 2px;
   vertical-align: top;
 }
 

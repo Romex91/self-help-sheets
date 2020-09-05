@@ -2,17 +2,38 @@ import React from "react";
 import TextField from "@material-ui/core/TextField";
 
 export class Entry extends React.PureComponent {
+  #trRef = React.createRef();
+  #resizerObserver = null;
+
   #onLeftChanged = (event) => {
     this.props.onLeftChanged(this.props.entry.key, event.target.value);
   };
+
   #onRightChanged = (event) => {
     this.props.onRightChanged(this.props.entry.key, event.target.value);
   };
 
+  #onHeightChanged = () => {
+    if (!this.#trRef.current) return;
+    this.props.onHeightChanged(
+      this.props.entry.key,
+      this.#trRef.current.offsetHeight
+    );
+  };
+
+  componentDidMount() {
+    this.#resizerObserver = new ResizeObserver(this.#onHeightChanged);
+    this.#resizerObserver.observe(this.#trRef.current);
+  }
+
+  componentWillUnmount() {
+    this.#resizerObserver.unobserve(this.#trRef.current);
+  }
+
   render() {
     return (
-      <tr>
-        <td key="issueElement">
+      <tr ref={this.#trRef}>
+        <td key="issueElement" style={{ top: this.props.top }}>
           <h5>issue</h5>
           <TextField
             className="issueElement"
@@ -25,7 +46,7 @@ export class Entry extends React.PureComponent {
           />
         </td>
 
-        <td key="resolutionElement">
+        <td key="resolutionElement" style={{ top: this.props.top }}>
           <h5>resolution</h5>
           <TextField
             className="resolutionElement"
