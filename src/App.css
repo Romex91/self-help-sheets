@@ -1,7 +1,3 @@
-.App {
-  text-align: center;
-}
-
 .entriesTable {
   width: 100%;
   border-spacing: 0px;
@@ -9,7 +5,7 @@
 
 .entriesTable th {
   background-color: lightgray;
-  z-index: 666;
+  z-index: 1;
   top: 0px;
   position: sticky;
   border-spacing: 0px;

@@ -7,11 +7,9 @@ import { Alert, AlertTitle } from "@material-ui/lab";
 const ButtonContent = ({ children }) => (
   <span
     style={{
-      paddingRight: 10,
-      fontWeight: 500,
+      padding: 10,
       paddingLeft: 0,
-      paddingTop: 10,
-      paddingBottom: 10,
+      fontWeight: 500,
     }}
   >
     {children}
@@ -140,30 +138,32 @@ export class GoogleSignInButton extends React.PureComponent {
             : "Sign in with Google"}
         </ButtonContent>
 
-        <Popper
-          key={1}
-          open={!!alertElement && !!this.state.buttonAnchor}
-          anchorEl={this.state.buttonAnchor}
-          placement="left"
-          disablePortal={false}
-          modifiers={{
-            flip: {
-              enabled: false,
-            },
-            preventOverflow: {
-              enabled: false,
-            },
-            hide: {
-              enabled: false,
-            },
-            offset: {
-              offset: "0,5",
-            },
-          }}
-        >
-          {alertElement}
-          <span className="arrow" ref={this.handleArrowRef} />
-        </Popper>
+        {!!alertElement && !!this.state.buttonAnchor && (
+          <Popper
+            key={1}
+            style={{ zIndex: 1200 }}
+            open={true}
+            anchorEl={this.state.buttonAnchor}
+            placement="bottom-end"
+            disablePortal={false}
+            modifiers={{
+              flip: {
+                enabled: false,
+              },
+              preventOverflow: {
+                enabled: false,
+              },
+              hide: {
+                enabled: false,
+              },
+              offset: {
+                offset: "0,5",
+              },
+            }}
+          >
+            {alertElement}
+          </Popper>
+        )}
       </button>
     );
   }

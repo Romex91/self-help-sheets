@@ -1,6 +1,5 @@
 import React from "react";
 import { Entry } from "./Entry.js";
-import Container from "@material-ui/core/Container";
 import ColumnResizer from "column-resizer";
 
 import _ from "lodash";
@@ -164,27 +163,25 @@ export class EntriesTable extends React.PureComponent {
 
   render() {
     return (
-      <Container>
-        <table
-          cellPadding={0}
-          cellSpacing={0}
-          className="entriesTable"
-          ref={this.#tableRef}
-        >
-          <thead>
-            <tr>
-              <th>
-                <div>issue</div>
-              </th>
-              <th>
-                <div>resolution</div>
-              </th>
-            </tr>
-          </thead>
+      <table
+        cellPadding={0}
+        cellSpacing={0}
+        className="entriesTable"
+        ref={this.#tableRef}
+      >
+        <thead>
+          <tr>
+            <th>
+              <div>issue</div>
+            </th>
+            <th>
+              <div>resolution</div>
+            </th>
+          </tr>
+        </thead>
 
-          <tbody>{this.#generateVirtualizedEntries()}</tbody>
-        </table>
-      </Container>
+        <tbody>{this.#generateVirtualizedEntries()}</tbody>
+      </table>
     );
   }
 }
