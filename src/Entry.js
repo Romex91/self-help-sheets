@@ -31,6 +31,13 @@ export class Entry extends React.PureComponent {
   }
 
   render() {
+    const {
+      onLeftChanged,
+      onRightChanged,
+      onHeightChanged,
+      entry,
+      ...rest
+    } = this.props;
     return (
       <tr ref={this.#trRef}>
         <td key="issueElement" style={{ top: this.props.top }}>
@@ -43,6 +50,7 @@ export class Entry extends React.PureComponent {
             variant="outlined"
             onChange={this.#onLeftChanged}
             value={this.props.entry.left}
+            {...rest}
           />
         </td>
 
@@ -56,6 +64,7 @@ export class Entry extends React.PureComponent {
             variant="outlined"
             onChange={this.#onRightChanged}
             value={this.props.entry.right}
+            {...rest}
           />
         </td>
       </tr>

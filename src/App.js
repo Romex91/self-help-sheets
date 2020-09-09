@@ -3,27 +3,39 @@ import "./App.css";
 import { gdriveAuthClient } from "./GDriveAuthClient.js";
 import { GoogleSignInButton } from "./GoogleSignInButton.js";
 import { EntriesTable } from "./EntriesTable.js";
-import { Settings as SettingsIcon, Help as HelpIcon } from "@material-ui/icons";
 import { makeStyles } from "@material-ui/core/styles";
 import { HelpWindow } from "./HelpWindow.js";
 import { SettingsWindow } from "./SettingsWindow.js";
 
 import {
-  IconButton,
-  useScrollTrigger,
-  Typography,
-  CssBaseline,
+  Settings as SettingsIcon,
+  ArrowDropDownCircle as ArrowIcon,
+  Help as HelpIcon,
+} from "@material-ui/icons";
+
+import {
   AppBar,
-  Toolbar,
-  Slide,
+  Collapse,
+  CssBaseline,
   Hidden,
+  IconButton,
   Modal,
+  Slide,
+  Toolbar,
+  Typography,
 } from "@material-ui/core";
 import { red } from "@material-ui/core/colors";
 
 const useStyles = makeStyles({
   placeholder: {
     flex: 1,
+  },
+  showAppBarButton: {
+    position: "fixed",
+    top: 0,
+    left: "50%",
+    transform: "translate(-50%, -45%)",
+    zIndex: 2000,
   },
 });
 
@@ -50,13 +62,29 @@ function ButtonController(props) {
 
 function App() {
   const classes = useStyles();
-  const trigger = useScrollTrigger();
+  const [appBarShown, setAppBarShown] = React.useState(true);
+  const onTableEntryFocus = React.useCallback((arg) => {
+    if (window.innerHeight < 700) {
+      setAppBarShown(false);
+    }
+  }, []);
+
+  const showAppBar = React.useCallback((arg) => {
+    setAppBarShown(true);
+  }, []);
 
   return (
     <React.Fragment>
       <CssBaseline />
-      <Toolbar />
-      <Slide appear={false} direction="down" in={!trigger}>
+      <Collapse appear={false} in={appBarShown}>
+        <Toolbar />
+      </Collapse>
+      {!appBarShown && (
+        <IconButton className={classes.showAppBarButton} onClick={showAppBar}>
+          <ArrowIcon color="primary" fontSize="large" />
+        </IconButton>
+      )}
+      <Slide appear={false} direction="down" in={appBarShown}>
         <AppBar>
           <Toolbar>
             <ButtonController edge="start">
@@ -91,7 +119,7 @@ function App() {
         </AppBar>
       </Slide>
 
-      <EntriesTable />
+      <EntriesTable onFocus={onTableEntryFocus} />
     </React.Fragment>
   );
 }

@@ -132,6 +132,7 @@ export class EntriesTable extends React.PureComponent {
             onLeftChanged={this.#onLeftChanged}
             onRightChanged={this.#onRightChanged}
             onHeightChanged={this.#onHeightChanged}
+            {...this.props}
           />
         );
       } else {
