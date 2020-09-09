@@ -34,7 +34,7 @@ const useStyles = makeStyles({
     position: "fixed",
     top: 0,
     left: "50%",
-    transform: "translate(-50%, -45%)",
+    transform: "translate(-50%, -30%)",
     zIndex: 2000,
   },
 });

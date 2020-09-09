@@ -6,17 +6,17 @@ export class Entry extends React.PureComponent {
   #resizerObserver = null;
 
   #onLeftChanged = (event) => {
-    this.props.onLeftChanged(this.props.entry.key, event.target.value);
+    this.props.onLeftChanged(this.props.entry, event.target.value);
   };
 
   #onRightChanged = (event) => {
-    this.props.onRightChanged(this.props.entry.key, event.target.value);
+    this.props.onRightChanged(this.props.entry, event.target.value);
   };
 
   #onHeightChanged = () => {
     if (!this.#trRef.current) return;
     this.props.onHeightChanged(
-      this.props.entry.key,
+      this.props.entry,
       this.#trRef.current.offsetHeight
     );
   };
@@ -40,7 +40,7 @@ export class Entry extends React.PureComponent {
     } = this.props;
     return (
       <tr ref={this.#trRef}>
-        <td key="issueElement" style={{ top: this.props.top }}>
+        <td key="issueElement">
           <h5>issue</h5>
           <TextField
             className="issueElement"
@@ -54,7 +54,7 @@ export class Entry extends React.PureComponent {
           />
         </td>
 
-        <td key="resolutionElement" style={{ top: this.props.top }}>
+        <td key="resolutionElement">
           <h5>resolution</h5>
           <TextField
             className="resolutionElement"

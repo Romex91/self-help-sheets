@@ -20,39 +20,40 @@ export class EntriesTable extends React.PureComponent {
   };
 
   #tableRef = React.createRef();
+  #scrollableContainerRef = React.createRef();
   #columnResizer = null;
   #resizeObserver = null;
 
-  #onLeftChanged = (key, left) => {
+  #onLeftChanged = (entry, left) => {
     this.setState((prevState) => {
       return {
         ...prevState,
         entries: prevState.entries.map((x) => {
-          if (x.key === key) return { ...x, left };
+          if (x === entry) return { ...x, left };
           return x;
         }),
       };
     });
   };
 
-  #onRightChanged = (key, right) => {
+  #onRightChanged = (entry, right) => {
     this.setState((prevState) => {
       return {
         ...prevState,
         entries: prevState.entries.map((x) => {
-          if (x.key === key) return { ...x, right };
+          if (x === entry) return { ...x, right };
           return x;
         }),
       };
     });
   };
 
-  #onHeightChanged = (key, height) => {
+  #onHeightChanged = (entry, height) => {
     this.setState((prevState) => {
       return {
         ...prevState,
         entries: prevState.entries.map((x) => {
-          if (x.key === key) return { ...x, height };
+          if (x === entry) return { ...x, height };
           return x;
         }),
       };
@@ -60,10 +61,14 @@ export class EntriesTable extends React.PureComponent {
   };
 
   #onResizeOrScroll = () => {
+    let scrollY = 0;
+    if (!!this.#scrollableContainerRef.current)
+      scrollY = this.#scrollableContainerRef.current.scrollTop;
+
     this.setState((prevState) => {
       return {
         ...prevState,
-        scrollY: window.scrollY,
+        scrollY,
         windowHeight: window.innerHeight,
       };
     });
@@ -71,7 +76,6 @@ export class EntriesTable extends React.PureComponent {
 
   componentDidMount() {
     window.addEventListener("resize", this.#onResizeOrScroll);
-    window.addEventListener("scroll", this.#onResizeOrScroll);
 
     this.#columnResizer = new ColumnResizer(this.#tableRef.current, {
       liveDrag: true,
@@ -106,7 +110,6 @@ export class EntriesTable extends React.PureComponent {
 
   componentWillUnmount() {
     window.removeEventListener("resize", this.#onResizeOrScroll);
-    window.removeEventListener("scroll", this.#onResizeOrScroll);
 
     this.#columnResizer.destroy();
     this.#resizeObserver.unobserve(this.#tableRef.current);
@@ -164,25 +167,31 @@ export class EntriesTable extends React.PureComponent {
 
   render() {
     return (
-      <table
-        cellPadding={0}
-        cellSpacing={0}
-        className="entriesTable"
-        ref={this.#tableRef}
+      <div
+        ref={this.#scrollableContainerRef}
+        onScroll={this.#onResizeOrScroll}
+        className="container"
       >
-        <thead>
-          <tr>
-            <th>
-              <div>issue</div>
-            </th>
-            <th>
-              <div>resolution</div>
-            </th>
-          </tr>
-        </thead>
+        <table
+          cellPadding={0}
+          cellSpacing={0}
+          className="entriesTable"
+          ref={this.#tableRef}
+        >
+          <thead>
+            <tr>
+              <th>
+                <div>issue</div>
+              </th>
+              <th>
+                <div>resolution</div>
+              </th>
+            </tr>
+          </thead>
 
-        <tbody>{this.#generateVirtualizedEntries()}</tbody>
-      </table>
+          <tbody>{this.#generateVirtualizedEntries()}</tbody>
+        </table>
+      </div>
     );
   }
 }
