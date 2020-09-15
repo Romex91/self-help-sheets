@@ -46,17 +46,6 @@
   cursor: col-resize;
 }
 
-.placeholder {
-  background-color: lightgray;
-}
-
-.resolutionElement {
-  background-color: lightblue;
-}
-.issueElement {
-  background-color: lightgray;
-}
-
 .entriesTable h5 {
   display: none;
 }
