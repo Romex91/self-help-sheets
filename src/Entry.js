@@ -1,5 +1,5 @@
 import React from "react";
-import TextField from "@material-ui/core/TextField";
+import { TextField } from "@material-ui/core";
 
 export class Entry extends React.PureComponent {
   #trRef = React.createRef();
@@ -43,7 +43,7 @@ export class Entry extends React.PureComponent {
         <td key="issueElement">
           <h5>issue</h5>
           <TextField
-            color="primary"
+            color="secondary"
             fullWidth
             multiline
             placeholder="What bothers you?"
@@ -57,7 +57,7 @@ export class Entry extends React.PureComponent {
         <td key="resolutionElement">
           <h5>resolution</h5>
           <TextField
-            color="secondary"
+            color="primary"
             fullWidth
             multiline
             placeholder="What can you do to resolve the problem?"

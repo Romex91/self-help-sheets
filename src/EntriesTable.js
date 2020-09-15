@@ -1,10 +1,74 @@
 import React from "react";
 import { Entry } from "./Entry.js";
 import ColumnResizer from "column-resizer";
-
 import _ from "lodash";
 
-export class EntriesTable extends React.PureComponent {
+import { withStyles } from "@material-ui/core";
+
+const styles = (theme) => ({
+  container: {
+    overflow: "auto",
+    flex: 1,
+    willChange: "transform",
+  },
+  grip: {
+    width: 10,
+    marginLeft: 5,
+    position: "absolute",
+    height: "100%",
+    backgroundColor: "#0000",
+    cursor: "col-resize",
+  },
+  entriesTable: {
+    width: "100%",
+    borderSpacing: 0,
+    "& th": {
+      backgroundColor: theme.palette.background.paper,
+      zIndex: 1,
+      top: 0,
+      position: "sticky",
+      borderSpacing: 0,
+      borderBottom: "1px solid #000",
+    },
+    "& td": {
+      padding: 2,
+      verticalAlign: "top",
+    },
+    "& td:nth-child(even)": {
+      borderLeft: "10px solid #0000",
+    },
+    "& h5": {
+      display: "none",
+    },
+
+    [theme.breakpoints.down("xs")]: {
+      "& thead": {
+        display: "none",
+      },
+
+      "& h5": {
+        display: "block",
+        margin: 0,
+      },
+
+      "& tbody tr": {
+        display: "grid",
+        padding: 5,
+        border: "1px solid #000",
+      },
+
+      "& td:nth-child(even)": {
+        borderLeft: 0,
+      },
+
+      "& tbody td": {
+        display: "block",
+      },
+    },
+  },
+});
+
+class EntriesTableNoStyles extends React.PureComponent {
   state = {
     scrollY: 0,
     windowHeight: window.innerHeight,
@@ -80,8 +144,7 @@ export class EntriesTable extends React.PureComponent {
     this.#columnResizer = new ColumnResizer(this.#tableRef.current, {
       liveDrag: true,
       minWidth: 100,
-      gripInnerHtml: "<div class='grip'></div>",
-      draggingClass: "dragging",
+      gripInnerHtml: `<div class='${this.props.classes.grip}'></div>`,
       onResize: (e) => {
         // TextArea adjusts its height only when the browser window
         // resizes. It ignores resize of its parent.
@@ -128,6 +191,7 @@ export class EntriesTable extends React.PureComponent {
         currentHeight <
         this.state.scrollY + 2 * this.state.windowHeight
       ) {
+        let { classes, ...rest } = this.props;
         entries.push(
           <Entry
             key={entry.key}
@@ -135,7 +199,7 @@ export class EntriesTable extends React.PureComponent {
             onLeftChanged={this.#onLeftChanged}
             onRightChanged={this.#onRightChanged}
             onHeightChanged={this.#onHeightChanged}
-            {...this.props}
+            {...rest}
           />
         );
       } else {
@@ -170,12 +234,12 @@ export class EntriesTable extends React.PureComponent {
       <div
         ref={this.#scrollableContainerRef}
         onScroll={this.#onResizeOrScroll}
-        className="container"
+        className={this.props.classes.container}
       >
         <table
           cellPadding={0}
           cellSpacing={0}
-          className="entriesTable"
+          className={this.props.classes.entriesTable}
           ref={this.#tableRef}
         >
           <thead>
@@ -195,3 +259,4 @@ export class EntriesTable extends React.PureComponent {
     );
   }
 }
+export const EntriesTable = withStyles(styles)(EntriesTableNoStyles);
