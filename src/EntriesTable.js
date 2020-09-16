@@ -154,6 +154,7 @@ class EntriesTableNoStyles extends React.PureComponent {
         entry={entry}
         onLeftChanged={this.#onLeftChanged}
         onRightChanged={this.#onRightChanged}
+        scrollableContainerRef={this.#scrollableContainerRef}
         {...rest}
         {...additionalProps}
       />
@@ -185,6 +186,7 @@ class EntriesTableNoStyles extends React.PureComponent {
       <div
         ref={this.#scrollableContainerRef}
         className={this.props.classes.container}
+        tabIndex={0}
       >
         <table
           cellPadding={0}

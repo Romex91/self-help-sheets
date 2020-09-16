@@ -27,11 +27,14 @@ export class Entry extends React.PureComponent {
   }
 
   componentWillUnmount() {
+    if (this.#trRef.current.contains(document.activeElement))
+      this.props.scrollableContainerRef.current.focus();
     this.#resizerObserver.unobserve(this.#trRef.current);
   }
 
   render() {
     const {
+      scrollableContainerRef,
       onLeftChanged,
       onRightChanged,
       onHeightChanged,
