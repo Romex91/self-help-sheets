@@ -1,5 +1,6 @@
 import React from "react";
 import "./App.css";
+import "fontsource-roboto";
 import { EntriesTable } from "./EntriesTable.js";
 import {
   createMuiTheme,
