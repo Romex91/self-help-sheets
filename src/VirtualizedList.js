@@ -1,23 +1,80 @@
 import React from "react";
 
+class VirtualizedItem extends React.PureComponent {
+  ref = React.createRef();
+
+  #onHeightChanged = () => {
+    if (!!this.ref.current) {
+      this.props.onHeightChanged(
+        this.props.entry,
+        this.ref.current.offsetHeight
+      );
+    }
+  };
+
+  #resizeObserver = null;
+
+  componentDidMount() {
+    if (!!this.ref.current) {
+      this.#onHeightChanged();
+      this.#resizeObserver = new ResizeObserver(this.#onHeightChanged);
+      this.#resizeObserver.observe(this.ref.current);
+    }
+  }
+
+  componentWillUnmount() {
+    if (
+      this.ref.current.contains(document.activeElement) &&
+      !!this.props.scrollableContainerRef.current
+    ) {
+      this.props.scrollableContainerRef.current.focus();
+    }
+
+    if (!!this.#resizeObserver) {
+      this.#resizeObserver.disconnect();
+      this.#resizeObserver = null;
+    }
+  }
+
+  render() {
+    const {
+      scrollableContainerRef,
+      ItemComponent,
+      onHeightChanged,
+      ...otherProps
+    } = this.props;
+
+    return <ItemComponent ref={this.ref} {...otherProps} />;
+  }
+}
+
 export function VirtualizedList({
   entries,
   defaultHeight = 30,
   scrollableContainerRef,
-  getEntryElement,
-  getTopPlaceholderElement,
-  getBottomPlaceholderElement,
+  ItemComponent,
+  PlaceholderComponent,
+  ...restProps
 }) {
   const [scrollY, setScrollY] = React.useState(0);
   const [windowHeight, setWindowHeight] = React.useState(window.innerHeight);
 
-  // Not a true React state, but a hack allowing GC to eliminate memory leak.
-  const [realHeights] = React.useState(new WeakMap());
+  // |realHeightsMap| asocciates each entry with a height obtained by
+  // ResizeObserver.
+  //
+  // WARINING!!! THis is not a true React state, but a hack allowing GC to
+  // eliminate memory leak when some entry is deleted.
+  // You cannot clone WeakMap. That's why it's impossible to use it as
+  // immutable React state.
+  // The alternative is to use Map instead of WeakMap and sync it with |entries|.
+  // But, I'd rather choose performance and simplicity over following React
+  // guidlines here.
+  const [realHeightsMap] = React.useState(new WeakMap());
   const onHeightChanged = React.useCallback(
     (entry, height) => {
-      realHeights.set(entry, height);
+      realHeightsMap.set(entry, height);
     },
-    [realHeights]
+    [realHeightsMap]
   );
 
   const onResizeOrScroll = () => {
@@ -42,24 +99,40 @@ export function VirtualizedList({
 
   for (let entry of entries) {
     let entryHeight = defaultHeight;
-    if (realHeights.has(entry)) {
-      entryHeight = realHeights.get(entry);
+    if (realHeightsMap.has(entry)) {
+      entryHeight = realHeightsMap.get(entry);
     }
 
     if (currentHeight < scrollY - window.innerHeight) {
       placeholderTop += entryHeight;
     } else if (currentHeight < scrollY + 2 * windowHeight) {
-      visibleEntries.push(getEntryElement(entry, { onHeightChanged }));
+      visibleEntries.push(
+        <VirtualizedItem
+          key={entry.key}
+          onHeightChanged={onHeightChanged}
+          entry={entry}
+          ItemComponent={ItemComponent}
+          scrollableContainerRef={scrollableContainerRef}
+          {...restProps}
+        />
+      );
     } else {
       placeholderBottom += entryHeight;
     }
     currentHeight += entryHeight;
   }
   if (placeholderTop !== 0) {
-    visibleEntries.unshift(getTopPlaceholderElement(placeholderTop));
+    visibleEntries.unshift(
+      <PlaceholderComponent height={placeholderTop} key="placeholderTop" />
+    );
   }
   if (placeholderBottom !== 0) {
-    visibleEntries.push(getBottomPlaceholderElement(placeholderBottom));
+    visibleEntries.push(
+      <PlaceholderComponent
+        height={placeholderBottom}
+        key="placeholderBottom"
+      />
+    );
   }
 
   return visibleEntries;

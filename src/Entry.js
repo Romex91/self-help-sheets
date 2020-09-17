@@ -1,48 +1,10 @@
 import React from "react";
 import { TextField } from "@material-ui/core";
 
-export class Entry extends React.PureComponent {
-  #trRef = React.createRef();
-  #resizerObserver = null;
-
-  #onLeftChanged = (event) => {
-    this.props.onLeftChanged(this.props.entry, event.target.value);
-  };
-
-  #onRightChanged = (event) => {
-    this.props.onRightChanged(this.props.entry, event.target.value);
-  };
-
-  #onHeightChanged = () => {
-    if (!this.#trRef.current) return;
-    this.props.onHeightChanged(
-      this.props.entry,
-      this.#trRef.current.offsetHeight
-    );
-  };
-
-  componentDidMount() {
-    this.#resizerObserver = new ResizeObserver(this.#onHeightChanged);
-    this.#resizerObserver.observe(this.#trRef.current);
-  }
-
-  componentWillUnmount() {
-    if (this.#trRef.current.contains(document.activeElement))
-      this.props.scrollableContainerRef.current.focus();
-    this.#resizerObserver.unobserve(this.#trRef.current);
-  }
-
-  render() {
-    const {
-      scrollableContainerRef,
-      onLeftChanged,
-      onRightChanged,
-      onHeightChanged,
-      entry,
-      ...rest
-    } = this.props;
+export const Entry = React.forwardRef(
+  ({ onLeftChanged, onRightChanged, entry, ...otherProps }, ref) => {
     return (
-      <tr ref={this.#trRef}>
+      <tr ref={ref}>
         <td key="issueElement">
           <h5>issue</h5>
           <TextField
@@ -51,9 +13,9 @@ export class Entry extends React.PureComponent {
             multiline
             placeholder="What bothers you?"
             variant="outlined"
-            onChange={this.#onLeftChanged}
-            value={this.props.entry.left}
-            {...rest}
+            onChange={(event) => onLeftChanged(entry, event.target.value)}
+            value={entry.left}
+            {...otherProps}
           />
         </td>
 
@@ -65,12 +27,12 @@ export class Entry extends React.PureComponent {
             multiline
             placeholder="What can you do to resolve the problem?"
             variant="outlined"
-            onChange={this.#onRightChanged}
-            value={this.props.entry.right}
-            {...rest}
+            onChange={(event) => onRightChanged(entry, event.target.value)}
+            value={entry.right}
+            {...otherProps}
           />
         </td>
       </tr>
     );
   }
-}
+);

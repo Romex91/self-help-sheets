@@ -69,6 +69,16 @@ const styles = (theme) => ({
   },
 });
 
+function Placeholder({ height, ...rest }) {
+  return (
+    <tr {...rest}>
+      <td colSpan="2">
+        <div style={{ height }} />
+      </td>
+    </tr>
+  );
+}
+
 class EntriesTableNoStyles extends React.PureComponent {
   state = {
     entries: _.range(0, 1000).map((x) => {
@@ -145,42 +155,6 @@ class EntriesTableNoStyles extends React.PureComponent {
     this.#columnResizer.destroy();
     this.#resizeObserver.unobserve(this.#tableRef.current);
   }
-
-  #getEntryElement = (entry, additionalProps) => {
-    let { classes, ...rest } = this.props;
-    return (
-      <Entry
-        key={entry.key}
-        entry={entry}
-        onLeftChanged={this.#onLeftChanged}
-        onRightChanged={this.#onRightChanged}
-        scrollableContainerRef={this.#scrollableContainerRef}
-        {...rest}
-        {...additionalProps}
-      />
-    );
-  };
-
-  #getTopPlaceholderElement = (height) => {
-    return (
-      <tr key="placeholderTop">
-        <td colSpan="2">
-          <div style={{ height }} />
-        </td>
-      </tr>
-    );
-  };
-
-  #getBottomPlaceholderElement = (height) => {
-    return (
-      <tr key="placeholderBottom">
-        <td colSpan="2">
-          <div style={{ height }} />
-        </td>
-      </tr>
-    );
-  };
-
   render() {
     return (
       <div
@@ -208,10 +182,12 @@ class EntriesTableNoStyles extends React.PureComponent {
           <tbody>
             <VirtualizedList
               entries={this.state.entries}
-              getEntryElement={this.#getEntryElement}
-              getTopPlaceholderElement={this.#getTopPlaceholderElement}
-              getBottomPlaceholderElement={this.#getBottomPlaceholderElement}
+              ItemComponent={Entry}
+              PlaceholderComponent={Placeholder}
               scrollableContainerRef={this.#scrollableContainerRef}
+              // Additional props for Entry
+              onLeftChanged={this.#onLeftChanged}
+              onRightChanged={this.#onRightChanged}
             />
           </tbody>
         </table>
