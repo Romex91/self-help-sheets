@@ -79,16 +79,13 @@ function Placeholder({ height, ...rest }) {
   );
 }
 
-class EntriesTableNoStyles extends React.PureComponent {
+class EntriesTableRaw extends React.PureComponent {
   state = {
-    entries: _.range(0, 1000).map((x) => {
-      return {
-        key: x,
-        left:
-          "Lorem ipsum dolo'r sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-        right: x + ". О сколько нам открытий чудных готовит просвещенья дух?",
-      };
-    }),
+    entries: [],
+  };
+
+  #onEntriesChanged = (entries) => {
+    this.setState({ entries });
   };
 
   #tableRef = React.createRef();
@@ -96,31 +93,9 @@ class EntriesTableNoStyles extends React.PureComponent {
   #columnResizer = null;
   #resizeObserver = null;
 
-  #onLeftChanged = (entry, left) => {
-    this.setState((prevState) => {
-      return {
-        ...prevState,
-        entries: prevState.entries.map((x) => {
-          if (x === entry) return { ...x, left };
-          return x;
-        }),
-      };
-    });
-  };
-
-  #onRightChanged = (entry, right) => {
-    this.setState((prevState) => {
-      return {
-        ...prevState,
-        entries: prevState.entries.map((x) => {
-          if (x === entry) return { ...x, right };
-          return x;
-        }),
-      };
-    });
-  };
-
   componentDidMount() {
+    this.props.model.subscribe(this.#onEntriesChanged);
+
     this.#columnResizer = new ColumnResizer(this.#tableRef.current, {
       liveDrag: true,
       minWidth: 100,
@@ -151,10 +126,20 @@ class EntriesTableNoStyles extends React.PureComponent {
     this.#resizeObserver.observe(this.#tableRef.current);
   }
 
+  componentDidUpdate(prevProps) {
+    if (this.props.model !== prevProps.model) {
+      prevProps.model.unsubscribe(this.#onEntriesChanged);
+      this.props.model.subscribe(this.#onEntriesChanged);
+    }
+  }
+
   componentWillUnmount() {
+    this.props.model.unsubscribe(this.#onEntriesChanged);
+
     this.#columnResizer.destroy();
     this.#resizeObserver.unobserve(this.#tableRef.current);
   }
+
   render() {
     return (
       <div
@@ -186,8 +171,7 @@ class EntriesTableNoStyles extends React.PureComponent {
               PlaceholderComponent={Placeholder}
               scrollableContainerRef={this.#scrollableContainerRef}
               // Additional props for Entry
-              onLeftChanged={this.#onLeftChanged}
-              onRightChanged={this.#onRightChanged}
+              onUpdate={this.props.model.onUpdate}
             />
           </tbody>
         </table>
@@ -195,4 +179,4 @@ class EntriesTableNoStyles extends React.PureComponent {
     );
   }
 }
-export const EntriesTable = withStyles(styles)(EntriesTableNoStyles);
+export const EntriesTable = withStyles(styles)(EntriesTableRaw);

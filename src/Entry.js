@@ -2,7 +2,7 @@ import React from "react";
 import { TextField } from "@material-ui/core";
 
 export const Entry = React.forwardRef(
-  ({ onLeftChanged, onRightChanged, entry, ...otherProps }, ref) => {
+  ({ onUpdate, onRightChanged, entry, ...otherProps }, ref) => {
     return (
       <tr ref={ref}>
         <td key="issueElement">
@@ -13,7 +13,9 @@ export const Entry = React.forwardRef(
             multiline
             placeholder="What bothers you?"
             variant="outlined"
-            onChange={(event) => onLeftChanged(entry, event.target.value)}
+            onChange={(event) =>
+              onUpdate({ ...entry, left: event.target.value })
+            }
             value={entry.left}
             {...otherProps}
           />
@@ -27,7 +29,9 @@ export const Entry = React.forwardRef(
             multiline
             placeholder="What can you do to resolve the problem?"
             variant="outlined"
-            onChange={(event) => onRightChanged(entry, event.target.value)}
+            onChange={(event) =>
+              onUpdate({ ...entry, right: event.target.value })
+            }
             value={entry.right}
             {...otherProps}
           />

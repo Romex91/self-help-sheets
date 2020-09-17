@@ -10,6 +10,9 @@ import {
 } from "@material-ui/core";
 import { AppMenu } from "./AppMenu.js";
 
+import { EntriesTableModelImpl } from "./EntriesTableModel";
+const model = new EntriesTableModelImpl();
+
 function App() {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
 
@@ -38,7 +41,7 @@ function App() {
       <CssBaseline />
       <AppMenu shown={appBarShown} onShow={showAppBar}></AppMenu>
 
-      <EntriesTable onFocus={onTableEntryFocus} />
+      <EntriesTable onFocus={onTableEntryFocus} model={model} />
     </ThemeProvider>
   );
 }

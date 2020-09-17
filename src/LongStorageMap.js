@@ -1,31 +1,15 @@
-// The app stores all the data in one of LongStorageMap
-export class LongStorageMap {
-  createKey() {
-    throw Error("not implemented");
-  }
-  delete(key) {
-    throw Error("not implemented");
-  }
+import { Interface } from "./Interface.js";
 
-  // Returns md5sum
-  set(key, value) {
-    throw Error("not implemented");
-  }
-  get(key) {
-    throw Error("not implemented");
-  }
-
-  // returns array of string keys in order of creation
-  getAllKeys() {
-    throw Error("not implemented");
-  }
-  getSettings() {
-    throw Error("not implemented");
-  }
-  setSettings() {
-    throw Error("not implemented");
-  }
-  setDescription(key, description) {
-    throw Error("not implemented");
+export class LongStorageMap extends Interface {
+  constructor() {
+    super();
+    this.requireFunction("createKey");
+    this.requireFunction("delete", "key");
+    this.requireFunction("set", "key", "contentString");
+    this.requireFunction("get", "key");
+    this.requireFunction("getAllKeys");
+    this.requireFunction("getSettings");
+    this.requireFunction("setSettings");
+    this.requireFunction("setDescription");
   }
 }
