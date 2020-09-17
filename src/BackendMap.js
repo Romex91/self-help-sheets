@@ -1,6 +1,6 @@
 import { Interface } from "./Interface.js";
 
-export class LongStorageMap extends Interface {
+export class BackendMap extends Interface {
   constructor() {
     super();
     this.requireFunction("createKey");
@@ -9,7 +9,7 @@ export class LongStorageMap extends Interface {
     this.requireFunction("get", "key");
     this.requireFunction("getAllKeys");
     this.requireFunction("getSettings");
-    this.requireFunction("setSettings");
-    this.requireFunction("setDescription");
+    this.requireFunction("setSettings", "settings");
+    this.requireFunction("setDescription", "key", "description");
   }
 }

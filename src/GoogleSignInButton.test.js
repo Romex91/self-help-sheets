@@ -2,26 +2,8 @@ import { GDriveStates } from "./GDriveAuthClient.js";
 import React from "react";
 import { render, fireEvent } from "@testing-library/react";
 import { GoogleSignInButton } from "./GoogleSignInButton.js";
-import sinon from "sinon";
 
-function GDriveAuthTestingClient() {
-  this.listeners = new Set();
-  this.state = GDriveStates.LOADING;
-  this.addStateListener = sinon.spy((listener) => {
-    this.listeners.add(listener);
-  });
-  this.removeStateListener = sinon.spy((listener) => {
-    this.listeners.delete(listener);
-  });
-  this.signIn = sinon.fake();
-  this.signOut = sinon.fake();
-  this.setStateFromTest = (state) => {
-    this.state = state;
-    this.listeners.forEach((listener) => {
-      listener(state);
-    });
-  };
-}
+import { TestingGDriveAuthClient } from "./TestingGDriveAuthClient";
 
 global.document.createRange = () => ({
   setStart: () => {},
@@ -33,7 +15,7 @@ global.document.createRange = () => ({
 });
 
 test("button text represents changes in state.", () => {
-  let gdriveAuthClient = new GDriveAuthTestingClient();
+  let gdriveAuthClient = new TestingGDriveAuthClient();
   const { getByText } = render(
     <GoogleSignInButton gdriveAuthClient={gdriveAuthClient} />
   );
@@ -61,7 +43,7 @@ test("button text represents changes in state.", () => {
 });
 
 test("button clicks lead to different function calls depending on state.", () => {
-  let gdriveAuthClient = new GDriveAuthTestingClient();
+  let gdriveAuthClient = new TestingGDriveAuthClient();
   const { getByText } = render(
     <GoogleSignInButton gdriveAuthClient={gdriveAuthClient} />
   );
@@ -107,7 +89,7 @@ test("button clicks lead to different function calls depending on state.", () =>
 });
 
 test("poppers are ok", () => {
-  let gdriveAuthClient = new GDriveAuthTestingClient();
+  let gdriveAuthClient = new TestingGDriveAuthClient();
   const { queryByText } = render(
     <GoogleSignInButton gdriveAuthClient={gdriveAuthClient} />
   );

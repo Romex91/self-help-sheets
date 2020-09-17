@@ -1,7 +1,7 @@
 import { gdriveAuthClient, GDriveStates } from "./GDriveAuthClient.js";
-import { LongStorageMap } from "./LongStorageMap.js";
+import { BackendMap } from "./BackendMap.js";
 
-class GDriveMap extends LongStorageMap {
+class GDriveMap extends BackendMap {
   #settings_key = null;
   async _getSettingsKey() {
     if (this.#settings_key !== null) {
@@ -43,7 +43,6 @@ class GDriveMap extends LongStorageMap {
     return await download(key);
   }
 
-  // returns array of string keys in order of creation
   async getAllKeys() {
     throwIfNotSignedIn();
     return await find('name = "item.json"');
@@ -160,7 +159,8 @@ async function download(fileId) {
     });
 
     return resp.body;
-  } catch {
+  } catch (e) {
+    if (e.status !== 404) throw e;
     return undefined;
   }
 }

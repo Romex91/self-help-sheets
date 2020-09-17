@@ -30,7 +30,7 @@ class GDriveAuthClient {
     this.#stateListeners.delete(listener);
   }
 
-  async getNextStateForTests() {
+  async waitForStateChange() {
     return await new Promise((resolve) => {
       let listener = (state) => {
         this.removeStateListener(listener);
