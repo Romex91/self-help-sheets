@@ -24,7 +24,11 @@ export class TestingBackendMap extends BackendMap {
 
   async set(key, value) {
     await this._sleep(20);
+    if (!this.#map.has(key)) {
+      throw new Error("Key should be registered");
+    }
     this.#map.set(key, value);
+
     return value;
   }
 
