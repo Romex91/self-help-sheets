@@ -318,6 +318,9 @@ test("EntriesTableModel reuses deleted keys", async () => {
   model.onUpdate(entries[0].setLeft("foo"));
   entries = await subscription.waitForNewEntries();
 
+  expect(entries[0].key).toBe("10");
+  entries = await subscription.waitForNewEntries();
+
   expect(entries[0].key).toBe("11");
   expect(entries[1].key).toBe("10");
   expect(entries[2].key).toBe("9");
@@ -417,7 +420,7 @@ test("EntriesTableModel has at least one item", async () => {
       entries[0].right === "" &&
       entries[0].key != null
     ) {
-      expect(subscription.callCount).toBe(2);
+      expect(subscription.callCount).toBe(1);
       await expectNewModelToHaveEntries(entries);
       break;
     }

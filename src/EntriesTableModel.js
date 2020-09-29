@@ -98,7 +98,6 @@ export class EntriesTableModelImpl extends EntriesTableModel {
       if (
         entry.isDataLoaded() &&
         (entry.data === EntryStatus.DELETED ||
-          entry.key == null ||
           (entry.left === "" && entry.right === ""))
       ) {
         lastFreeIndex++;
@@ -113,15 +112,16 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     // There always should be an empty entry on top of the table.
     // The table doesn't have ADD NEW ITEM button. Instead user should
     // start typing in the top empty entry to add a new one.
-    const isFirstEntryLoadedAndFree =
-      this.#entries.length > 0 &&
-      this.#getLastFreeIndex() === -1 &&
-      this.#entries[0].isDataLoaded();
+    this.#notifySubscribers();
+    if (
+      this.#entries.length === 0 ||
+      (this.#getLastFreeIndex() === -1 && this.#entries[0].isDataLoaded())
+    ) {
+      if (this.#entries.length > 0 && this.#entries[0].key === null) {
+        return;
+      }
 
-    if (this.#entries.length === 0 || isFirstEntryLoadedAndFree) {
       this.#entries.unshift(new EntryModel(null, {}).clear());
-
-      this.#notifySubscribers();
 
       let newKey = await this.#backendMap.createKey();
 
@@ -140,10 +140,9 @@ export class EntriesTableModelImpl extends EntriesTableModel {
 
       this.#keys.unshift({ md5Checksum, id: newKey });
 
-      return this.#onEntriesChanged();
+      await this.#onEntriesChanged();
+      return;
     }
-
-    this.#notifySubscribers();
   };
 
   #getFilteredEntries = () => {
@@ -157,12 +156,13 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     }
 
     filteredEntries = filteredEntries.filter(
-      (x) => x.data !== EntryStatus.DELETED
+      (x) => x.data !== EntryStatus.DELETED && x.key !== null
     );
     return filteredEntries;
   };
 
   #notifySubscribers = () => {
+    if (this.#entries.length === 0) return;
     this.#subscriptions.forEach((callback) => {
       callback(this.#getFilteredEntries());
     });
