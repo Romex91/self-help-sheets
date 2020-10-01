@@ -42,13 +42,6 @@ export async function realBrowserTest(testFile, testBody) {
   // The function is called from jest. Create real browser and run
   // the test there.
   test(`Running "${testFile}" #${id} in real-browser.`, async () => {
-    if (realBrowserTest.webpackPromises === undefined) {
-      realBrowserTest.webpackPromises = new Map();
-    }
-    if (!realBrowserTest.webpackPromises.has(testFile))
-      realBrowserTest.webpackPromises.set(testFile, runWebpack(testFile));
-    await realBrowserTest.webpackPromises.get(testFile);
-
     let puppeteer = (await import("puppeteer")).default;
 
     const browser = await puppeteer.launch({
@@ -61,6 +54,7 @@ export async function realBrowserTest(testFile, testBody) {
     await new Promise((resolve, reject) => {
       page.goto(`localhost:3000/realBrowserTest.html`);
       page.on("load", async () => {
+        await runWebpack(testFile);
         const { total, failures } = await injectTestsToPage(page, testFile, id);
         if (failures === 0 && total > 0) {
           setTimeout(resolve, 500);
