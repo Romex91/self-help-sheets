@@ -1,3 +1,4 @@
+import { BackendMap } from "./BackendMap.js";
 /* eslint-disable no-undef */
 // These tests require a Google account with enabled 'less secure apps' option.
 import { realBrowserTest } from "./realBrowserTest.js";
@@ -95,11 +96,28 @@ realBrowserTest("GDrive.test.js", async () => {
         assert.equal(await gdriveMap.get(keys[1]), "bar");
       });
 
-      it("provides md5 for set and getAll", async () => {
-        let md5 = await gdriveMap.set(keys[0], "barbor");
-        let allKeys = await gdriveMap.getAllKeys();
+      it("provides md5 is the same in getMd5 and getAll", async () => {
+        // keys are equal before change
+        let allKeysBefore = await gdriveMap.getAllKeys();
+        let md5Before = await gdriveMap.getMd5(keys[0]);
+        assert.equal(
+          md5Before,
+          allKeysBefore.find((x) => x.id === keys[0]).md5Checksum
+        );
 
-        assert.equal(md5, allKeys.find((x) => x.id === keys[0]).md5Checksum);
+        assert(typeof md5Before === "string" && !!md5Before);
+
+        await gdriveMap.set(keys[0], "barbor");
+
+        let md5after = await gdriveMap.getMd5(keys[0]);
+        assert.equal("03e11b8751429d96a3d8620f82dcece1", md5after);
+
+        assert.notEqual(md5Before, md5after);
+        let allKeysAfter = await gdriveMap.getAllKeys();
+        assert.equal(
+          md5after,
+          allKeysAfter.find((x) => x.id === keys[0]).md5Checksum
+        );
       });
 
       it("returns undefined for not existing elements", async () => {
@@ -238,7 +256,11 @@ realBrowserTest("GDrive.test.js", async () => {
       });
 
       it("sets file description", async () => {
+        // setting description doesn't change md5.
+        let md5 = await gdriveMap.getMd5(keys[0]);
         await gdriveMap.setDescription(keys[0], "01321");
+        assert.equal(md5, await gdriveMap.getMd5(keys[0]));
+
         await gdriveMap.setDescription(keys[3], "33321");
         await gdriveMap.setDescription(keys[7], "35622");
         await gdriveMap.setDescription(keys[5], "64390");

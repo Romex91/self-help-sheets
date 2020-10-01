@@ -7,6 +7,7 @@ export class BackendMap extends Interface {
     this.requireFunction("delete", "key");
     this.requireFunction("set", "key", "contentString");
     this.requireFunction("get", "key");
+    this.requireFunction("getMd5", "key");
     this.requireFunction("getAllKeys");
     this.requireFunction("getSettings");
     this.requireFunction("setSettings", "settings");

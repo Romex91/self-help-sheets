@@ -43,6 +43,11 @@ class GDriveMap extends BackendMap {
     return await download(key);
   }
 
+  async getMd5(key) {
+    throwIfNotSignedIn();
+    return await getMd5(key);
+  }
+
   async getAllKeys() {
     throwIfNotSignedIn();
     return await find('name = "item.json"');
@@ -121,7 +126,7 @@ async function patchDescription(fileId, description) {
     JSON.stringify({ description }) +
     close_delim;
 
-  return prom(window.gapi.client.request, {
+  await prom(window.gapi.client.request, {
     path: `/upload/drive/v3/files/${fileId}`,
     method: "PATCH",
     params: { uploadType: "multipart" },
@@ -141,7 +146,9 @@ async function upload(fileId, content) {
     fields: "md5Checksum",
     body: content,
   });
+}
 
+async function getMd5(fileId) {
   let result = await prom(window.gapi.client.request, {
     path: `/drive/v3/files/${fileId}`,
     method: "GET",

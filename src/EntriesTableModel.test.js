@@ -703,6 +703,9 @@ test("EntriesTableModel deletes items in map", async () => {
   await expectNewModelToHaveEntries(entries);
 });
 
+test("async set/delete doesn't explode", async () => {});
+test("BackendMultiplexor handles incorrect data", async () => {});
+
 // test("sync hides deleted entries (without changing other entries)", async () => {
 //   await fillTestingBackendMap(10);
 //   const { model1 } = createModel();

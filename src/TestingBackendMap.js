@@ -28,11 +28,14 @@ export class TestingBackendMap extends BackendMap {
       throw new Error("Key should be registered");
     }
     this.#map.set(key, value);
-
-    return value;
   }
 
   async get(key) {
+    await this._sleep(20);
+    return this.#map.get(key);
+  }
+
+  async getMd5(key) {
     await this._sleep(20);
     return this.#map.get(key);
   }
