@@ -1,3 +1,7 @@
+/**
+ * @jest-environment node
+ */
+
 // realBrowserTest(testFile, testBody)
 // runs real-browser Mocha tests from Create React App projects.
 //
@@ -38,6 +42,13 @@ export async function realBrowserTest(testFile, testBody) {
   // The function is called from jest. Create real browser and run
   // the test there.
   test(`Running "${testFile}" #${id} in real-browser.`, async () => {
+    if (realBrowserTest.webpackPromises === undefined) {
+      realBrowserTest.webpackPromises = new Map();
+    }
+    if (!realBrowserTest.webpackPromises.has(testFile))
+      realBrowserTest.webpackPromises.set(testFile, runWebpack(testFile));
+    await realBrowserTest.webpackPromises.get(testFile);
+
     let puppeteer = (await import("puppeteer")).default;
 
     const browser = await puppeteer.launch({
@@ -48,7 +59,7 @@ export async function realBrowserTest(testFile, testBody) {
     page.setCacheEnabled(false);
 
     await new Promise((resolve, reject) => {
-      page.goto(`localhost:3000/src/realBrowserTest.html`);
+      page.goto(`localhost:3000/realBrowserTest.html`);
       page.on("load", async () => {
         const { total, failures } = await injectTestsToPage(page, testFile, id);
         if (failures === 0 && total > 0) {
@@ -72,19 +83,13 @@ export async function realBrowserTest(testFile, testBody) {
   }, 999999999);
 }
 
-export function realBrowserTest_DISABLED(testFile) {
-  if (!isInRealBrowser()) {
-    test(`${testFile} has disabled tests.`, () => {});
-  }
-}
-
 (() => {
   if (isInRealBrowser()) return;
 
   beforeAll(async () => {
     let { setup } = await import("jest-dev-server");
     await setup({
-      command: `http-server . -p 3000`,
+      command: `http-server tmp -p 3000`,
       launchTimeout: 50000,
       port: 3000,
     });
@@ -137,4 +142,73 @@ function generateTestId(testFile) {
 
 function isInRealBrowser() {
   return window.location.pathname.endsWith("realBrowserTest.html");
+}
+
+async function runWebpack(testFile) {
+  const webpack = (await import("webpack")).default;
+  const path = (await import("path")).default;
+  const fs = (await import("fs")).default;
+
+  if (!fs.existsSync(path.resolve(__dirname, "../", "tmp"))) {
+    fs.mkdirSync(path.resolve(__dirname, "../", "tmp"));
+  }
+  fs.writeFileSync(
+    path.resolve(__dirname, "../", "tmp", "realBrowserTest.html"),
+    fs.readFileSync(path.resolve(__dirname, "realBrowserTest.html"))
+  );
+
+  await new Promise(async (resolve, reject) => {
+    webpack(
+      {
+        mode: "development",
+        entry: path.resolve(__dirname, testFile),
+        output: {
+          path: path.resolve(__dirname, "../", "tmp"),
+          filename: testFile,
+        },
+        target: "web",
+        plugins: [
+          new webpack.IgnorePlugin({
+            checkResource(resource) {
+              return [
+                "webpack",
+                "path",
+                "puppeteer",
+                "jest-dev-server",
+                "fs",
+              ].some((x) => resource === x);
+            },
+          }),
+        ],
+        module: {
+          rules: [
+            {
+              test: /\.m?js$/,
+              exclude: /(node_modules)/,
+              use: {
+                loader: "babel-loader",
+                options: {
+                  presets: [
+                    [
+                      "@babel/preset-env",
+                      {
+                        targets: { browsers: ["last 2 chrome versions"] },
+                      },
+                    ],
+                  ],
+                  plugins: ["@babel/plugin-proposal-class-properties"],
+                },
+              },
+            },
+          ],
+        },
+      },
+      (err, stats) => {
+        if (err || stats.hasErrors()) {
+          reject(err || stats.compilation.errors);
+        }
+        resolve();
+      }
+    );
+  });
 }

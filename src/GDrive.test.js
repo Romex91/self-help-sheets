@@ -1,9 +1,9 @@
 /* eslint-disable no-undef */
 // These tests require a Google account with enabled 'less secure apps' option.
 import { realBrowserTest } from "./realBrowserTest.js";
+import { assert } from "chai";
 
 realBrowserTest("GDrive.test.js", async () => {
-  let assert = window.chai.assert;
   let { gdriveAuthClient, GDriveStates } = await import(
     "./GDriveAuthClient.js"
   );
@@ -49,7 +49,6 @@ realBrowserTest("GDrive.test.js", async () => {
 });
 
 realBrowserTest("GDrive.test.js", async () => {
-  let assert = window.chai.assert;
   let before = window.before;
 
   let { gdriveAuthClient, GDriveStates } = await import(
@@ -261,8 +260,6 @@ realBrowserTest("GDrive.test.js", async () => {
 });
 
 realBrowserTest("GDrive.test.js", async () => {
-  let assert = window.chai.assert;
-
   let before = window.before;
   let { gdriveAuthClient, GDriveStates } = await import(
     "./GDriveAuthClient.js"

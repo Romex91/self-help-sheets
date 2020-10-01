@@ -8,6 +8,7 @@
 # testing
 /coverage
 /testing_chrome_user_data
+/tmp
 
 # production
 /build
