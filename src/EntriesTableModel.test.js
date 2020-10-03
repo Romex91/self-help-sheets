@@ -1,11 +1,11 @@
 import sinon from "sinon";
 import { TestingBackendMap } from "./TestingBackendMap";
+import { BackendMultiplexor } from "./BackendQuotaSavers";
 import { TestingGDriveAuthClient } from "./TestingGDriveAuthClient";
 import { EntriesTableModelImpl } from "./EntriesTableModel";
 import { GDriveStates } from "./GDriveAuthClient.js";
 import { EntryModel, EntryStatus } from "./Entry";
 import _ from "lodash";
-import { ArrowUpward } from "@material-ui/icons";
 
 // TESTING DATA
 let testingBackendMap;
@@ -112,7 +112,11 @@ async function expectNewModelToHaveEntries(entries) {
 beforeEach(async () => {
   testingAuthClient = new TestingGDriveAuthClient();
   testingAuthClient.setStateFromTest(GDriveStates.SIGNED_IN);
-  testingBackendMap = sinon.spy(new TestingBackendMap());
+  testingBackendMap = sinon.spy(
+    new BackendMultiplexor(new TestingBackendMap())
+  );
+
+  await testingBackendMap.getAllKeys();
 });
 
 test("EntriesTableModel waits for sign in", async () => {
@@ -146,6 +150,7 @@ test("EntriesTableModel has at least one empty item", async () => {
 
   while (true) {
     let entries = await subscription.waitForNewEntries();
+
     if (
       entries.length === 11 &&
       entries.every((entry) => entry.isDataLoaded()) &&
@@ -172,41 +177,41 @@ test("EntriesTableModel cannot have more than one empty item at front", async ()
   const { model, subscription } = createModel();
   let entries = await waitForModelFullyLoad(model);
   expect(entries.length).toBe(11);
-  expect(entries[0].key).toBe("10");
+  expect(entries[0].key).toBe("2-1");
 
   // you cannot delete the first item
   model.onUpdate(entries[0].delete());
 
   entries = await subscription.waitForNewEntries();
   expect(entries.length).toBe(11);
-  expect(entries[0].key).toBe("10");
+  expect(entries[0].key).toBe("2-1");
   expect(entries[0].left).toBe("");
   expect(entries[0].right).toBe("");
 
   // deleting the second item should do the trick
-  expect(entries[1].key).toBe("9");
+  expect(entries[1].key).toBe("1-1");
   model.onUpdate(entries[1].delete());
   entries = await subscription.waitForNewEntries();
   expect(entries.length).toBe(10);
 
   // now the second item is empty and it is in the place of the first item.
-  expect(entries[0].key).toBe("9");
+  expect(entries[0].key).toBe("1-1");
   expect(entries[0].left).toBe("");
   expect(entries[0].right).toBe("");
 
-  expect(entries[1].key).toBe("8");
+  expect(entries[1].key).toBe("0-1");
   expect(entries[1].left).not.toBe("");
   expect(entries[1].right).not.toBe("");
 
-  expect(entries[2].key).toBe("7");
+  expect(entries[2].key).toBe("7-0");
   expect(entries[2].left).not.toBe("");
   expect(entries[2].right).not.toBe("");
 
-  expect(entries[3].key).toBe("6");
+  expect(entries[3].key).toBe("6-0");
   expect(entries[3].left).not.toBe("");
   expect(entries[3].right).not.toBe("");
 
-  expect(entries[4].key).toBe("5");
+  expect(entries[4].key).toBe("5-0");
   expect(entries[4].left).not.toBe("");
   expect(entries[4].right).not.toBe("");
 
@@ -223,24 +228,24 @@ test("EntriesTableModel cannot have more than one empty item at front", async ()
 
   // Clearing items in the middle of the table does nothing.
   expect(entries.length).toBe(10);
-  expect(entries[0].key).toBe("9");
+  expect(entries[0].key).toBe("1-1");
   expect(entries[0].left).toBe("");
   expect(entries[0].right).toBe("");
-  expect(entries[1].key).toBe("8");
+  expect(entries[1].key).toBe("0-1");
   expect(entries[1].left).not.toBe("");
   expect(entries[1].right).not.toBe("");
 
-  expect(entries[2].key).toBe("7");
+  expect(entries[2].key).toBe("7-0");
   expect(entries[2].left).toBe("");
   expect(entries[2].right).toBe("");
 
-  expect(entries[3].key).toBe("6");
+  expect(entries[3].key).toBe("6-0");
   expect(entries[3].left).toBe("");
   expect(entries[3].right).toBe("");
 
   expect(entries[4].left).not.toBe("");
   expect(entries[4].right).not.toBe("");
-  expect(entries[4].key).toBe("5");
+  expect(entries[4].key).toBe("5-0");
 
   // But clearing the second item should clear all empty items at table top.
   model.onUpdate(entries[1].setLeft(""));
@@ -249,7 +254,7 @@ test("EntriesTableModel cannot have more than one empty item at front", async ()
   entries = await subscription.waitForNewEntries();
 
   expect(entries.length).toBe(7);
-  expect(entries[0].key).toBe("6");
+  expect(entries[0].key).toBe("6-0");
   expect(entries[0].left).toBe("");
   expect(entries[0].right).toBe("");
 
@@ -268,66 +273,66 @@ test("EntriesTableModel reuses deleted keys", async () => {
   let entries = await waitForModelFullyLoad(model);
   expect(entries.length).toBe(11);
 
-  expect(entries[0].key).toBe("10");
-  expect(entries[1].key).toBe("9");
-  expect(entries[2].key).toBe("8");
-  expect(entries[3].key).toBe("7");
-  expect(entries[4].key).toBe("6");
-  expect(entries[5].key).toBe("5");
+  expect(entries[0].key).toBe("2-1");
+  expect(entries[1].key).toBe("1-1");
+  expect(entries[2].key).toBe("0-1");
+  expect(entries[3].key).toBe("7-0");
+  expect(entries[4].key).toBe("6-0");
+  expect(entries[5].key).toBe("5-0");
 
   model.onUpdate(entries[1].delete());
   entries = await subscription.waitForNewEntries();
-  expect(entries[0].key).toBe("9");
+  expect(entries[0].key).toBe("1-1");
 
   model.onUpdate(entries[1].delete());
   entries = await subscription.waitForNewEntries();
-  expect(entries[0].key).toBe("8");
+  expect(entries[0].key).toBe("0-1");
 
   model.onUpdate(entries[1].delete());
   entries = await subscription.waitForNewEntries();
-  expect(entries[0].key).toBe("7");
+  expect(entries[0].key).toBe("7-0");
 
   model.onUpdate(entries[1].delete());
   entries = await subscription.waitForNewEntries();
-  expect(entries[0].key).toBe("6");
+  expect(entries[0].key).toBe("6-0");
 
   model.onUpdate(entries[1].delete());
   entries = await subscription.waitForNewEntries();
-  expect(entries[0].key).toBe("5");
+  expect(entries[0].key).toBe("5-0");
 
   model.onUpdate(entries[0].setLeft("foo"));
   entries = await subscription.waitForNewEntries();
-  expect(entries[0].key).toBe("6");
+  expect(entries[0].key).toBe("6-0");
 
   model.onUpdate(entries[0].setLeft("foo"));
   entries = await subscription.waitForNewEntries();
-  expect(entries[0].key).toBe("7");
+  expect(entries[0].key).toBe("7-0");
 
   model.onUpdate(entries[0].setLeft("foo"));
   entries = await subscription.waitForNewEntries();
-  expect(entries[0].key).toBe("8");
+  expect(entries[0].key).toBe("0-1");
 
   model.onUpdate(entries[0].setLeft("foo"));
   entries = await subscription.waitForNewEntries();
-  expect(entries[0].key).toBe("9");
+  expect(entries[0].key).toBe("1-1");
 
   model.onUpdate(entries[0].setLeft("foo"));
   entries = await subscription.waitForNewEntries();
-  expect(entries[0].key).toBe("10");
+  expect(entries[0].key).toBe("2-1");
 
   model.onUpdate(entries[0].setLeft("foo"));
   entries = await subscription.waitForNewEntries();
 
-  expect(entries[0].key).toBe("10");
+  expect(entries[0].key).toBe("2-1");
   entries = await subscription.waitForNewEntries();
 
-  expect(entries[0].key).toBe("11");
-  expect(entries[1].key).toBe("10");
-  expect(entries[2].key).toBe("9");
-  expect(entries[3].key).toBe("8");
-  expect(entries[4].key).toBe("7");
-  expect(entries[5].key).toBe("6");
-  expect(entries[6].key).toBe("5");
+  expect(entries[0].key).toBe("3-1");
+  expect(entries[1].key).toBe("2-1");
+  expect(entries[2].key).toBe("1-1");
+  expect(entries[3].key).toBe("0-1");
+  expect(entries[4].key).toBe("7-0");
+  expect(entries[5].key).toBe("6-0");
+  expect(entries[6].key).toBe("5-0");
 
   model.onUpdate(entries[0].delete());
   model.onUpdate(entries[1].delete());
@@ -340,34 +345,34 @@ test("EntriesTableModel reuses deleted keys", async () => {
     entries = await subscription.waitForNewEntries();
   }
 
-  expect(entries[0].key).toBe("6");
+  expect(entries[0].key).toBe("6-0");
 
   model.onUpdate(entries[0].setLeft("foo"));
   entries = await subscription.waitForNewEntries();
-  expect(entries[0].key).toBe("7");
+  expect(entries[0].key).toBe("7-0");
 
   model.onUpdate(entries[0].setLeft("foo"));
   entries = await subscription.waitForNewEntries();
-  expect(entries[0].key).toBe("8");
+  expect(entries[0].key).toBe("0-1");
 
   model.onUpdate(entries[0].setLeft("foo"));
   entries = await subscription.waitForNewEntries();
-  expect(entries[0].key).toBe("9");
+  expect(entries[0].key).toBe("1-1");
 
   model.onUpdate(entries[0].setLeft("foo"));
   entries = await subscription.waitForNewEntries();
-  expect(entries[0].key).toBe("10");
+  expect(entries[0].key).toBe("2-1");
 
   model.onUpdate(entries[0].setLeft("foo"));
   entries = await subscription.waitForNewEntries();
 
-  expect(entries[0].key).toBe("11");
-  expect(entries[1].key).toBe("10");
-  expect(entries[2].key).toBe("9");
-  expect(entries[3].key).toBe("8");
-  expect(entries[4].key).toBe("7");
-  expect(entries[5].key).toBe("6");
-  expect(entries[6].key).toBe("5");
+  expect(entries[0].key).toBe("3-1");
+  expect(entries[1].key).toBe("2-1");
+  expect(entries[2].key).toBe("1-1");
+  expect(entries[3].key).toBe("0-1");
+  expect(entries[4].key).toBe("7-0");
+  expect(entries[5].key).toBe("6-0");
+  expect(entries[6].key).toBe("5-0");
 
   model.onUpdate(entries[0].delete());
   model.onUpdate(entries[1].delete());
@@ -394,14 +399,14 @@ test("EntriesTableModel can delete all items without explosion", async () => {
 
   await sleep(100);
   expect(subscription.currentEntries.length).toBe(1);
-  expect(subscription.currentEntries[0].key).toBe("0");
+  expect(subscription.currentEntries[0].key).toBe("0-0");
   expect(subscription.currentEntries[0].left).toBe("");
   expect(subscription.currentEntries[0].right).toBe("");
 
   model.onUpdate(subscription.currentEntries[0].delete());
   await sleep(100);
   expect(subscription.currentEntries.length).toBe(1);
-  expect(subscription.currentEntries[0].key).toBe("0");
+  expect(subscription.currentEntries[0].key).toBe("0-0");
   expect(subscription.currentEntries[0].left).toBe("");
   expect(subscription.currentEntries[0].right).toBe("");
 
@@ -690,7 +695,7 @@ test("EntriesTableModel deletes items in map", async () => {
     `"${EntryStatus.DELETED}"`
   );
 
-  expect(await testingBackendMap.get("10")).toBe(
+  expect(await testingBackendMap.get(entries[0].key)).toBe(
     JSON.stringify({
       left: "",
       right: "",

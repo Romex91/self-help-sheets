@@ -1,5 +1,5 @@
 import { BackendMap } from "./BackendMap.js";
-
+import md5 from "md5";
 export class TestingBackendMap extends BackendMap {
   _sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -37,12 +37,12 @@ export class TestingBackendMap extends BackendMap {
 
   async getMd5(key) {
     await this._sleep(20);
-    return this.#map.get(key);
+    return md5(this.#map.get(key));
   }
 
   #getDescription = (key) => {
     if (this.#descriptions.has(key)) return this.#descriptions.get(key);
-    else return undefined;
+    else return "";
   };
 
   async getAllKeys() {
@@ -50,7 +50,7 @@ export class TestingBackendMap extends BackendMap {
     return Array.from(this.#map).map((x) => ({
       description: this.#getDescription(x[0]),
       id: x[0],
-      md5Checksum: x[1],
+      md5Checksum: md5(x[1]),
     }));
   }
 

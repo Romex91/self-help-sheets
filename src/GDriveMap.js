@@ -16,7 +16,7 @@ class GDriveMap extends BackendMap {
       return keys[0].id;
     }
 
-    console.error("Illegal state. Multiple settings.json. ");
+    console.error("Invalid state. Multiple settings.json. ");
     let [firstKey, ...restKeys] = keys;
 
     restKeys.map((x) => deleteFile(x));
@@ -40,7 +40,8 @@ class GDriveMap extends BackendMap {
 
   async get(key) {
     throwIfNotSignedIn();
-    return await download(key);
+    let result = await download(key);
+    return result;
   }
 
   async getMd5(key) {
@@ -50,7 +51,11 @@ class GDriveMap extends BackendMap {
 
   async getAllKeys() {
     throwIfNotSignedIn();
-    return await find('name = "item.json"');
+    let result = await find('name = "item.json"');
+    result.forEach((element) => {
+      if (!element.description) element.description = "";
+    });
+    return result;
   }
 
   async getSettings() {
