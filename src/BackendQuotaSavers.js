@@ -3,10 +3,11 @@ import _ from "lodash";
 import md5 from "md5";
 import { Mutex } from "async-mutex";
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 const chunkSize = 8;
+
+export function applyQuotaSavers(backendMap) {
+  return new BackendMultiplexor(new GetThrottler(new ErrorHandler(backendMap)));
+}
 
 // Asociates several pseudo keys with each Google Drive key.
 // Reduces amount of calls to _innerBackendMap methods without changing
@@ -400,8 +401,101 @@ export class BackendMultiplexor extends BackendMap {
   };
 }
 
-// Handle errors and reduces frequency of calls to _innerBackendMap ;
-export class ErrorHandlingDebouncer extends BackendMap {
+export class ErrorHandler extends BackendMap {
+  constructor(innerMap) {
+    super();
+    if (!innerMap instanceof BackendMap)
+      throw new Error(
+        "CachingBackendMap have to accepts instance of BackendMap"
+      );
+    this._innerBackendMap = innerMap;
+  }
+
+  async _exponentialRetry(callback) {
+    let retriesCount = 1;
+    while (retriesCount < 6) {
+      try {
+        return await callback();
+      } catch (error) {
+        let secondsToNextRetry = 1 * 2 ** retriesCount++;
+        console.error(
+          `Failed running ${callback.name} : ${error.message}. Will try again after ${secondsToNextRetry} seconds.`
+        );
+        await this._sleep(secondsToNextRetry * 1000);
+      }
+    }
+
+    console.error("finish retry attempts");
+  }
+
+  async createKey() {
+    return await this._exponentialRetry(
+      this._innerBackendMap.createKey.bind(this._innerBackendMap)
+    );
+  }
+
+  async delete(key) {
+    return await this._exponentialRetry(
+      this._innerBackendMap.delete.bind(this._innerBackendMap, key)
+    );
+  }
+
+  async set(key, value) {
+    return await this._exponentialRetry(
+      this._innerBackendMap.set.bind(this._innerBackendMap, key, value)
+    );
+  }
+
+  async get(key) {
+    return await this._exponentialRetry(
+      this._innerBackendMap.get.bind(this._innerBackendMap, key)
+    );
+  }
+
+  async getMd5(key) {
+    return await this._exponentialRetry(
+      this._innerBackendMap.getMd5.bind(this._innerBackendMap, key)
+    );
+  }
+
+  async getAllKeys() {
+    return await this._exponentialRetry(
+      this._innerBackendMap.getAllKeys.bind(this._innerBackendMap)
+    );
+  }
+
+  async getSettings() {
+    return await this._exponentialRetry(
+      this._innerBackendMap.getSettings.bind(this._innerBackendMap)
+    );
+  }
+
+  async setSettings(settingsContent) {
+    return await this._exponentialRetry(
+      this._innerBackendMap.setSettings.bind(
+        this._innerBackendMap,
+        settingsContent
+      )
+    );
+  }
+
+  async setDescription(key, description) {
+    return await this._exponentialRetry(
+      this._innerBackendMap.setDescription.bind(
+        this._innerBackendMap,
+        key,
+        description
+      )
+    );
+  }
+
+  _innerBackendMap = null;
+  _sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+}
+
+export class GetThrottler extends BackendMap {
   _innerBackendMap = null;
   constructor(innerMap) {
     super();
@@ -412,22 +506,64 @@ export class ErrorHandlingDebouncer extends BackendMap {
     this._innerBackendMap = innerMap;
   }
 
-  _onResponceCallbacks = [];
+  createKey() {
+    return this._innerBackendMap.createKey();
+  }
 
-  _pendingGetRequests = new Set();
-  _pendingSetRequests = new Set();
+  delete(key) {
+    return this._innerBackendMap.delete(key);
+  }
 
-  _handlePendingSetRequests = async () => {};
+  set(key, value) {
+    return this._innerBackendMap.set(key, value);
+  }
 
-  _waitForNextResponse = async () => {
-    await new Promise((resolve) => {
-      this._onResponceCallbacks.push(resolve);
+  async get(key) {
+    return await new Promise((resolve) => {
+      this._pendingGetRequests.set(key, resolve);
+
+      if (this._handlePendingRequests === null) {
+        this._handlePendingRequests = async () => {
+          while (true) {
+            if (this._pendingGetRequests.size === 0) {
+              this._handlePendingRequests = null;
+              return;
+            }
+
+            let [
+              key,
+              callback,
+            ] = this._pendingGetRequests.entries().next().value;
+            this._pendingGetRequests.delete(key);
+            callback(await this._innerBackendMap.get(key));
+          }
+        };
+        this._handlePendingRequests();
+      }
     });
-  };
+  }
 
-  _onResponse = () => {
-    let prevCallbacks = this._onResponceCallbacks;
-    this._onResponceCallbacks = [];
-    prevCallbacks.forEach((callbalck) => callbalck());
-  };
+  getMd5(key) {
+    return this._innerBackendMap.getMd5(key);
+  }
+
+  getAllKeys() {
+    return this._innerBackendMap.getAllKeys();
+  }
+
+  getSettings() {
+    return this._innerBackendMap.getSettings();
+  }
+
+  setSettings(settingsContent) {
+    return this._innerBackendMap.setSettings(settingsContent);
+  }
+
+  setDescription(key, description) {
+    return this._innerBackendMap.setDescription(key, description);
+  }
+
+  _pendingGetRequests = new Map();
+
+  _handlePendingRequests = null;
 }

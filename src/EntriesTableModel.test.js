@@ -1,6 +1,6 @@
 import sinon from "sinon";
 import { TestingBackendMap } from "./TestingBackendMap";
-import { BackendMultiplexor } from "./BackendQuotaSavers";
+import { applyQuotaSavers } from "./BackendQuotaSavers";
 import { TestingGDriveAuthClient } from "./TestingGDriveAuthClient";
 import { EntriesTableModelImpl } from "./EntriesTableModel";
 import { GDriveStates } from "./GDriveAuthClient.js";
@@ -112,9 +112,7 @@ async function expectNewModelToHaveEntries(entries) {
 beforeEach(async () => {
   testingAuthClient = new TestingGDriveAuthClient();
   testingAuthClient.setStateFromTest(GDriveStates.SIGNED_IN);
-  testingBackendMap = sinon.spy(
-    new BackendMultiplexor(new TestingBackendMap())
-  );
+  testingBackendMap = sinon.spy(applyQuotaSavers(new TestingBackendMap()));
 
   await testingBackendMap.getAllKeys();
 });
@@ -708,8 +706,8 @@ test("EntriesTableModel deletes items in map", async () => {
   await expectNewModelToHaveEntries(entries);
 });
 
-test("async set/delete doesn't explode", async () => {});
-test("BackendMultiplexor handles incorrect data", async () => {});
+// test("async set/delete doesn't explode", async () => {});
+// test("BackendMultiplexor handles incorrect data", async () => {});
 
 // test("sync hides deleted entries (without changing other entries)", async () => {
 //   await fillTestingBackendMap(10);

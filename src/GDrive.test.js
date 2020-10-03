@@ -57,12 +57,14 @@ realBrowserTest("GDrive.test.js", async () => {
     "./GDriveAuthClient.js"
   );
   let { TestingBackendMap } = await import("./TestingBackendMap.js");
-  let { BackendMultiplexor } = await import("./BackendQuotaSavers.js");
+  let { ApplyQuotaSavers, BackendMultiplexor } = await import(
+    "./BackendQuotaSavers.js"
+  );
   let { gdriveMap: realGdriveMap } = await import("./GDriveMap.js");
 
   for (let gdriveMap of [
     realGdriveMap,
-    new BackendMultiplexor(realGdriveMap),
+    ApplyQuotaSavers(realGdriveMap),
     new TestingBackendMap(),
   ]) {
     let keys = [];
@@ -308,11 +310,9 @@ realBrowserTest("GDrive.test.js", async () => {
     "./GDriveAuthClient.js"
   );
 
-  let { BackendMultiplexor } = await import("./BackendQuotaSavers.js");
+  let { ApplyQuotaSavers } = await import("./BackendQuotaSavers.js");
 
-  let gdriveMap = new BackendMultiplexor(
-    (await import("./GDriveMap.js")).gdriveMap
-  );
+  let gdriveMap = ApplyQuotaSavers((await import("./GDriveMap.js")).gdriveMap);
 
   describe("Google drive map PART2", function () {
     this.timeout(6000000);
