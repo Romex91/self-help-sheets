@@ -393,7 +393,11 @@ test("EntriesTableModel reuses deleted keys", async () => {
 
   await sleep(100);
 
-  await expectNewModelToHaveEntries(await waitForModelFullyLoad(model));
+  console.log("old model");
+  entries = await waitForModelFullyLoad(model);
+
+  console.log("new model");
+  await expectNewModelToHaveEntries(entries);
 });
 
 test("EntriesTableModel can delete all items without explosion", async () => {
@@ -574,8 +578,6 @@ test("EntriesTableModel deletes non existing entries", async () => {
   }
 
   expect(testingBackendMap.delete.notCalled).toBe(true);
-
-  await expectNewModelToHaveEntries(entries);
 });
 
 test("EntriesTableModel creates items in map", async () => {
@@ -856,83 +858,83 @@ test("BackendMultiplexor handles incorrect data", async () => {
   console.log("-----------------------------------------------");
 }, 60000);
 
-// test("sync hides deleted entries (without changing other entries)", async () => {
-//   await fillTestingBackendMap(10);
-//   const { model1 } = createModel();
+test("sync hides deleted entries (without changing other entries)", async () => {
+  await fillTestingBackendMap(10);
+  const { model1 } = createModel();
 
-//   const { model2 } = createModel();
+  const { model2 } = createModel();
 
-//   let entries1 = await waitForModelFullyLoad(model1);
-//   let entries2 = await waitForModelFullyLoad(model2);
+  let entries1 = await waitForModelFullyLoad(model1);
+  let entries2 = await waitForModelFullyLoad(model2);
 
-//   model2.onUpdate(entries2[1].delete());
-//   model1.onUpdate(entries1[4].delete());
+  model2.onUpdate(entries2[1].delete());
+  model1.onUpdate(entries1[4].delete());
 
-//   await sleep(100);
+  await sleep(100);
 
-//   model1.sync();
-//   model2.sync();
+  model1.sync();
+  model2.sync();
 
-//   entries1 = await waitForModelFullyLoad(model1);
-//   expectModelToHaveEntries({ model: model2, entries: entries1 });
+  entries1 = await waitForModelFullyLoad(model1);
+  expectModelToHaveEntries({ model: model2, entries: entries1 });
 
-//   expect(entries1.length).toBe(8);
+  expect(entries1.length).toBe(8);
 
-//   expect(JSON.stringify(entries1[0].data)).toBe(
-//     JSON.stringify({
-//       left: "",
-//       right: "",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[1].data)).toBe(
-//     JSON.stringify({
-//       left: "lorem ipsum 1",
-//       right: "dolores 1",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[2].data)).toBe(
-//     JSON.stringify({
-//       left: "lorem ipsum 2",
-//       right: "dolores 2",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[3].data)).toBe(
-//     JSON.stringify({
-//       left: "lorem ipsum 3",
-//       right: "dolores 3",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[4].data)).toBe(
-//     JSON.stringify({
-//       left: "lorem ipsum 5",
-//       right: "dolores 5",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[5].data)).toBe(
-//     JSON.stringify({
-//       left: "lorem ipsum 6",
-//       right: "dolores 6",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[6].data)).toBe(
-//     JSON.stringify({
-//       left: "lorem ipsum 7",
-//       right: "dolores 7",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[7].data)).toBe(
-//     JSON.stringify({
-//       left: "lorem ipsum 8",
-//       right: "dolores 8",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[8].data)).toBe(
-//     JSON.stringify({
-//       left: "lorem ipsum 9",
-//       right: "dolores 9",
-//     })
-//   );
-// });
+  expect(JSON.stringify(entries1[0].data)).toBe(
+    JSON.stringify({
+      left: "",
+      right: "",
+    })
+  );
+  expect(JSON.stringify(entries1[1].data)).toBe(
+    JSON.stringify({
+      left: "lorem ipsum 1",
+      right: "dolores 1",
+    })
+  );
+  expect(JSON.stringify(entries1[2].data)).toBe(
+    JSON.stringify({
+      left: "lorem ipsum 2",
+      right: "dolores 2",
+    })
+  );
+  expect(JSON.stringify(entries1[3].data)).toBe(
+    JSON.stringify({
+      left: "lorem ipsum 3",
+      right: "dolores 3",
+    })
+  );
+  expect(JSON.stringify(entries1[4].data)).toBe(
+    JSON.stringify({
+      left: "lorem ipsum 5",
+      right: "dolores 5",
+    })
+  );
+  expect(JSON.stringify(entries1[5].data)).toBe(
+    JSON.stringify({
+      left: "lorem ipsum 6",
+      right: "dolores 6",
+    })
+  );
+  expect(JSON.stringify(entries1[6].data)).toBe(
+    JSON.stringify({
+      left: "lorem ipsum 7",
+      right: "dolores 7",
+    })
+  );
+  expect(JSON.stringify(entries1[7].data)).toBe(
+    JSON.stringify({
+      left: "lorem ipsum 8",
+      right: "dolores 8",
+    })
+  );
+  expect(JSON.stringify(entries1[8].data)).toBe(
+    JSON.stringify({
+      left: "lorem ipsum 9",
+      right: "dolores 9",
+    })
+  );
+});
 
 // test("sync updates changed entries (without changing other entries)", async () => {
 //   await fillTestingBackendMap(10);

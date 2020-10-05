@@ -1,5 +1,5 @@
 import { Interface } from "./Interface.js";
-import _ from "lodash";
+import _, { entries } from "lodash";
 import { BackendMap } from "./BackendMap";
 import { GDriveStates } from "./GDriveAuthClient";
 
@@ -24,13 +24,13 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     console.assert(backendMap instanceof BackendMap);
     super();
     this._backendMap = backendMap;
-    this._init(authClient);
+    this._authClient = authClient;
+    this.sync();
   }
 
   subscribe(callback) {
     this._subscriptions.add(callback);
-    if (!!this._entries && this._entries.length > 0)
-      callback(this._getFilteredEntries());
+    if (this._entries.size > 0) callback(this._getFilteredEntriesArray());
   }
 
   unsubscribe(callback) {
@@ -41,13 +41,52 @@ export class EntriesTableModelImpl extends EntriesTableModel {
 
   redo() {}
 
-  sync() {}
+  async sync() {
+    while (this._authClient.state !== GDriveStates.SIGNED_IN) {
+      await this._authClient.waitForStateChange();
+    }
+
+    let keys = await this._backendMap.getAllKeys();
+
+    let newEntries = new Map();
+
+    keys.forEach((x) => {
+      if (this._entries.has(x.id)) {
+        newEntries.set(x.id, this._entries.get(x.id));
+      } else {
+        newEntries.set(
+          x.id,
+          new EntryModel(
+            x.id,
+            newEntries.size < keys.length - 30
+              ? EntryStatus.HIDDEN
+              : EntryStatus.LOADING
+          )
+        );
+      }
+    });
+
+    keys.reverse().forEach((x) => {
+      if (x.outdated && newEntries.get(x.id).data !== EntryStatus.HIDDEN) {
+        this._fetch(x.id);
+      }
+    });
+
+    if (this._entries.has(null)) {
+      newEntries.set(null, this._entries.get(null));
+    }
+
+    this._entries = newEntries;
+
+    this._onEntriesChanged();
+  }
 
   onUpdate = (entry) => {
-    let prevEntry = this._entries.find((x) => x.key === entry.key);
-    if (prevEntry == null) return;
+    if (!this._entries.has(entry.key)) return;
 
-    this._entries = this._entries.map((x) => (x.key === entry.key ? entry : x));
+    let prevEntry = this._entries.get(entry.key);
+    this._entries.set(entry.key, entry);
+
     if (
       entry.data === EntryStatus.LOADING &&
       prevEntry.data === EntryStatus.HIDDEN
@@ -60,48 +99,33 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     this._onEntriesChanged();
   };
 
+  _authClient = null;
   _backendMap = null;
-  _keys = [];
-  _entries = null;
+
+  // |_entries| is in reverse order.
+  // It is natural for |Map| to add new items to the end, but
+  // in |EntriesTable| new items belong to the top.
+  _entries = new Map();
   _subscriptions = new Set();
-
-  _init = async (authClient) => {
-    while (authClient.state !== GDriveStates.SIGNED_IN) {
-      await authClient.waitForStateChange();
-    }
-    this._keys = (await this._backendMap.getAllKeys()).reverse();
-
-    let entryNumber = 0;
-    this._entries = this._keys.map((key) => {
-      if (entryNumber++ < 30) {
-        this._fetch(key.id);
-        return new EntryModel(key.id, EntryStatus.LOADING);
-      } else {
-        return new EntryModel(key.id, EntryStatus.HIDDEN);
-      }
-    });
-
-    this._onEntriesChanged();
-  };
 
   _fetch = async (key) => {
     let content = await this._backendMap.get(key);
-    let entryIndex = this._entries.findIndex((x) => x.key === key);
-    if (entryIndex === -1) {
+
+    if (!this._entries.has(key)) {
       console.error("Entry for fetch doesn't exist anymore. " + key);
       return;
     }
 
     if (content === undefined) {
       console.error("Key " + key + " is missing");
-      this._entries.splice(entryIndex, 1);
+      this._entries.delete(key);
       this._onEntriesChanged();
       return;
     }
 
     try {
       if (content === "") {
-        this._entries[entryIndex] = new EntryModel(key, {}).delete();
+        this._entries.set(key, new EntryModel(key, {}).delete());
       } else {
         const data = JSON.parse(content);
 
@@ -112,77 +136,36 @@ export class EntriesTableModelImpl extends EntriesTableModel {
           throw new Error("bad format " + content);
         }
 
-        this._entries[entryIndex] = new EntryModel(key, data);
+        this._entries.set(key, new EntryModel(key, data));
       }
     } catch (e) {
-      console.error(e.message + " " + content);
-      this._entries.splice(entryIndex, 1);
+      console.error(e.message + " " + key + " " + content);
+      this._entries.delete(key);
       this._backendMap.delete(key);
     }
 
     this._onEntriesChanged();
   };
 
-  // If user deletes entries from top of the table than keys assigned to these
-  // entries can be reused again. This way syncing is a bit simpler.
-  _getLastFreeIndex = () => {
-    let lastFreeIndex = -1;
-    for (let entry of this._entries) {
-      if (
-        entry.isDataLoaded() &&
-        (entry.data === EntryStatus.DELETED ||
-          (entry.left === "" && entry.right === ""))
-      ) {
-        lastFreeIndex++;
+  _getFilteredEntriesArray() {
+    let reverseEntriesArray = Array.from(this._entries.values()).reverse();
+
+    // If user deletes entries from top of the table than keys assigned to these
+    // entries can be reused again.
+    let lastVacantIndex = -1;
+    for (let entry of reverseEntriesArray) {
+      if (entry.isVacant()) {
+        lastVacantIndex++;
         continue;
       }
       break;
     }
-    return lastFreeIndex;
-  };
 
-  _onEntriesChanged = async () => {
-    // There always should be an empty entry on top of the table.
-    // The table doesn't have ADD NEW ITEM button. Instead user should
-    // start typing in the top empty entry to add a new one.
-    this._notifySubscribers();
-    if (
-      this._entries.length === 0 ||
-      (this._getLastFreeIndex() === -1 && this._entries[0].isDataLoaded())
-    ) {
-      if (this._entries.length > 0 && this._entries[0].key === null) {
-        return;
-      }
-
-      this._entries.unshift(new EntryModel(null, {}).clear());
-
-      let newKey = await this._backendMap.createKey();
-
-      if (this._entries[0].key !== null) {
-        throw new Error(
-          "A null key should be ontop until the new key is created"
-        );
-      }
-
-      this._entries[0] = new EntryModel(newKey, this._entries[0].data);
-
-      let md5Checksum = await this._backendMap.set(
-        newKey,
-        JSON.stringify(this._entries[0].data)
-      );
-
-      this._keys.unshift({ md5Checksum, id: newKey });
-
-      await this._onEntriesChanged();
-      return;
-    }
-  };
-
-  _getFilteredEntries = () => {
-    let lastFreeIndex = this._getLastFreeIndex();
-    let filteredEntries = this._entries.slice(
-      lastFreeIndex > 0 ? lastFreeIndex : 0
+    let filteredEntries = reverseEntriesArray.slice(
+      lastVacantIndex > 0 ? lastVacantIndex : 0
     );
+
+    if (filteredEntries.length === 0) return filteredEntries;
 
     if (filteredEntries[0].data === EntryStatus.DELETED) {
       filteredEntries[0] = filteredEntries[0].clear();
@@ -192,12 +175,49 @@ export class EntriesTableModelImpl extends EntriesTableModel {
       (x) => x.data !== EntryStatus.DELETED && x.key !== null
     );
     return filteredEntries;
+  }
+
+  _onEntriesChanged = async () => {
+    let filteredEntriesArray = this._getFilteredEntriesArray();
+    if (filteredEntriesArray.length > 0)
+      this._notifySubscribers(filteredEntriesArray);
+    // There always should be an empty entry on top of the table.
+    // The table doesn't have ADD NEW ITEM button. Instead user should
+    // start typing in the top empty entry to add a new one.
+    if (
+      filteredEntriesArray.length === 0 ||
+      (filteredEntriesArray[0].isDataLoaded() &&
+        !filteredEntriesArray[0].isVacant())
+    ) {
+      // if there is a null key it means that we already
+      // called |this._backendMap.createKey|.
+      if (this._entries.has(null)) {
+        return;
+      }
+
+      this._entries.set(null, new EntryModel(null, {}).clear());
+      let newKey = await this._backendMap.createKey();
+
+      if (!this._entries.has(null)) {
+        throw new Error(
+          "A null key should persist until the new key is created"
+        );
+      }
+
+      let newEntry = new EntryModel(newKey, this._entries.get(null).data);
+
+      this._entries.set(newKey, newEntry);
+      await this._backendMap.set(newKey, JSON.stringify(newEntry.data));
+      this._entries.delete(null);
+
+      await this._onEntriesChanged();
+      return;
+    }
   };
 
-  _notifySubscribers = () => {
-    if (this._entries.length === 0) return;
+  _notifySubscribers(entries) {
     this._subscriptions.forEach((callback) => {
-      callback(this._getFilteredEntries());
+      callback(entries);
     });
-  };
+  }
 }

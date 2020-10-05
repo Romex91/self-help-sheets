@@ -22,6 +22,14 @@ export class EntryModel {
     );
   }
 
+  isVacant() {
+    return (
+      this.isDataLoaded() &&
+      (this.data === EntryStatus.DELETED ||
+        (this.left === "" && this.right === ""))
+    );
+  }
+
   get data() {
     if (this.#data instanceof Object) return { ...this.#data };
     return this.#data;
