@@ -80,7 +80,10 @@ export const Entry = React.forwardRef(
   ({ onUpdate, onRightChanged, entry, ...otherProps }, ref) => {
     console.assert(entry instanceof EntryModel);
 
-    if (entry.data === EntryStatus.HIDDEN) onUpdate(entry.show());
+    React.useEffect(() => {
+      if (entry.data === EntryStatus.HIDDEN) onUpdate(entry.show());
+    });
+
     return (
       <tr ref={ref}>
         <td key="issueElement">

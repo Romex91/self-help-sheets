@@ -163,7 +163,6 @@ export class EntriesTableModelImpl extends EntriesTableModel {
 
   #notifySubscribers = () => {
     if (this.#entries.length === 0) return;
-    console.log(this.#getFilteredEntries().map((x) => x.data));
     this.#subscriptions.forEach((callback) => {
       callback(this.#getFilteredEntries());
     });
