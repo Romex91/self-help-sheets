@@ -366,7 +366,7 @@ export class BackendMultiplexor extends BackendMap {
       let serializedValues = await this._connector.getValue();
       try {
         let values = JSON.parse(serializedValues);
-        if (!Array.isArray(values) || values.length !== chunkSize) {
+        if (!Array.isArray(values)) {
           throw new Error("Bad server data. Not valid array");
         }
 
@@ -380,7 +380,9 @@ export class BackendMultiplexor extends BackendMap {
       } catch (error) {
         // In theory, server may contain arbitrary data.
         // BackendMultiplexor should be able recover in this case.
-        console.error("Bad response from server:" + error.message);
+        console.error(
+          "Bad response from server:" + error.message + " " + serializedValues
+        );
         if (this._shouldKeepOnFormatError) {
           this._values = Array(chunkSize).fill("");
           this._isDirty = true;

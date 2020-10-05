@@ -55,7 +55,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     let content = await this.#backendMap.get(key);
     let entryIndex = this.#entries.findIndex((x) => x.key === key);
     if (entryIndex === -1) {
-      console.error("Entry for fetch doesn't exist anymore.");
+      console.error("Entry for fetch doesn't exist anymore. " + key);
       return;
     }
 
@@ -68,7 +68,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
 
     try {
       if (content === "") {
-        this.#entries[entryIndex] = new EntryModel(key, {}).clear();
+        this.#entries[entryIndex] = new EntryModel(key, {}).delete();
       } else {
         const data = JSON.parse(content);
 
@@ -82,7 +82,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
         this.#entries[entryIndex] = new EntryModel(key, data);
       }
     } catch (e) {
-      console.error(e.message);
+      console.error(e.message + " " + content);
       this.#entries.splice(entryIndex, 1);
       this.#backendMap.delete(key);
     }
@@ -185,11 +185,16 @@ export class EntriesTableModelImpl extends EntriesTableModel {
   sync() {}
 
   onUpdate = (entry) => {
+    let prevEntry = this.#entries.find((x) => x.key === entry.key);
+    if (prevEntry == null) return;
+
     this.#entries = this.#entries.map((x) => (x.key === entry.key ? entry : x));
-    if (entry.data === EntryStatus.LOADING) {
+    if (
+      entry.data === EntryStatus.LOADING &&
+      prevEntry.data === EntryStatus.HIDDEN
+    ) {
       this.#fetch(entry.key);
-    } else if (entry.key !== null) {
-      console.assert(entry.isDataLoaded());
+    } else if (entry.key !== null && entry.isDataLoaded()) {
       this.#backendMap.set(entry.key, JSON.stringify(entry.data));
     }
 

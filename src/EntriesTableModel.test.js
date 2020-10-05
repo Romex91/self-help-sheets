@@ -45,22 +45,26 @@ function EntriesSubscription(model) {
   });
 }
 
-async function fillTestingBackendMap(entriesCount) {
+async function fillTestingBackendMap(
+  entriesCount,
+  backendMap = testingBackendMap
+) {
   await Promise.all(
     _.range(0, entriesCount)
       .reverse()
-      .map((id) => addEntryToTestingMap("lorem ipsum " + id, "dolores " + id))
+      .map((id) =>
+        addEntryToTestingMap("lorem ipsum " + id, "dolores " + id, backendMap)
+      )
   );
 }
 
-async function addEntryToTestingMap(left, right) {
-  let copy = testingBackendMap;
-  let key = await testingBackendMap.createKey();
-
-  if (copy !== testingBackendMap)
-    throw new Error("testingBackendMap changed instance");
-
-  await testingBackendMap.set(
+async function addEntryToTestingMap(
+  left,
+  right,
+  backendMap = testingBackendMap
+) {
+  let key = await backendMap.createKey();
+  await backendMap.set(
     key,
     JSON.stringify(new EntryModel().setLeft(left).setRight(right).data)
   );
@@ -71,6 +75,14 @@ async function waitForModelFullyLoad(model) {
   let entries = null;
   while (true) {
     entries = await subscription.waitForNewEntries();
+
+    for (let i = 0; i < entries.length; i++) {
+      if (entries[i].data === EntryStatus.HIDDEN) {
+        model.onUpdate(entries[i].show());
+        break;
+      }
+    }
+
     if (
       entries.length > 0 &&
       entries[0].left === "" &&
@@ -706,8 +718,143 @@ test("EntriesTableModel deletes items in map", async () => {
   await expectNewModelToHaveEntries(entries);
 });
 
-// test("async set/delete doesn't explode", async () => {});
-// test("BackendMultiplexor handles incorrect data", async () => {});
+test("async set/delete doesn't explode", async () => {
+  await fillTestingBackendMap(10);
+  const { model, subscription } = createModel();
+
+  let entries = await waitForModelFullyLoad(model);
+  model.onUpdate(entries[10].delete());
+  model.onUpdate(entries[4].setLeft("").setRight(""));
+  model.onUpdate(entries[1].setLeft("").setRight(""));
+  model.onUpdate(entries[5].setLeft("").setRight(""));
+  model.onUpdate(entries[4].delete());
+  model.onUpdate(entries[9].setLeft("").setRight(""));
+  model.onUpdate(entries[1].delete());
+  model.onUpdate(entries[8].delete());
+  model.onUpdate(entries[10].setLeft("").setRight(""));
+  model.onUpdate(entries[2].delete());
+  model.onUpdate(entries[2].setLeft("").setRight(""));
+  model.onUpdate(entries[6].delete());
+  model.onUpdate(entries[7].setLeft("").setRight(""));
+  model.onUpdate(entries[6].setLeft("").setRight(""));
+  model.onUpdate(entries[3].setLeft("").setRight(""));
+  model.onUpdate(entries[9].delete());
+  model.onUpdate(entries[7].delete());
+  model.onUpdate(entries[5].delete());
+  model.onUpdate(entries[3].delete());
+  model.onUpdate(entries[8].setLeft("").setRight(""));
+
+  while (entries.length !== 1) {
+    entries = await subscription.waitForNewEntries();
+  }
+
+  expect(entries[0].left).toBe("");
+  expect(entries[0].right).toBe("");
+});
+
+test("BackendMultiplexor handles incorrect data", async () => {
+  console.log("-----------------------------------------------");
+  let testingBackendMap = new TestingBackendMap();
+  fillTestingBackendMap(50, testingBackendMap);
+
+  await testingBackendMap.getAllKeys();
+  // correct entry
+  await testingBackendMap.set(
+    "3",
+    JSON.stringify([
+      '{"left":"3-1", "right": ""}',
+      null,
+      '{"left":"3-2", "right": ""}',
+    ])
+  );
+  await testingBackendMap.setDescription("3", ",null,");
+
+  // wrong json format (should be deleted)
+  await testingBackendMap.set(
+    "4",
+    JSON.stringify([
+      '{"left":"4-1", "right": ""}',
+      null,
+      '{"left":"4-2", "right": ""}',
+    ]) + "wrong"
+  );
+  await testingBackendMap.setDescription("4", ",null,");
+
+  // without description (should be deleted)
+  await testingBackendMap.set(
+    "10",
+    JSON.stringify([
+      null,
+      '{"left":"10-1", "right": ""}',
+      null,
+      '{"left":"10-2", "right": ""}',
+    ])
+  );
+
+  // with null values (should be deleted)
+  await testingBackendMap.set("13", `null`);
+  await testingBackendMap.setDescription("13", ",null,");
+
+  // values is array of nulls (should be deleted)
+  await testingBackendMap.set("20", JSON.stringify([null, null, null]));
+  await testingBackendMap.setDescription("20", ",null,");
+
+  // with empty values (should be deleted)
+  await testingBackendMap.set("25", `[]`);
+  await testingBackendMap.setDescription("25", ",,");
+
+  // larger than chunkSize (extra items ignored)
+  await testingBackendMap.set(
+    "30",
+    JSON.stringify([
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      '{"left":"30-1", "right": "this item is not ignored"}',
+      '{"left":"30-2", "right": "this item is ignored"}',
+    ])
+  );
+  await testingBackendMap.setDescription("30", ",,,,,,,,");
+
+  let model = new EntriesTableModelImpl(
+    applyQuotaSavers(testingBackendMap),
+    testingAuthClient
+  );
+  let entries = await waitForModelFullyLoad(model);
+
+  expect(entries.length).toBe(4);
+  expect(entries[0].left).toBe("");
+  expect(entries[1].left).toBe("30-1");
+  expect(entries[2].left).toBe("3-2");
+  expect(entries[3].left).toBe("3-1");
+
+  let subscription = new EntriesSubscription(model);
+
+  model.onUpdate(entries[0].setLeft("newLeft"));
+  while (entries.length !== 5) {
+    entries = await subscription.waitForNewEntries();
+  }
+
+  model.onUpdate(entries[0].setLeft("newNewLeft"));
+  while (entries.length !== 6) {
+    entries = await subscription.waitForNewEntries();
+  }
+
+  await sleep(1500);
+  expect((await testingBackendMap.getAllKeys()).length).toBe(4);
+
+  let anotherModel = new EntriesTableModelImpl(
+    applyQuotaSavers(testingBackendMap),
+    testingAuthClient
+  );
+
+  await expectModelToHaveEntries({ model: anotherModel, entries });
+  console.log("-----------------------------------------------");
+}, 60000);
 
 // test("sync hides deleted entries (without changing other entries)", async () => {
 //   await fillTestingBackendMap(10);
