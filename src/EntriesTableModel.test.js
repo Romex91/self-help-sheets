@@ -676,12 +676,7 @@ test("EntriesTableModel updates item in map", async () => {
     })
   );
 
-  expect(await testingBackendMap.get(entries[0].key)).toBe(
-    JSON.stringify({
-      left: "",
-      right: "",
-    })
-  );
+  expect(await testingBackendMap.get(entries[0].key)).toBe(`"deleted"`);
 
   await expectNewModelToHaveEntries(entries);
 });
@@ -707,12 +702,7 @@ test("EntriesTableModel deletes items in map", async () => {
     `"${EntryStatus.DELETED}"`
   );
 
-  expect(await testingBackendMap.get(entries[0].key)).toBe(
-    JSON.stringify({
-      left: "",
-      right: "",
-    })
-  );
+  expect(await testingBackendMap.get(entries[0].key)).toBe(`"deleted"`);
 
   entries.splice(10, 1);
   entries.splice(5, 1);
@@ -858,11 +848,42 @@ test("BackendMultiplexor handles incorrect data", async () => {
   console.log("-----------------------------------------------");
 }, 60000);
 
-test("sync hides deleted entries (without changing other entries)", async () => {
-  await fillTestingBackendMap(10);
-  const { model1 } = createModel();
+async function createSyncedModels(itemsNumber) {
+  let testingMap = new TestingBackendMap();
+  let withQuotaSavers = applyQuotaSavers(testingMap);
+  await withQuotaSavers.getAllKeys();
+  await fillTestingBackendMap(itemsNumber, withQuotaSavers);
+  await sleep(1500);
 
-  const { model2 } = createModel();
+  let model1 = new EntriesTableModelImpl(
+    applyQuotaSavers(testingMap),
+    testingAuthClient
+  );
+
+  // As soon as model1 finishes loading it creates new item
+  // and marks it dirty. While it is dirty it will ignore
+  // all updates to that item unless updated md5checksum
+  // matches. This is behavior preventing sync hell when
+  // user makes different changes to the same item.
+  await waitForModelFullyLoad(model1);
+  // To reset dirtiness we should wait until changes are delivered
+  // to testingMap and sync. This way updated md5checksum will
+  // equal |model1| contents.
+  await sleep(1200);
+  model1.sync();
+
+  let model2 = new EntriesTableModelImpl(
+    applyQuotaSavers(testingMap),
+    testingAuthClient
+  );
+
+  return [model1, model2];
+}
+
+test("sync hides deleted entries (without changing other entries)", async () => {
+  let [model1, model2] = await createSyncedModels(10);
+  let subscription1 = new EntriesSubscription(model1);
+  let subscription2 = new EntriesSubscription(model2);
 
   let entries1 = await waitForModelFullyLoad(model1);
   let entries2 = await waitForModelFullyLoad(model2);
@@ -870,15 +891,19 @@ test("sync hides deleted entries (without changing other entries)", async () => 
   model2.onUpdate(entries2[1].delete());
   model1.onUpdate(entries1[4].delete());
 
-  await sleep(100);
+  await sleep(1500);
 
   model1.sync();
   model2.sync();
 
-  entries1 = await waitForModelFullyLoad(model1);
-  expectModelToHaveEntries({ model: model2, entries: entries1 });
+  while (entries1.length !== 9) {
+    entries1 = await subscription1.waitForNewEntries();
+  }
+  while (subscription2.currentEntries.length !== 9) {
+    entries2 = await subscription2.waitForNewEntries();
+  }
 
-  expect(entries1.length).toBe(8);
+  await expectModelToHaveEntries({ model: model2, entries: entries1 });
 
   expect(JSON.stringify(entries1[0].data)).toBe(
     JSON.stringify({
@@ -900,8 +925,8 @@ test("sync hides deleted entries (without changing other entries)", async () => 
   );
   expect(JSON.stringify(entries1[3].data)).toBe(
     JSON.stringify({
-      left: "lorem ipsum 3",
-      right: "dolores 3",
+      left: "lorem ipsum 4",
+      right: "dolores 4",
     })
   );
   expect(JSON.stringify(entries1[4].data)).toBe(
@@ -934,202 +959,239 @@ test("sync hides deleted entries (without changing other entries)", async () => 
       right: "dolores 9",
     })
   );
-});
+}, 10000);
 
-// test("sync updates changed entries (without changing other entries)", async () => {
-//   await fillTestingBackendMap(10);
-//   const { model1 } = createModel();
+test("sync updates changed entries (without changing other entries)", async () => {
+  let [model1, model2] = await createSyncedModels(10);
+  let subscription1 = new EntriesSubscription(model1);
+  let subscription2 = new EntriesSubscription(model2);
 
-//   const { model2 } = createModel();
+  let entries1 = await waitForModelFullyLoad(model1);
+  let entries2 = await waitForModelFullyLoad(model2);
 
-//   let entries1 = await waitForModelFullyLoad(model1);
-//   let entries2 = await waitForModelFullyLoad(model2);
-//   expectModelToHaveEntries({ model: model2, entries: entries1 });
+  await expectModelToHaveEntries({ model: model2, entries: entries1 });
+  expect(entries1.length).toBe(11);
 
-//   expect(entries1.length).toBe(11);
+  entries1.shift();
+  entries2.shift();
 
-//   model2.onUpdate(entries2[1].delete());
+  model2.onUpdate(entries2[1].delete());
+  model2.onUpdate(entries2[3].setLeft("updated 3"));
+  model2.onUpdate(entries2[7].setLeft("updated 7"));
 
-//   entries1.shift();
-//   entries2.shift();
-//   model1.onUpdate(entries1[4].setLeft("updated 4"));
-//   model2.onUpdate(entries2[3].setLeft("updated 3"));
-//   model1.onUpdate(entries1[6].setLeft("updated 6"));
-//   model1.onUpdate(entries1[7].setLeft("updated 7"));
-//   model2.onUpdate(entries2[7].setLeft("updated 7"));
+  await sleep(1200);
+  model1.sync();
+  model2.sync();
+  await sleep(200);
 
-//   await sleep(100);
+  model1.onUpdate(entries1[4].setLeft("updated 4"));
+  model1.onUpdate(entries1[6].setLeft("updated 6"));
 
-//   model1.sync();
-//   model2.sync();
+  await sleep(1200);
+  model1.sync();
+  model2.sync();
+  await sleep(200);
 
-//   entries1 = await waitForModelFullyLoad(model1);
-//   expectModelToHaveEntries({ model: model2, entries: entries1 });
+  entries1 = subscription1.currentEntries;
+  entries2 = subscription2.currentEntries;
 
-//   expect(entries1.length).toBe(10);
+  await expectModelToHaveEntries({ model: model2, entries: entries1 });
 
-//   expect(JSON.stringify(entries1[0].data)).toBe(
-//     JSON.stringify({
-//       left: "",
-//       right: "",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[1].data)).toBe(
-//     JSON.stringify({
-//       left: "lorem ipsum 1",
-//       right: "dolores 1",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[2].data)).toBe(
-//     JSON.stringify({
-//       left: "lorem ipsum 2",
-//       right: "dolores 2",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[3].data)).toBe(
-//     JSON.stringify({
-//       left: "updated 3",
-//       right: "dolores 3",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[4].data)).toBe(
-//     JSON.stringify({
-//       left: "updated 4",
-//       right: "dolores 4",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[5].data)).toBe(
-//     JSON.stringify({
-//       left: "lorem ipsum 5",
-//       right: "dolores 5",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[6].data)).toBe(
-//     JSON.stringify({
-//       left: "updated 6",
-//       right: "dolores 6",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[7].data)).toBe(
-//     JSON.stringify({
-//       left: "updated 7",
-//       right: "dolores 7",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[8].data)).toBe(
-//     JSON.stringify({
-//       left: "lorem ipsum 8",
-//       right: "dolores 8",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[9].data)).toBe(
-//     JSON.stringify({
-//       left: "lorem ipsum 9",
-//       right: "dolores 9",
-//     })
-//   );
-// });
+  expect(entries1.length).toBe(10);
 
-// test("sync adds new entries (without changing other entries)", async () => {
-//   await fillTestingBackendMap(4);
-//   const { model: model1, subscription: subscription1 } = createModel();
-//   const { model: model2, subscription: subscription2 } = createModel();
+  expect(JSON.stringify(entries1[0].data)).toBe(
+    JSON.stringify({
+      left: "",
+      right: "",
+    })
+  );
+  expect(JSON.stringify(entries1[1].data)).toBe(
+    JSON.stringify({
+      left: "lorem ipsum 0",
+      right: "dolores 0",
+    })
+  );
+  expect(JSON.stringify(entries1[2].data)).toBe(
+    JSON.stringify({
+      left: "lorem ipsum 2",
+      right: "dolores 2",
+    })
+  );
+  expect(JSON.stringify(entries1[3].data)).toBe(
+    JSON.stringify({
+      left: "updated 3",
+      right: "dolores 3",
+    })
+  );
+  expect(JSON.stringify(entries1[4].data)).toBe(
+    JSON.stringify({
+      left: "updated 4",
+      right: "dolores 4",
+    })
+  );
+  expect(JSON.stringify(entries1[5].data)).toBe(
+    JSON.stringify({
+      left: "lorem ipsum 5",
+      right: "dolores 5",
+    })
+  );
+  expect(JSON.stringify(entries1[6].data)).toBe(
+    JSON.stringify({
+      left: "updated 6",
+      right: "dolores 6",
+    })
+  );
+  expect(JSON.stringify(entries1[7].data)).toBe(
+    JSON.stringify({
+      left: "updated 7",
+      right: "dolores 7",
+    })
+  );
+  expect(JSON.stringify(entries1[8].data)).toBe(
+    JSON.stringify({
+      left: "lorem ipsum 8",
+      right: "dolores 8",
+    })
+  );
+  expect(JSON.stringify(entries1[9].data)).toBe(
+    JSON.stringify({
+      left: "lorem ipsum 9",
+      right: "dolores 9",
+    })
+  );
+}, 10000);
 
-//   let [entries1, entries2] = await Promise.all([
-//     waitForModelFullyLoad(model1),
-//     waitForModelFullyLoad(model2),
-//   ]);
+test("without sync new entries overwrite previous items in chunk", async () => {
+  let [model1, model2] = await createSyncedModels(4);
+  let subscription1 = new EntriesSubscription(model1);
+  let subscription2 = new EntriesSubscription(model2);
 
-//   expectModelToHaveEntries({ model: model2, entries: entries1 });
+  let entries1 = await waitForModelFullyLoad(model1);
+  await waitForModelFullyLoad(model2);
 
-//   expect(entries1.length).toBe(5);
+  await expectModelToHaveEntries({ model: model2, entries: entries1 });
 
-//   model1.onUpdate(entries1[0].setLeft("newStuff").setRight("newStuff"));
-//   model2.onUpdate(entries2[0].setLeft("newStuff").setRight("newStuff"));
+  expect(entries1.length).toBe(5);
 
-//   [entries1, entries2] = await Promise.all(
-//     subscription1.waitForNewEntries(),
-//     subscription2.waitForNewEntries()
-//   );
+  let addItem = async (model, subscription, left) => {
+    while (subscription.currentEntries[0].left !== "") {
+      await subscription.waitForNewEntries();
+    }
+    model.onUpdate(subscription.currentEntries[0].setLeft(left));
+    await subscription.waitForNewEntries();
+  };
 
-//   model1.onUpdate(entries1[0].setLeft("newStuff").setRight("newStuff"));
-//   model2.onUpdate(entries2[0].setLeft("newStuff").setRight("newStuff"));
+  await addItem(model1, subscription1, "item 1 model 1");
+  await addItem(model1, subscription1, "item 2 model 1");
+  await addItem(model1, subscription1, "item 3 model 1");
+  await addItem(model1, subscription1, "item 4 model 1");
+  await addItem(model1, subscription1, "item 5 model 1");
+  await addItem(model1, subscription1, "item 6 model 1");
 
-//   [entries1, entries2] = await Promise.all(
-//     subscription1.waitForNewEntries(),
-//     subscription2.waitForNewEntries()
-//   );
+  await sleep(1200);
+  model1.sync();
+  // model2 didn't sync
+  await sleep(200);
 
-//   await sleep(100);
+  await addItem(model2, subscription2, "item 1 model 2");
+  await addItem(model2, subscription2, "item 2 model 2");
+  await addItem(model2, subscription2, "item 3 model 2");
+  await addItem(model2, subscription2, "item 4 model 2");
+  await addItem(model2, subscription2, "item 5 model 2");
+  await addItem(model2, subscription2, "item 6 model 2");
 
-//   model1.sync();
-//   model2.sync();
+  await sleep(1200);
+  model1.sync();
+  model2.sync();
+  await sleep(200);
 
-//   entries1 = await waitForModelFullyLoad(model1);
-//   expectModelToHaveEntries({ model: model2, entries: entries1 });
+  entries1 = subscription1.currentEntries;
 
-//   expect(entries1.length).toBe(9);
-//   expect(JSON.stringify(entries1[0].data)).toBe(
-//     JSON.stringify({
-//       left: "",
-//       right: "",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[1].data)).toBe(
-//     JSON.stringify({
-//       left: "newStuff",
-//       right: "newStuff",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[2].data)).toBe(
-//     JSON.stringify({
-//       left: "newStuff",
-//       right: "newStuff",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[3].data)).toBe(
-//     JSON.stringify({
-//       left: "newStuff",
-//       right: "newStuff",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[4].data)).toBe(
-//     JSON.stringify({
-//       left: "newStuff",
-//       right: "newStuff",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[5].data)).toBe(
-//     JSON.stringify({
-//       left: "lorem ipsum 0",
-//       right: "dolores 0",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[6].data)).toBe(
-//     JSON.stringify({
-//       left: "updated 1",
-//       right: "dolores 1",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[7].data)).toBe(
-//     JSON.stringify({
-//       left: "updated 2",
-//       right: "dolores 2",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[8].data)).toBe(
-//     JSON.stringify({
-//       left: "lorem ipsum 3",
-//       right: "dolores 4",
-//     })
-//   );
-//   expect(JSON.stringify(entries1[9].data)).toBe(
-//     JSON.stringify({
-//       left: "lorem ipsum 4",
-//       right: "dolores 4",
-//     })
-//   );
-// });
+  await expectModelToHaveEntries({ model: model2, entries: entries1 });
+
+  expect(entries1[0].left).toBe("");
+  expect(entries1[1].left).toBe("item 6 model 2");
+  expect(entries1[2].left).toBe("item 5 model 2");
+  expect(entries1[3].left).toBe("item 6 model 1");
+  expect(entries1[4].left).toBe("item 5 model 1");
+  // model2 didn't sync and it didn't know about changes in model1.
+  // That's why it overwrote last 3 entries in chunk.
+  expect(entries1[5].left).toBe("item 4 model 2");
+  expect(entries1[6].left).toBe("item 3 model 2");
+  expect(entries1[7].left).toBe("item 2 model 2");
+  expect(entries1[8].left).toBe("item 1 model 2");
+  expect(entries1[9].left).toBe("lorem ipsum 0");
+  expect(entries1[10].left).toBe("lorem ipsum 1");
+  expect(entries1[11].left).toBe("lorem ipsum 2");
+  expect(entries1[12].left).toBe("lorem ipsum 3");
+}, 10000);
+
+test("with sync new entries adds up to previous items in chunk", async () => {
+  let [model1, model2] = await createSyncedModels(4);
+  let subscription1 = new EntriesSubscription(model1);
+  let subscription2 = new EntriesSubscription(model2);
+
+  let entries1 = await waitForModelFullyLoad(model1);
+  await waitForModelFullyLoad(model2);
+
+  await expectModelToHaveEntries({ model: model2, entries: entries1 });
+
+  expect(entries1.length).toBe(5);
+
+  let addItem = async (model, subscription, left) => {
+    while (subscription.currentEntries[0].left !== "") {
+      await subscription.waitForNewEntries();
+    }
+    model.onUpdate(subscription.currentEntries[0].setLeft(left));
+    await subscription.waitForNewEntries();
+  };
+
+  await addItem(model1, subscription1, "item 1 model 1");
+  await addItem(model1, subscription1, "item 2 model 1");
+  await addItem(model1, subscription1, "item 3 model 1");
+  await addItem(model1, subscription1, "item 4 model 1");
+  await addItem(model1, subscription1, "item 5 model 1");
+  await addItem(model1, subscription1, "item 6 model 1");
+
+  await sleep(1200);
+  model1.sync();
+  model2.sync();
+  await sleep(200);
+
+  await addItem(model2, subscription2, "item 1 model 2");
+  await addItem(model2, subscription2, "item 2 model 2");
+  await addItem(model2, subscription2, "item 3 model 2");
+  await addItem(model2, subscription2, "item 4 model 2");
+  await addItem(model2, subscription2, "item 5 model 2");
+  await addItem(model2, subscription2, "item 6 model 2");
+
+  await sleep(1200);
+  model1.sync();
+  model2.sync();
+  await sleep(200);
+
+  entries1 = subscription1.currentEntries;
+
+  await expectModelToHaveEntries({ model: model2, entries: entries1 });
+
+  expect(entries1[0].left).toBe("");
+  expect(entries1[1].left).toBe("item 6 model 2");
+  expect(entries1[2].left).toBe("item 5 model 2");
+  expect(entries1[3].left).toBe("item 4 model 2");
+  expect(entries1[4].left).toBe("item 3 model 2");
+  expect(entries1[5].left).toBe("item 2 model 2");
+  expect(entries1[6].left).toBe("item 1 model 2");
+  expect(entries1[7].left).toBe("item 6 model 1");
+  expect(entries1[8].left).toBe("item 5 model 1");
+  expect(entries1[9].left).toBe("item 4 model 1");
+  expect(entries1[10].left).toBe("item 3 model 1");
+  expect(entries1[11].left).toBe("item 2 model 1");
+  expect(entries1[12].left).toBe("item 1 model 1");
+  expect(entries1[13].left).toBe("lorem ipsum 0");
+  expect(entries1[14].left).toBe("lorem ipsum 1");
+  expect(entries1[15].left).toBe("lorem ipsum 2");
+  expect(entries1[16].left).toBe("lorem ipsum 3");
+}, 10000);
 
 // EntriesTableModel supports undo/redo"
 test("undo/redo recreates deleted items in map", async () => {});

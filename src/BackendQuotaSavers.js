@@ -113,7 +113,7 @@ export class BackendMultiplexor extends BackendMap {
           outdated = chunk.onMetadataUpdate(
             innerKey.description,
             innerKey.md5Checksum
-          );
+          ).outdated;
         } else {
           newChunks.set(
             innerKey.id,

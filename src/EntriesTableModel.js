@@ -41,7 +41,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
 
   redo() {}
 
-  async sync() {
+  sync = async () => {
     while (this._authClient.state !== GDriveStates.SIGNED_IN) {
       await this._authClient.waitForStateChange();
     }
@@ -54,6 +54,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
       if (this._entries.has(x.id)) {
         newEntries.set(x.id, this._entries.get(x.id));
       } else {
+        x.outdated = true;
         newEntries.set(
           x.id,
           new EntryModel(
@@ -66,9 +67,10 @@ export class EntriesTableModelImpl extends EntriesTableModel {
       }
     });
 
+    let promises = [];
     keys.reverse().forEach((x) => {
       if (x.outdated && newEntries.get(x.id).data !== EntryStatus.HIDDEN) {
-        this._fetch(x.id);
+        promises.push(this._fetch(x.id));
       }
     });
 
@@ -79,7 +81,10 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     this._entries = newEntries;
 
     this._onEntriesChanged();
-  }
+
+    await Promise.all(promises);
+    setTimeout(this.sync, 15000);
+  };
 
   onUpdate = (entry) => {
     if (!this._entries.has(entry.key)) return;
@@ -195,7 +200,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
         return;
       }
 
-      this._entries.set(null, new EntryModel(null, {}).clear());
+      this._entries.set(null, new EntryModel(null, {}).delete());
       let newKey = await this._backendMap.createKey();
 
       if (!this._entries.has(null)) {
