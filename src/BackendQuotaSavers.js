@@ -527,17 +527,28 @@ export class GetThrottler extends BackendMap {
       if (this._handlePendingRequests === null) {
         this._handlePendingRequests = async () => {
           while (true) {
-            if (this._pendingGetRequests.size === 0) {
-              this._handlePendingRequests = null;
-              return;
-            }
+            let handleSingleRequest = async () => {
+              if (this._pendingGetRequests.size === 0) {
+                this._handlePendingRequests = null;
+                return false;
+              }
 
-            let [
-              key,
-              callback,
-            ] = this._pendingGetRequests.entries().next().value;
-            this._pendingGetRequests.delete(key);
-            callback(await this._innerBackendMap.get(key));
+              let [
+                key,
+                callback,
+              ] = this._pendingGetRequests.entries().next().value;
+              this._pendingGetRequests.delete(key);
+              callback(await this._innerBackendMap.get(key));
+              return true;
+            };
+
+            let results = await Promise.all([
+              handleSingleRequest(),
+              handleSingleRequest(),
+              handleSingleRequest(),
+              handleSingleRequest(),
+            ]);
+            if (results.every((x) => x === false)) return;
           }
         };
         this._handlePendingRequests();

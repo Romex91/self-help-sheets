@@ -80,9 +80,13 @@ class GDriveAuthClient {
 
   signIn() {
     console.assert(isGapiLoaded());
-    window.gapi.auth2.getAuthInstance().signIn({
-      prompt: "select_account",
-    });
+    if (!!window.mocha) {
+      window.gapi.auth2.getAuthInstance().signIn();
+    } else {
+      window.gapi.auth2.getAuthInstance().signIn({
+        prompt: "select_account",
+      });
+    }
   }
 
   signOut() {
