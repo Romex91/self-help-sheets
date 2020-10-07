@@ -1,5 +1,6 @@
 import React from "react";
 import { TextField } from "@material-ui/core";
+import { Skeleton } from "@material-ui/lab";
 
 export const EntryStatus = {
   // The http request for the text of the entry has been sent.
@@ -96,30 +97,38 @@ export const Entry = React.forwardRef(
       <tr ref={ref}>
         <td key="issueElement">
           <h5>issue</h5>
-          <TextField
-            color="secondary"
-            fullWidth
-            multiline
-            placeholder="What bothers you?"
-            variant="outlined"
-            onChange={(event) => onUpdate(entry.setLeft(event.target.value))}
-            value={entry.left}
-            {...otherProps}
-          />
+          {entry.isDataLoaded() ? (
+            <TextField
+              color="secondary"
+              fullWidth
+              multiline
+              placeholder="What bothers you?"
+              variant="outlined"
+              onChange={(event) => onUpdate(entry.setLeft(event.target.value))}
+              value={entry.left}
+              {...otherProps}
+            />
+          ) : (
+            <Skeleton variant="rect" height={56}></Skeleton>
+          )}
         </td>
 
         <td key="resolutionElement">
           <h5>resolution</h5>
-          <TextField
-            color="primary"
-            fullWidth
-            multiline
-            placeholder="What can you do to resolve the problem?"
-            variant="outlined"
-            onChange={(event) => onUpdate(entry.setRight(event.target.value))}
-            value={entry.right}
-            {...otherProps}
-          />
+          {entry.isDataLoaded() ? (
+            <TextField
+              color="primary"
+              fullWidth
+              multiline
+              placeholder="What can you do to resolve the problem?"
+              variant="outlined"
+              onChange={(event) => onUpdate(entry.setRight(event.target.value))}
+              value={entry.right}
+              {...otherProps}
+            />
+          ) : (
+            <Skeleton variant="rect" height={56}></Skeleton>
+          )}
         </td>
       </tr>
     );
