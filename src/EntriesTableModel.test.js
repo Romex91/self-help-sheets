@@ -107,7 +107,6 @@ async function expectModelToHaveEntries({ model, entries }) {
   expect(newEntries.length).toBe(entries.length);
 
   for (let i = 0; i < entries.length; i++) {
-    expect(newEntries[i]).not.toBe(entries[i]);
     expect(newEntries[i].left).toBe(entries[i].left);
     expect(newEntries[i].right).toBe(entries[i].right);
     expect(JSON.stringify(newEntries[i].data)).toBe(
@@ -393,15 +392,13 @@ test("EntriesTableModel reuses deleted keys", async () => {
 
   await sleep(100);
 
-  console.log("old model");
   entries = await waitForModelFullyLoad(model);
 
-  console.log("new model");
   await expectNewModelToHaveEntries(entries);
 });
 
 test("EntriesTableModel can delete all items without explosion", async () => {
-  await fillTestingBackendMap(3);
+  await fillTestingBackendMap(16);
 
   const { model, subscription } = createModel();
   let entries = await waitForModelFullyLoad(model);
@@ -410,6 +407,19 @@ test("EntriesTableModel can delete all items without explosion", async () => {
   model.onUpdate(entries[1].delete());
   model.onUpdate(entries[2].delete());
   model.onUpdate(entries[3].delete());
+  model.onUpdate(entries[4].delete());
+  model.onUpdate(entries[5].delete());
+  model.onUpdate(entries[6].delete());
+  model.onUpdate(entries[7].delete());
+  model.onUpdate(entries[8].delete());
+  model.onUpdate(entries[9].delete());
+  model.onUpdate(entries[10].delete());
+  model.onUpdate(entries[11].delete());
+  model.onUpdate(entries[12].delete());
+  model.onUpdate(entries[13].delete());
+  model.onUpdate(entries[14].delete());
+  model.onUpdate(entries[15].delete());
+  model.onUpdate(entries[16].delete());
 
   await sleep(100);
   expect(subscription.currentEntries.length).toBe(1);
@@ -1193,12 +1203,165 @@ test("with sync new entries adds up to previous items in chunk", async () => {
   expect(entries1[16].left).toBe("lorem ipsum 3");
 }, 10000);
 
-// EntriesTableModel supports undo/redo"
-test("undo/redo recreates deleted items in map", async () => {});
-test("undo/redo deletes added items in map", async () => {});
-test("undo/redo restore changed items in map", async () => {});
+test("undo/redo", async () => {
+  await fillTestingBackendMap(160);
 
-test("undo/redo works when data is halfloaded", async () => {});
+  const { model, subscription } = createModel();
+  let initialEntries = await waitForModelFullyLoad(model);
+
+  for (let i = 0; i <= 160; i++) model.onUpdate(initialEntries[i].delete());
+  await sleep(100);
+
+  expect(subscription.currentEntries.length).toBe(1);
+  expect(subscription.currentEntries[0].key).toBe("0-0");
+  expect(subscription.currentEntries[0].left).toBe("");
+  expect(subscription.currentEntries[0].right).toBe("");
+
+  for (let i = 0; i <= 499; i++) model.undo();
+
+  await sleep(10);
+  await expectModelToHaveEntries({ model, entries: initialEntries });
+
+  for (let i = 0; i <= 1500; i++) {
+    model.redo();
+  }
+
+  await sleep(10);
+
+  expect(subscription.currentEntries.length).toBe(1);
+  expect(subscription.currentEntries[0].key).toBe("0-0");
+  expect(subscription.currentEntries[0].left).toBe("");
+  expect(subscription.currentEntries[0].right).toBe("");
+
+  for (let i = 0; i <= 15; i++) {
+    expect(subscription.currentEntries.length).toBe(i + 1);
+    model.undo();
+    await sleep(10);
+  }
+
+  let entries1 = subscription.currentEntries;
+
+  expect(entries1[0].left).toBe("");
+  expect(entries1[1].left).toBe("lorem ipsum 144");
+  expect(entries1[2].left).toBe("lorem ipsum 145");
+  expect(entries1[3].left).toBe("lorem ipsum 146");
+  expect(entries1[4].left).toBe("lorem ipsum 147");
+  expect(entries1[5].left).toBe("lorem ipsum 148");
+  expect(entries1[6].left).toBe("lorem ipsum 149");
+  expect(entries1[7].left).toBe("lorem ipsum 150");
+  expect(entries1[8].left).toBe("lorem ipsum 151");
+  expect(entries1[9].left).toBe("lorem ipsum 152");
+  expect(entries1[10].left).toBe("lorem ipsum 153");
+  expect(entries1[11].left).toBe("lorem ipsum 154");
+  expect(entries1[12].left).toBe("lorem ipsum 155");
+  expect(entries1[13].left).toBe("lorem ipsum 156");
+  expect(entries1[14].left).toBe("lorem ipsum 157");
+  expect(entries1[15].left).toBe("lorem ipsum 158");
+  expect(entries1[16].left).toBe("lorem ipsum 159");
+
+  // redo delete
+  model.redo();
+  await sleep(10);
+  let entries2 = subscription.currentEntries;
+
+  expect(entries2[0].left).toBe("");
+  expect(entries2[1].left).toBe("lorem ipsum 145");
+  expect(entries2[2].left).toBe("lorem ipsum 146");
+  expect(entries2[3].left).toBe("lorem ipsum 147");
+  expect(entries2[4].left).toBe("lorem ipsum 148");
+  expect(entries2[5].left).toBe("lorem ipsum 149");
+  expect(entries2[6].left).toBe("lorem ipsum 150");
+  expect(entries2[7].left).toBe("lorem ipsum 151");
+  expect(entries2[8].left).toBe("lorem ipsum 152");
+  expect(entries2[9].left).toBe("lorem ipsum 153");
+  expect(entries2[10].left).toBe("lorem ipsum 154");
+  expect(entries2[11].left).toBe("lorem ipsum 155");
+  expect(entries2[12].left).toBe("lorem ipsum 156");
+  expect(entries2[13].left).toBe("lorem ipsum 157");
+  expect(entries2[14].left).toBe("lorem ipsum 158");
+  expect(entries2[15].left).toBe("lorem ipsum 159");
+
+  model.onUpdate(entries2[2].setLeft("changed 2"));
+  model.onUpdate(entries2[4].setLeft("changed 4"));
+  model.onUpdate(entries2[8].setLeft("changed 8"));
+  model.onUpdate(entries2[14].setLeft("changed 14"));
+
+  await sleep(10);
+  let entries3 = subscription.currentEntries;
+
+  expect(entries3[0].left).toBe("");
+  expect(entries3[1].left).toBe("lorem ipsum 145");
+  expect(entries3[2].left).toBe("changed 2");
+  expect(entries3[3].left).toBe("lorem ipsum 147");
+  expect(entries3[4].left).toBe("changed 4");
+  expect(entries3[5].left).toBe("lorem ipsum 149");
+  expect(entries3[6].left).toBe("lorem ipsum 150");
+  expect(entries3[7].left).toBe("lorem ipsum 151");
+  expect(entries3[8].left).toBe("changed 8");
+  expect(entries3[9].left).toBe("lorem ipsum 153");
+  expect(entries3[10].left).toBe("lorem ipsum 154");
+  expect(entries3[11].left).toBe("lorem ipsum 155");
+  expect(entries3[12].left).toBe("lorem ipsum 156");
+  expect(entries3[13].left).toBe("lorem ipsum 157");
+  expect(entries3[14].left).toBe("changed 14");
+  expect(entries3[15].left).toBe("lorem ipsum 159");
+
+  // Redo does nothing.
+  model.redo();
+  await sleep(10);
+
+  await expectModelToHaveEntries({ model, entries: entries3 });
+
+  model.onUpdate(entries3[4].setLeft("changed again 4"));
+  model.onUpdate(entries3[14].setLeft("changed again 14"));
+  await sleep(10);
+  let entries4 = subscription.currentEntries;
+  expect(entries4[0].left).toBe("");
+  expect(entries4[1].left).toBe("lorem ipsum 145");
+  expect(entries4[2].left).toBe("changed 2");
+  expect(entries4[3].left).toBe("lorem ipsum 147");
+  expect(entries4[4].left).toBe("changed again 4");
+  expect(entries4[5].left).toBe("lorem ipsum 149");
+  expect(entries4[6].left).toBe("lorem ipsum 150");
+  expect(entries4[7].left).toBe("lorem ipsum 151");
+  expect(entries4[8].left).toBe("changed 8");
+  expect(entries4[9].left).toBe("lorem ipsum 153");
+  expect(entries4[10].left).toBe("lorem ipsum 154");
+  expect(entries4[11].left).toBe("lorem ipsum 155");
+  expect(entries4[12].left).toBe("lorem ipsum 156");
+  expect(entries4[13].left).toBe("lorem ipsum 157");
+  expect(entries4[14].left).toBe("changed again 14");
+  expect(entries4[15].left).toBe("lorem ipsum 159");
+
+  model.undo();
+  await sleep(10);
+  expect(subscription.currentEntries[4].left).toBe("changed again 4");
+  expect(subscription.currentEntries[14].left).toBe("changed 14");
+
+  model.undo();
+  await sleep(10);
+  await expectModelToHaveEntries({ model, entries: entries3 });
+
+  for (let i = 0; i < 4; i++) model.undo();
+  await sleep(10);
+  await expectModelToHaveEntries({ model, entries: entries2 });
+
+  model.undo();
+  await sleep(10);
+  await expectModelToHaveEntries({ model, entries: entries1 });
+
+  for (let i = 0; i <= 160; i++) model.undo();
+  await sleep(10);
+  await expectModelToHaveEntries({ model, entries: initialEntries });
+
+  for (let i = 0; i <= 1600; i++) model.undo();
+  await sleep(10);
+  await expectModelToHaveEntries({ model, entries: initialEntries });
+
+  for (let i = 0; i <= 160; i++) model.redo();
+  await sleep(10);
+  await expectModelToHaveEntries({ model, entries: entries4 });
+}, 10000);
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

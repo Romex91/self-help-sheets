@@ -11,6 +11,16 @@ const model = new EntriesTableModelImpl(
   gdriveAuthClient
 );
 
+function keyPress(e) {
+  if (e.ctrlKey) {
+    if (e.keyCode === 90) model.undo();
+    else if (e.keyCode === 89) model.redo();
+    else return;
+    e.preventDefault();
+  }
+}
+window.onkeydown = keyPress;
+
 export function AppContent(props) {
   const [signInState, setSignInState] = React.useState(gdriveAuthClient.state);
   useEffect(() => {

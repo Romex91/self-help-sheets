@@ -13,12 +13,12 @@ export const EntryStatus = {
 
 // EntryModel is immutable. setLeft setRight delete and clear return a new copy.
 export class EntryModel {
-  #data;
-  #key;
+  _data;
+  _key;
 
   isDataLoaded() {
     return (
-      this.#data !== EntryStatus.LOADING && this.#data !== EntryStatus.HIDDEN
+      this._data !== EntryStatus.LOADING && this._data !== EntryStatus.HIDDEN
     );
   }
 
@@ -31,22 +31,22 @@ export class EntryModel {
   }
 
   get data() {
-    if (this.#data instanceof Object) return { ...this.#data };
-    return this.#data;
+    if (this._data instanceof Object) return { ...this._data };
+    return this._data;
   }
 
   get key() {
-    return this.#key;
+    return this._key;
   }
 
   get left() {
     if (!this.isDataLoaded()) return "";
-    return this.#data.left;
+    return this._data.left;
   }
 
   get right() {
     if (!this.isDataLoaded()) return "";
-    return this.#data.right;
+    return this._data.right;
   }
 
   setLeft(left) {
@@ -55,7 +55,7 @@ export class EntryModel {
       return this;
     }
 
-    return new EntryModel(this.#key, { ...this.#data, left });
+    return new EntryModel(this._key, { ...this._data, left });
   }
 
   setRight(right) {
@@ -63,24 +63,24 @@ export class EntryModel {
       console.error("bad status");
       return this;
     }
-    return new EntryModel(this.#key, { ...this.#data, right });
+    return new EntryModel(this._key, { ...this._data, right });
   }
 
   delete() {
-    return new EntryModel(this.#key, EntryStatus.DELETED);
+    return new EntryModel(this._key, EntryStatus.DELETED);
   }
 
   clear() {
-    return new EntryModel(this.#key, { left: "", right: "" });
+    return new EntryModel(this._key, { left: "", right: "" });
   }
 
   show() {
-    return new EntryModel(this.#key, EntryStatus.LOADING);
+    return new EntryModel(this._key, EntryStatus.LOADING);
   }
 
   constructor(key, data) {
-    this.#data = data;
-    this.#key = key;
+    this._data = data;
+    this._key = key;
   }
 }
 

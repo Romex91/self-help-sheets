@@ -1,5 +1,4 @@
 import { Interface } from "./Interface.js";
-import _, { entries } from "lodash";
 import { BackendMap } from "./BackendMap";
 import { GDriveStates } from "./GDriveAuthClient";
 
@@ -37,9 +36,25 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     this._subscriptions.delete(callback);
   }
 
-  undo() {}
+  undo() {
+    if (this._historyIndex === 0) return;
 
-  redo() {}
+    this._historyIndex--;
+
+    let entry = this._history[this._historyIndex].old;
+    this._entries.set(entry.key, entry);
+    this._sendEntryToBackend(entry);
+    this._onEntriesChanged();
+  }
+
+  redo() {
+    if (this._historyIndex >= this._history.length) return;
+
+    let entry = this._history[this._historyIndex++].new;
+    this._entries.set(entry.key, entry);
+    this._sendEntryToBackend(entry);
+    this._onEntriesChanged();
+  }
 
   sync = async () => {
     while (this._authClient.state !== GDriveStates.SIGNED_IN) {
@@ -90,20 +105,24 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     if (!this._entries.has(entry.key)) return;
 
     let prevEntry = this._entries.get(entry.key);
-    this._entries.set(entry.key, entry);
 
-    if (
-      entry.data === EntryStatus.LOADING &&
-      prevEntry.data === EntryStatus.HIDDEN
-    ) {
-      this._fetch(entry.key);
-    } else if (entry.key !== null && entry.isDataLoaded()) {
-      this._backendMap.set(entry.key, JSON.stringify(entry.data));
+    if (entry.data === EntryStatus.LOADING) {
+      if (prevEntry.data === EntryStatus.HIDDEN) {
+        this._fetch(entry.key);
+        this._entries.set(entry.key, entry);
+      }
+      return;
     }
+
+    this._sendEntryToBackend(entry);
+    this._addHistoryItem(entry);
+    this._entries.set(entry.key, entry);
 
     this._onEntriesChanged();
   };
 
+  _historyIndex = 0;
+  _history = [];
   _authClient = null;
   _backendMap = null;
 
@@ -112,6 +131,34 @@ export class EntriesTableModelImpl extends EntriesTableModel {
   // in |EntriesTable| new items belong to the top.
   _entries = new Map();
   _subscriptions = new Set();
+
+  _addHistoryItem(newEntry) {
+    if (newEntry.key == null) {
+      throw new Error(
+        "null key shouldn't have value. There is no point to restore it."
+      );
+    }
+
+    if (
+      !this._entries.has(newEntry.key) ||
+      !this._entries.get(newEntry.key).isDataLoaded()
+    ) {
+      return;
+    }
+
+    this._history = this._history.slice(0, this._historyIndex);
+    this._history.push({
+      old: this._entries.has(newEntry.key)
+        ? this._entries.get(newEntry.key)
+        : new EntryModel(newEntry.key, {}).delete(),
+      new: newEntry,
+    });
+    this._historyIndex = this._history.length;
+  }
+
+  async _sendEntryToBackend(entry) {
+    await this._backendMap.set(entry.key, JSON.stringify(entry.data));
+  }
 
   _fetch = async (key) => {
     let content = await this._backendMap.get(key);
@@ -130,7 +177,9 @@ export class EntriesTableModelImpl extends EntriesTableModel {
 
     try {
       if (content === "") {
-        this._entries.set(key, new EntryModel(key, {}).delete());
+        let entry = new EntryModel(key, {}).delete();
+        this._addHistoryItem(entry);
+        this._entries.set(key, entry);
       } else {
         const data = JSON.parse(content);
 
@@ -141,12 +190,16 @@ export class EntriesTableModelImpl extends EntriesTableModel {
           throw new Error("bad format " + content);
         }
 
-        this._entries.set(key, new EntryModel(key, data));
+        let entry = new EntryModel(key, data);
+        this._addHistoryItem(entry);
+        this._entries.set(key, entry);
       }
     } catch (e) {
       console.error(e.message + " " + key + " " + content);
-      this._entries.delete(key);
-      this._backendMap.delete(key);
+      if (!this._entries.get(key).isDataLoaded()) {
+        this._entries.delete(key);
+        this._backendMap.delete(key);
+      }
     }
 
     this._onEntriesChanged();
@@ -194,13 +247,11 @@ export class EntriesTableModelImpl extends EntriesTableModel {
       (filteredEntriesArray[0].isDataLoaded() &&
         !filteredEntriesArray[0].isVacant())
     ) {
-      // if there is a null key it means that we already
-      // called |this._backendMap.createKey|.
       if (this._entries.has(null)) {
         return;
       }
-
       this._entries.set(null, new EntryModel(null, {}).delete());
+
       let newKey = await this._backendMap.createKey();
 
       if (!this._entries.has(null)) {
@@ -212,7 +263,8 @@ export class EntriesTableModelImpl extends EntriesTableModel {
       let newEntry = new EntryModel(newKey, this._entries.get(null).data);
 
       this._entries.set(newKey, newEntry);
-      await this._backendMap.set(newKey, JSON.stringify(newEntry.data));
+      await this._sendEntryToBackend(newEntry);
+
       this._entries.delete(null);
 
       await this._onEntriesChanged();

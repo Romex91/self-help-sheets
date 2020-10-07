@@ -1,4 +1,3 @@
-import { BackendMap } from "./BackendMap.js";
 /* eslint-disable no-undef */
 // These tests require a Google account with enabled 'less secure apps' option.
 import { realBrowserTest } from "./realBrowserTest.js";
