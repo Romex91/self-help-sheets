@@ -25,6 +25,13 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     this._backendMap = backendMap;
     this._authClient = authClient;
     this.sync();
+    window.addEventListener("keydown", this._onKeyPress);
+  }
+
+  dispose() {
+    this._disposed = true;
+    window.removeEventListener("keydown", this._onKeyPress);
+    this._subscriptions = new Set();
   }
 
   subscribe(callback) {
@@ -57,6 +64,8 @@ export class EntriesTableModelImpl extends EntriesTableModel {
   }
 
   sync = async () => {
+    if (this._disposed) return;
+
     while (this._authClient.state !== GDriveStates.SIGNED_IN) {
       await this._authClient.waitForStateChange();
     }
@@ -121,6 +130,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     this._onEntriesChanged();
   };
 
+  _disposed = false;
   _historyIndex = 0;
   _history = [];
   _authClient = null;
@@ -131,6 +141,15 @@ export class EntriesTableModelImpl extends EntriesTableModel {
   // in |EntriesTable| new items belong to the top.
   _entries = new Map();
   _subscriptions = new Set();
+
+  _onKeyPress = (e) => {
+    if (e.ctrlKey) {
+      if (e.keyCode === 90) this.undo();
+      else if (e.keyCode === 89) this.redo();
+      else return;
+      e.preventDefault();
+    }
+  };
 
   _addHistoryItem(newEntry) {
     if (newEntry.key == null) {

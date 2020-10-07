@@ -3,33 +3,54 @@ import { EntriesTable } from "./EntriesTable.js";
 import { EntriesTableModelImpl } from "./EntriesTableModel";
 import { gdriveAuthClient, GDriveStates } from "./GDriveAuthClient";
 import { gdriveMap } from "./GDriveMap";
-import { Skeleton } from "@material-ui/lab";
 import { applyQuotaSavers } from "./BackendQuotaSavers";
+import { Typography, makeStyles } from "@material-ui/core";
 
-const model = new EntriesTableModelImpl(
-  applyQuotaSavers(gdriveMap),
-  gdriveAuthClient
-);
-
-function keyPress(e) {
-  if (e.ctrlKey) {
-    if (e.keyCode === 90) model.undo();
-    else if (e.keyCode === 89) model.redo();
-    else return;
-    e.preventDefault();
-  }
+const useStyles = makeStyles({
+  container: {
+    flex: 1,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});
+function CenteredTypography(props) {
+  const classes = useStyles();
+  return (
+    <div className={classes.container}>
+      <Typography variant="h4" {...props}>
+        {props.children}
+      </Typography>
+    </div>
+  );
 }
-window.onkeydown = keyPress;
 
 export function AppContent(props) {
   const [signInState, setSignInState] = React.useState(gdriveAuthClient.state);
-  useEffect(() => {
-    gdriveAuthClient.addStateListener(setSignInState);
-  }, []);
+  const [model, setModel] = React.useState(null);
 
-  if (signInState === GDriveStates.SIGNED_IN) {
+  useEffect(() => {
+    gdriveAuthClient.waitForStateChange().then((newState) => {
+      if (newState === GDriveStates.SIGNED_IN) {
+        setModel(
+          new EntriesTableModelImpl(
+            applyQuotaSavers(gdriveMap),
+            gdriveAuthClient
+          )
+        );
+      } else {
+        if (!!model) model.dispose();
+        setModel(null);
+      }
+      setSignInState(newState);
+    });
+  });
+
+  if (signInState === GDriveStates.SIGNED_IN && !!model) {
     return <EntriesTable {...props} model={model} />;
+  } else if (signInState === GDriveStates.SIGNED_OUT) {
+    return <CenteredTypography>Sign in to proceed...</CenteredTypography>;
   } else {
-    return <Skeleton />;
+    return <CenteredTypography> Loading...</CenteredTypography>;
   }
 }
