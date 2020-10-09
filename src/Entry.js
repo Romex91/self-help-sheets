@@ -1,6 +1,7 @@
 import React from "react";
-import { TextField } from "@material-ui/core";
+import { InputBase, makeStyles } from "@material-ui/core";
 import { Skeleton } from "@material-ui/lab";
+import { EmojiPicker } from "./EmojiPicker";
 
 export const EntryStatus = {
   // The http request for the text of the entry has been sent.
@@ -27,7 +28,7 @@ export class EntryModel {
     return (
       this.isDataLoaded() &&
       (this.data === EntryStatus.DELETED ||
-        (this.left === "" && this.right === ""))
+        (this.description === "" && this.left === "" && this.right === ""))
     );
   }
 
@@ -40,6 +41,11 @@ export class EntryModel {
     return this._key;
   }
 
+  get description() {
+    if (!this.isDataLoaded()) return "";
+    return this._data.description;
+  }
+
   get left() {
     if (!this.isDataLoaded()) return "";
     return this._data.left;
@@ -48,6 +54,15 @@ export class EntryModel {
   get right() {
     if (!this.isDataLoaded()) return "";
     return this._data.right;
+  }
+
+  setDescription(description) {
+    if (!this.isDataLoaded()) {
+      console.error("bad status");
+      return this;
+    }
+
+    return new EntryModel(this._key, { ...this._data, description });
   }
 
   setLeft(left) {
@@ -72,7 +87,7 @@ export class EntryModel {
   }
 
   clear() {
-    return new EntryModel(this._key, { left: "", right: "" });
+    return new EntryModel(this._key, { left: "", right: "", description: "" });
   }
 
   show() {
@@ -85,29 +100,90 @@ export class EntryModel {
   }
 }
 
+function descriptionToEmojiArray(descriptionString, emojiList) {
+  if (typeof descriptionString !== "string") return [[], []];
+  const all = Array.from(descriptionString).map((x) => Number(x));
+  let left = all.slice(0, emojiList.length);
+  let right = all.slice(emojiList.length);
+
+  for (let i = 0; i < emojiList.length; i++) {
+    left[i] = { value: left[i] == null ? 0 : left[i], ...emojiList[i] };
+    right[i] = { value: right[i] == null ? 0 : right[i], ...emojiList[i] };
+  }
+
+  return [left, right];
+}
+
+function emojiArraysToDescription(left, right) {
+  if (left.every((x) => x.value === 0) && right.every((x) => x.value === 0))
+    return "";
+  return left.map((x) => x.value).join("") + right.map((x) => x.value).join("");
+}
+
+const useStyles = makeStyles({
+  container: {
+    display: "flex",
+    flexDirection: "column",
+    border: "lightgray solid 1px",
+    borderRadius: 4,
+    position: "relative",
+  },
+});
+
+function SubItem({ emojiText, emojiArray, onEmojiArrayChange, ...props }) {
+  const classes = useStyles();
+  return (
+    <div className={classes.container}>
+      <InputBase
+        style={{ border: 0 }}
+        fullWidth
+        multiline
+        variant="outlined"
+        {...props}
+      />
+      <EmojiPicker
+        text={emojiText}
+        onEmojiArrayChange={onEmojiArrayChange}
+        emojiArray={emojiArray}
+      ></EmojiPicker>
+    </div>
+  );
+}
+
 export const Entry = React.forwardRef(
-  ({ onUpdate, onRightChanged, entry, ...otherProps }, ref) => {
+  ({ onUpdate, onRightChanged, entry, settings, ...otherProps }, ref) => {
     console.assert(entry instanceof EntryModel);
 
     React.useEffect(() => {
       if (entry.data === EntryStatus.HIDDEN) onUpdate(entry.show());
     });
 
+    const [leftEmojiArray, rightEmojiArray] = descriptionToEmojiArray(
+      entry.description,
+      settings.emojiList
+    );
+
     return (
       <tr ref={ref}>
         <td key="issueElement">
           <h5>issue</h5>
           {entry.isDataLoaded() ? (
-            <TextField
+            <SubItem
               color="secondary"
-              fullWidth
-              multiline
               placeholder="What bothers you?"
-              variant="outlined"
-              onChange={(event) => onUpdate(entry.setLeft(event.target.value))}
               value={entry.left}
+              onChange={(event) => onUpdate(entry.setLeft(event.target.value))}
+              emojiText="How do you feel now?"
+              emojiArray={leftEmojiArray}
+              onEmojiArrayChange={(newLeftEmojiArray) =>
+                onUpdate(
+                  entry.setDescription(
+                    emojiArraysToDescription(newLeftEmojiArray, rightEmojiArray)
+                  )
+                )
+              }
               {...otherProps}
-            />
+            ></SubItem>
           ) : (
             <Skeleton variant="rect" height={56}></Skeleton>
           )}
@@ -116,14 +192,21 @@ export const Entry = React.forwardRef(
         <td key="resolutionElement">
           <h5>resolution</h5>
           {entry.isDataLoaded() ? (
-            <TextField
+            <SubItem
               color="primary"
-              fullWidth
-              multiline
               placeholder="What can you do to resolve the problem?"
               variant="outlined"
-              onChange={(event) => onUpdate(entry.setRight(event.target.value))}
               value={entry.right}
+              onChange={(event) => onUpdate(entry.setRight(event.target.value))}
+              emojiText="How do you feel after writing resolution?"
+              emojiArray={rightEmojiArray}
+              onEmojiArrayChange={(newRightEmojiArray) =>
+                onUpdate(
+                  entry.setDescription(
+                    emojiArraysToDescription(leftEmojiArray, newRightEmojiArray)
+                  )
+                )
+              }
               {...otherProps}
             />
           ) : (

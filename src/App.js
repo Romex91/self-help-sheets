@@ -8,7 +8,7 @@ import {
   useMediaQuery,
 } from "@material-ui/core";
 import { AppMenu } from "./AppMenu.js";
-import { AppContent } from "./AppContent.js";
+import { AppContent } from "./TestingAppContent.js";
 
 function App() {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");

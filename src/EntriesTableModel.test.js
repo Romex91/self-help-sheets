@@ -52,21 +52,7 @@ async function fillTestingBackendMap(
   await Promise.all(
     _.range(0, entriesCount)
       .reverse()
-      .map((id) =>
-        addEntryToTestingMap("lorem ipsum " + id, "dolores " + id, backendMap)
-      )
-  );
-}
-
-async function addEntryToTestingMap(
-  left,
-  right,
-  backendMap = testingBackendMap
-) {
-  let key = await backendMap.createKey();
-  await backendMap.set(
-    key,
-    JSON.stringify(new EntryModel().setLeft(left).setRight(right).data)
+      .map((id) => backendMap.addEntry("lorem ipsum " + id, "dolores " + id))
   );
 }
 

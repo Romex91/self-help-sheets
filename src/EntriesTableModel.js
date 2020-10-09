@@ -75,20 +75,28 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     let newEntries = new Map();
 
     keys.forEach((x) => {
+      let entry;
       if (this._entries.has(x.id)) {
-        newEntries.set(x.id, this._entries.get(x.id));
+        entry = this._entries.get(x.id);
       } else {
         x.outdated = true;
-        newEntries.set(
+        entry = new EntryModel(
           x.id,
-          new EntryModel(
-            x.id,
-            newEntries.size < keys.length - 30
-              ? EntryStatus.HIDDEN
-              : EntryStatus.LOADING
-          )
+          newEntries.size < keys.length - 30
+            ? EntryStatus.HIDDEN
+            : EntryStatus.LOADING
         );
       }
+
+      if (
+        entry.isDataLoaded() &&
+        entry.data !== EntryStatus.DELETED &&
+        x.description !== this._descriptions.get(x.id)
+      ) {
+        entry = entry.setDescription(x.description);
+      }
+      newEntries.set(x.id, entry);
+      this._descriptions.set(x.id, x.description);
     });
 
     let promises = [];
@@ -140,6 +148,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
   // It is natural for |Map| to add new items to the end, but
   // in |EntriesTable| new items belong to the top.
   _entries = new Map();
+  _descriptions = new Map();
   _subscriptions = new Set();
 
   _onKeyPress = (e) => {
@@ -176,7 +185,19 @@ export class EntriesTableModelImpl extends EntriesTableModel {
   }
 
   async _sendEntryToBackend(entry) {
-    await this._backendMap.set(entry.key, JSON.stringify(entry.data));
+    const { description, ...otherData } = entry.data;
+    let descriptionPromise = null;
+    if (description !== this._descriptions.get(entry.key)) {
+      descriptionPromise = this._backendMap.setDescription(
+        entry.key,
+        description
+      );
+      this._descriptions.set(entry.key, description);
+    }
+    await Promise.all([
+      descriptionPromise,
+      this._backendMap.set(entry.key, JSON.stringify(otherData)),
+    ]);
   }
 
   _fetch = async (key) => {
@@ -209,7 +230,9 @@ export class EntriesTableModelImpl extends EntriesTableModel {
           throw new Error("bad format " + content);
         }
 
-        let entry = new EntryModel(key, data);
+        let entry = new EntryModel(key, data).setDescription(
+          this._descriptions.get(key)
+        );
         this._addHistoryItem(entry);
         this._entries.set(key, entry);
       }
@@ -217,6 +240,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
       console.error(e.message + " " + key + " " + content);
       if (!this._entries.get(key).isDataLoaded()) {
         this._entries.delete(key);
+        this._descriptions.delete(key);
         this._backendMap.delete(key);
       }
     }

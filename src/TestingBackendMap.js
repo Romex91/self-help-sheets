@@ -1,5 +1,7 @@
 import { BackendMap } from "./BackendMap.js";
 import md5 from "md5";
+
+import { EntryModel } from "./Entry";
 export class TestingBackendMap extends BackendMap {
   _sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -8,6 +10,14 @@ export class TestingBackendMap extends BackendMap {
   #map = new Map();
   #descriptions = new Map();
   #settings = "";
+
+  async addEntry(left, right) {
+    let key = await this.createKey();
+    await this.set(
+      key,
+      JSON.stringify(new EntryModel().setLeft(left).setRight(right).data)
+    );
+  }
 
   async createKey() {
     await this._sleep(20);

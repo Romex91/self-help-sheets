@@ -25,7 +25,7 @@ const styles = (theme) => ({
     borderSpacing: 0,
     "& th": {
       backgroundColor: theme.palette.background.paper,
-      zIndex: 1,
+      zIndex: 3,
       top: 0,
       position: "sticky",
       borderSpacing: 0,
@@ -34,6 +34,8 @@ const styles = (theme) => ({
     "& td": {
       padding: 2,
       verticalAlign: "top",
+      // ColumnResizer sets it to "hidden". This cuts emoji popups.
+      overflow: "inherit !important",
     },
     "& td:nth-child(even)": {
       borderLeft: "10px solid #0000",
@@ -82,21 +84,33 @@ function Placeholder({ height, ...rest }) {
 class EntriesTableRaw extends React.PureComponent {
   state = {
     entries: [],
+    settings: {
+      emojiList: [
+        { codePoint: 0x1f44e, text: "discontent" },
+        { codePoint: 0x1f628, text: "fear" },
+        { codePoint: 0x1f622, text: "sadness" },
+        { codePoint: 0x1f62d, text: "grief" },
+        { codePoint: 0x1f631, text: "horror" },
+        { codePoint: 0x1f616, text: "pain" },
+        { codePoint: 0x1f621, text: "anger" },
+        { codePoint: 0x1f922, text: "disgust" },
+      ],
+    },
   };
 
-  #onEntriesChanged = (entries) => {
+  _onEntriesChanged = (entries) => {
     this.setState({ entries });
   };
 
-  #tableRef = React.createRef();
-  #scrollableContainerRef = React.createRef();
-  #columnResizer = null;
-  #resizeObserver = null;
+  _tableRef = React.createRef();
+  _scrollableContainerRef = React.createRef();
+  _columnResizer = null;
+  _resizeObserver = null;
 
   componentDidMount() {
-    this.props.model.subscribe(this.#onEntriesChanged);
+    this.props.model.subscribe(this._onEntriesChanged);
 
-    this.#columnResizer = new ColumnResizer(this.#tableRef.current, {
+    this._columnResizer = new ColumnResizer(this._tableRef.current, {
       liveDrag: true,
       minWidth: 100,
       gripInnerHtml: `<div class='${this.props.classes.grip}'></div>`,
@@ -113,37 +127,37 @@ class EntriesTableRaw extends React.PureComponent {
       },
     });
 
-    // this.#columnResizer doesn't observe resizes of the table.
+    // this._columnResizer doesn't observe resizes of the table.
     // It listens for browser window "resize" events instead.
     // This doesn't play well when table content asynchronously adjusts
     // its height listening for the same "resize" event.
-    window.removeEventListener("resize", this.#columnResizer.onResize);
-    this.#resizeObserver = new ResizeObserver(
+    window.removeEventListener("resize", this._columnResizer.onResize);
+    this._resizeObserver = new ResizeObserver(
       _.throttle(() => {
-        this.#columnResizer.onResize();
+        this._columnResizer.onResize();
       }, 200)
     );
-    this.#resizeObserver.observe(this.#tableRef.current);
+    this._resizeObserver.observe(this._tableRef.current);
   }
 
   componentDidUpdate(prevProps) {
     if (this.props.model !== prevProps.model) {
-      prevProps.model.unsubscribe(this.#onEntriesChanged);
-      this.props.model.subscribe(this.#onEntriesChanged);
+      prevProps.model.unsubscribe(this._onEntriesChanged);
+      this.props.model.subscribe(this._onEntriesChanged);
     }
   }
 
   componentWillUnmount() {
-    this.props.model.unsubscribe(this.#onEntriesChanged);
+    this.props.model.unsubscribe(this._onEntriesChanged);
 
-    this.#columnResizer.destroy();
-    this.#resizeObserver.unobserve(this.#tableRef.current);
+    this._columnResizer.destroy();
+    this._resizeObserver.unobserve(this._tableRef.current);
   }
 
   render() {
     return (
       <div
-        ref={this.#scrollableContainerRef}
+        ref={this._scrollableContainerRef}
         className={this.props.classes.container}
         tabIndex={0}
       >
@@ -151,7 +165,7 @@ class EntriesTableRaw extends React.PureComponent {
           cellPadding={0}
           cellSpacing={0}
           className={this.props.classes.entriesTable}
-          ref={this.#tableRef}
+          ref={this._tableRef}
         >
           <thead>
             <tr>
@@ -169,9 +183,10 @@ class EntriesTableRaw extends React.PureComponent {
               entries={this.state.entries}
               ItemComponent={Entry}
               PlaceholderComponent={Placeholder}
-              scrollableContainerRef={this.#scrollableContainerRef}
+              scrollableContainerRef={this._scrollableContainerRef}
               // Additional props for Entry
               onUpdate={this.props.model.onUpdate}
+              settings={this.state.settings}
             />
           </tbody>
         </table>
