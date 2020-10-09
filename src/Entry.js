@@ -1,7 +1,8 @@
 import React from "react";
-import { InputBase, makeStyles } from "@material-ui/core";
+import { IconButton, InputBase, makeStyles } from "@material-ui/core";
 import { Skeleton } from "@material-ui/lab";
 import { EmojiPicker } from "./EmojiPicker";
+import DeleteIcon from "@material-ui/icons/Delete";
 
 export const EntryStatus = {
   // The http request for the text of the entry has been sent.
@@ -121,42 +122,73 @@ function emojiArraysToDescription(left, right) {
 }
 
 const useStyles = makeStyles({
-  container: {
+  inner: {
     display: "flex",
+    flex: 1,
     flexDirection: "column",
+    position: "relative",
+  },
+  input: {
+    padding: "5px 5px 0px 5px",
+  },
+  outer: {
+    display: "flex",
+    alignItems: "flex-start",
+    flexDirection: "row",
     border: "lightgray solid 1px",
     borderRadius: 4,
-    position: "relative",
   },
 });
 
-function SubItem({ emojiText, emojiArray, onEmojiArrayChange, ...props }) {
+function SubItem({
+  emojiText,
+  emojiArray,
+  onDelete,
+  isFirst,
+  onEmojiArrayChange,
+  ...props
+}) {
   const classes = useStyles();
   return (
-    <div className={classes.container}>
-      <InputBase
-        style={{ border: 0 }}
-        fullWidth
-        multiline
-        variant="outlined"
-        {...props}
-      />
-      <EmojiPicker
-        text={emojiText}
-        onEmojiArrayChange={onEmojiArrayChange}
-        emojiArray={emojiArray}
-      ></EmojiPicker>
+    <div className={classes.outer}>
+      <div className={classes.inner}>
+        <InputBase
+          className={classes.input}
+          fullWidth
+          multiline
+          variant="outlined"
+          {...props}
+        />
+        <EmojiPicker
+          text={emojiText}
+          onEmojiArrayChange={onEmojiArrayChange}
+          emojiArray={emojiArray}
+        ></EmojiPicker>
+      </div>
+      {!!onDelete && (
+        <IconButton aria-label="delete" size="small" onClick={onDelete}>
+          <DeleteIcon
+            color={isFirst ? "disabled" : "secondary"}
+            fontSize="small"
+          ></DeleteIcon>
+        </IconButton>
+      )}
     </div>
   );
 }
 
 export const Entry = React.forwardRef(
-  ({ onUpdate, onRightChanged, entry, settings, ...otherProps }, ref) => {
+  (
+    { isFirst, onUpdate, onRightChanged, entry, settings, ...otherProps },
+    ref
+  ) => {
     console.assert(entry instanceof EntryModel);
 
     React.useEffect(() => {
       if (entry.data === EntryStatus.HIDDEN) onUpdate(entry.show());
     });
+
+    const classes = useStyles();
 
     const [leftEmojiArray, rightEmojiArray] = descriptionToEmojiArray(
       entry.description,
@@ -170,7 +202,11 @@ export const Entry = React.forwardRef(
           {entry.isDataLoaded() ? (
             <SubItem
               color="secondary"
-              placeholder="What bothers you?"
+              placeholder={
+                isFirst
+                  ? "Start typing to create new item."
+                  : "What bothers you?"
+              }
               value={entry.left}
               onChange={(event) => onUpdate(entry.setLeft(event.target.value))}
               emojiText="How do you feel now?"
@@ -194,9 +230,15 @@ export const Entry = React.forwardRef(
           {entry.isDataLoaded() ? (
             <SubItem
               color="primary"
-              placeholder="What can you do to resolve the problem?"
+              placeholder={
+                isFirst
+                  ? "Start typing to create new item."
+                  : "What can you do to resolve the problem?"
+              }
+              isFirst={isFirst}
               variant="outlined"
               value={entry.right}
+              onDelete={(event) => onUpdate(entry.delete())}
               onChange={(event) => onUpdate(entry.setRight(event.target.value))}
               emojiText="How do you feel after writing resolution?"
               emojiArray={rightEmojiArray}

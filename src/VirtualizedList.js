@@ -97,6 +97,7 @@ export function VirtualizedList({
   let placeholderTop = 0;
   let placeholderBottom = 0;
 
+  let isFirstEntry = true;
   for (let entry of entries) {
     let entryHeight = defaultHeight;
     if (realHeightsMap.has(entry)) {
@@ -109,6 +110,7 @@ export function VirtualizedList({
       visibleEntries.push(
         <VirtualizedItem
           key={entry.key}
+          isFirst={isFirstEntry}
           onHeightChanged={onHeightChanged}
           entry={entry}
           ItemComponent={ItemComponent}
@@ -120,6 +122,8 @@ export function VirtualizedList({
       placeholderBottom += entryHeight;
     }
     currentHeight += entryHeight;
+
+    isFirstEntry = false;
   }
   if (placeholderTop !== 0) {
     visibleEntries.unshift(
