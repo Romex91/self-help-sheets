@@ -99,6 +99,30 @@ class EntriesTableRaw extends React.PureComponent {
   };
 
   _onEntriesChanged = (entries) => {
+    if (entries.length > 1) {
+      entries = [...entries];
+      let dateToInsert = entries[entries.length - 1].creationTime;
+      for (let i = entries.length - 2; i >= 0; i--) {
+        let currentCreationTime = entries[i].creationTime;
+        if (dateToInsert == null) {
+          dateToInsert = entries[i].creationTime;
+          continue;
+        }
+
+        if (
+          currentCreationTime != null &&
+          currentCreationTime.getYear() === dateToInsert.getYear() &&
+          currentCreationTime.getMonth() === dateToInsert.getMonth() &&
+          currentCreationTime.getDay() === dateToInsert.getDay()
+        ) {
+          continue;
+        }
+
+        dateToInsert.key = "time" + dateToInsert.getTime();
+        entries.splice(i + 1, 0, dateToInsert);
+        dateToInsert = currentCreationTime;
+      }
+    }
     this.setState({ entries });
   };
 

@@ -21,7 +21,7 @@ const model = new EntriesTableModelImpl(backendMap, authClient);
       )
     )
   );
-  await backendMap.setDescription("9", "3210002");
+  await backendMap.setDescription("9", "3210002-0");
 
   model.sync();
 })();

@@ -1,5 +1,10 @@
 import React from "react";
-import { IconButton, InputBase, makeStyles } from "@material-ui/core";
+import {
+  IconButton,
+  InputBase,
+  makeStyles,
+  Typography,
+} from "@material-ui/core";
 import { Skeleton } from "@material-ui/lab";
 import { EmojiPicker } from "./EmojiPicker";
 import DeleteIcon from "@material-ui/icons/Delete";
@@ -16,9 +21,6 @@ export const EntryStatus = {
 
 // EntryModel is immutable. setLeft setRight delete and clear return a new copy.
 export class EntryModel {
-  _data;
-  _key;
-
   isDataLoaded() {
     return (
       this._data !== EntryStatus.LOADING && this._data !== EntryStatus.HIDDEN
@@ -29,7 +31,9 @@ export class EntryModel {
     return (
       this.isDataLoaded() &&
       (this.data === EntryStatus.DELETED ||
-        (this.description === "" && this.left === "" && this.right === ""))
+        (this._emojiArrays.every((x) => x.length === 0) &&
+          this.left === "" &&
+          this.right === ""))
     );
   }
 
@@ -57,35 +61,12 @@ export class EntryModel {
     return this._data.right;
   }
 
-  getEmojiArrays(emojiList) {
-    if (typeof this.description !== "string") return [[], []];
-    const all = Array.from(this.description).map((x) => Number(x));
-    let left = all.slice(0, emojiList.length);
-    let right = all.slice(emojiList.length);
-
-    for (let i = 0; i < emojiList.length; i++) {
-      left[i] = { value: left[i] == null ? 0 : left[i], ...emojiList[i] };
-      right[i] = { value: right[i] == null ? 0 : right[i], ...emojiList[i] };
-    }
-
-    return [left, right];
+  get emojiArrays() {
+    return this._emojiArrays;
   }
 
-  updateEmojiArrays(left, right) {
-    if (left.every((x) => x.value === 0) && right.every((x) => x.value === 0))
-      return this.setDescription("");
-    return this.setDescription(
-      left.map((x) => x.value).join("") + right.map((x) => x.value).join("")
-    );
-  }
-
-  setDescription(description) {
-    if (!this.isDataLoaded()) {
-      console.error("bad status");
-      return this;
-    }
-
-    return new EntryModel(this._key, { ...this._data, description });
+  get creationTime() {
+    return this._creationTime;
   }
 
   setLeft(left) {
@@ -94,7 +75,12 @@ export class EntryModel {
       return this;
     }
 
-    return new EntryModel(this._key, { ...this._data, left });
+    return new EntryModel(
+      this._key,
+      { ...this._data, left },
+      this._emojiArrays,
+      this._creationTime
+    );
   }
 
   setRight(right) {
@@ -102,7 +88,12 @@ export class EntryModel {
       console.error("bad status");
       return this;
     }
-    return new EntryModel(this._key, { ...this._data, right });
+    return new EntryModel(
+      this._key,
+      { ...this._data, right },
+      this._emojiArrays,
+      this._creationTime
+    );
   }
 
   delete() {
@@ -117,13 +108,86 @@ export class EntryModel {
     return new EntryModel(this._key, EntryStatus.LOADING);
   }
 
-  constructor(key, data) {
+  setEmojiArrays(left, right) {
+    return this.setDescription(
+      EntryModel._generateDescription(
+        left.map((x) => x.value),
+        right.map((x) => x.value),
+        this._creationTime
+      )
+    );
+  }
+
+  setCreationTime(creationTime) {
+    return this.setDescription(
+      EntryModel._generateDescription(
+        this._emojiArrays[0],
+        this._emojiArrays[1],
+        creationTime
+      )
+    );
+  }
+
+  setDescription(description) {
+    if (!this.isDataLoaded()) {
+      return this;
+    }
+
+    let emojiArrays = [[], []];
+    let creationTime;
+    if (typeof description === "string") {
+      const [serializedEmoji, serializedCreationTime] = description.split("-");
+
+      {
+        const all = Array.from(serializedEmoji).map((x) => Number(x));
+        var half_length = Math.ceil(all.length / 2);
+        let left = all.slice(0, half_length);
+        let right = all.slice(half_length);
+        emojiArrays = [left, right];
+      }
+
+      creationTime = new Date(Number(serializedCreationTime));
+      if (isNaN(creationTime.getTime())) {
+        creationTime = null;
+      }
+    }
+    return new EntryModel(
+      this._key,
+      { ...this._data, description },
+      emojiArrays,
+      creationTime
+    );
+  }
+
+  constructor(key, data, emojiArrays, creationTime) {
     this._data = data;
     this._key = key;
+
+    this._emojiArrays = emojiArrays != null ? emojiArrays : [[], []];
+    this._creationTime = creationTime;
+  }
+
+  _data;
+  _key;
+  // Cached values for performance. Got recomputed only when setDescription is called.
+  _emojiArrays;
+  _creationTime;
+
+  static _generateDescription(left, right, creationTime) {
+    let descrciption;
+    if (left.every((x) => x === 0) && right.every((x) => x === 0)) {
+      descrciption = "";
+    } else {
+      descrciption = left.join("") + right.join("");
+    }
+
+    if (creationTime != null)
+      descrciption = descrciption + "-" + creationTime.getTime();
+    return descrciption;
   }
 }
 
-const useStyles = makeStyles({
+const useStyles = makeStyles((theme) => ({
   inner: {
     display: "flex",
     flex: 1,
@@ -131,22 +195,24 @@ const useStyles = makeStyles({
     position: "relative",
   },
   input: {
-    padding: "5px 5px 0px 5px",
+    padding: 0,
   },
   outer: {
+    padding: 5,
     display: "flex",
     alignItems: "flex-start",
     flexDirection: "row",
     border: "lightgray solid 1px",
     borderRadius: 4,
   },
-});
+}));
 
 function SubItem({
   emojiText,
   emojiArray,
   onDelete,
   isFirst,
+  creationTime,
   onEmojiArrayChange,
   ...props
 }) {
@@ -155,6 +221,18 @@ function SubItem({
   return (
     <div className={classes.outer}>
       <div className={classes.inner}>
+        {creationTime && (
+          <Typography
+            variant="caption"
+            onClick={() => inputRef.current.focus()}
+            color="textSecondary"
+            align="center"
+          >
+            {creationTime.getHours().toString().padStart(2, "0")}:
+            {creationTime.getMinutes().toString().padStart(2, "0")}
+          </Typography>
+        )}
+
         <InputBase
           className={classes.input}
           fullWidth
@@ -173,7 +251,7 @@ function SubItem({
       {!!onDelete && (
         <IconButton aria-label="delete" size="small" onClick={onDelete}>
           <DeleteIcon
-            color={isFirst ? "disabled" : ""}
+            color={isFirst ? "disabled" : "action"}
             fontSize="small"
           ></DeleteIcon>
         </IconButton>
@@ -187,15 +265,51 @@ export const Entry = React.forwardRef(
     { isFirst, onUpdate, onRightChanged, entry, settings, ...otherProps },
     ref
   ) => {
+    if (entry instanceof Date) {
+      let dateString = "";
+      let now = new Date(Date.now());
+      if (
+        entry.getYear() === now.getYear() &&
+        entry.getMonth() === now.getMonth() &&
+        entry.getDay() === now.getDay()
+      ) {
+        dateString = "Today";
+      } else {
+        dateString = entry.toDateString();
+      }
+      return (
+        <tr ref={ref}>
+          <td>{dateString}</td>
+        </tr>
+      );
+    }
+
     console.assert(entry instanceof EntryModel);
 
     React.useEffect(() => {
       if (entry.data === EntryStatus.HIDDEN) onUpdate(entry.show());
     });
 
-    const [leftEmojiArray, rightEmojiArray] = entry.getEmojiArrays(
-      settings.emojiList
-    );
+    let emojiLeft = [];
+    let emojiRight = [];
+
+    for (let i = 0; i < settings.emojiList.length; i++) {
+      emojiLeft.push({
+        value: entry.emojiArrays[0][i] == null ? 0 : entry.emojiArrays[0][i],
+        ...settings.emojiList[i],
+      });
+      emojiRight.push({
+        value: entry.emojiArrays[1][i] == null ? 0 : entry.emojiArrays[1][i],
+        ...settings.emojiList[i],
+      });
+    }
+
+    const onEntryChanged = (updatedEntry) => {
+      if (isFirst)
+        updatedEntry = updatedEntry.setCreationTime(new Date(Date.now()));
+
+      onUpdate(updatedEntry);
+    };
 
     return (
       <tr ref={ref}>
@@ -204,18 +318,21 @@ export const Entry = React.forwardRef(
           {entry.isDataLoaded() ? (
             <SubItem
               color="secondary"
+              creationTime={!isFirst && entry.creationTime}
               placeholder={
                 isFirst
-                  ? "Start typing to create new item."
+                  ? "Start typing to create a new item."
                   : "What bothers you?"
               }
               value={entry.left}
-              onChange={(event) => onUpdate(entry.setLeft(event.target.value))}
+              onChange={(event) =>
+                onEntryChanged(entry.setLeft(event.target.value))
+              }
               emojiText="How do you feel now?"
-              emojiArray={leftEmojiArray}
+              emojiArray={emojiLeft}
               onEmojiArrayChange={(newLeftEmojiArray) =>
-                onUpdate(
-                  entry.updateEmojiArrays(newLeftEmojiArray, rightEmojiArray)
+                onEntryChanged(
+                  entry.setEmojiArrays(newLeftEmojiArray, emojiRight)
                 )
               }
               {...otherProps}
@@ -232,19 +349,21 @@ export const Entry = React.forwardRef(
               color="primary"
               placeholder={
                 isFirst
-                  ? "Start typing to create new item."
+                  ? "Start typing to create a new item."
                   : "What can you do to resolve the problem?"
               }
               isFirst={isFirst}
               variant="outlined"
               value={entry.right}
               onDelete={(event) => onUpdate(entry.delete())}
-              onChange={(event) => onUpdate(entry.setRight(event.target.value))}
+              onChange={(event) =>
+                onEntryChanged(entry.setRight(event.target.value))
+              }
               emojiText="How do you feel after writing resolution?"
-              emojiArray={rightEmojiArray}
+              emojiArray={emojiRight}
               onEmojiArrayChange={(newRightEmojiArray) =>
-                onUpdate(
-                  entry.updateEmojiArrays(leftEmojiArray, newRightEmojiArray)
+                onEntryChanged(
+                  entry.setEmojiArrays(emojiLeft, newRightEmojiArray)
                 )
               }
               {...otherProps}
