@@ -21,7 +21,16 @@ const model = new EntriesTableModelImpl(backendMap, authClient);
       )
     )
   );
-  await backendMap.setDescription("9", "3210002-0");
+  await backendMap.setDescription("9", "3210002-" + Date.now());
+  await backendMap.setDescription("8", "3210002-" + (Date.now() - 100000000));
+  await backendMap.setDescription("7", "3210002-0" + (Date.now() - 200000000));
+  await backendMap.setDescription("6", "3210002-0" + (Date.now() - 300000000));
+  await backendMap.setDescription("5", "3210002-0" + (Date.now() - 400000000));
+  await backendMap.setDescription("4", "3210002-0" + (Date.now() - 500000000));
+  await backendMap.setDescription("3", "3210002-0" + (Date.now() - 600000000));
+  await backendMap.setDescription("2", "3210002-0" + (Date.now() - 700000000));
+  await backendMap.setDescription("1", "3210002-0" + (Date.now() - 800000000));
+  await backendMap.setDescription("0", "3210002-0");
 
   model.sync();
 })();

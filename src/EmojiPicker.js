@@ -189,7 +189,9 @@ export function EmojiPicker(props) {
             />
           ))
         ) : (
-          <Typography variant="caption">add mood</Typography>
+          <Typography variant="caption" color="textSecondary">
+            add mood
+          </Typography>
         )}
         {focused && (
           <Zoom in={focused}>

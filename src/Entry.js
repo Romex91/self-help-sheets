@@ -8,6 +8,7 @@ import {
 import { Skeleton } from "@material-ui/lab";
 import { EmojiPicker } from "./EmojiPicker";
 import DeleteIcon from "@material-ui/icons/Delete";
+import moment from "moment";
 
 export const EntryStatus = {
   // The http request for the text of the entry has been sent.
@@ -205,6 +206,9 @@ const useStyles = makeStyles((theme) => ({
     border: "lightgray solid 1px",
     borderRadius: 4,
   },
+  date: {
+    border: "0px !important",
+  },
 }));
 
 function SubItem({
@@ -228,8 +232,7 @@ function SubItem({
             color="textSecondary"
             align="center"
           >
-            {creationTime.getHours().toString().padStart(2, "0")}:
-            {creationTime.getMinutes().toString().padStart(2, "0")}
+            {moment(creationTime).format("h:mm a")}
           </Typography>
         )}
 
@@ -265,21 +268,22 @@ export const Entry = React.forwardRef(
     { isFirst, onUpdate, onRightChanged, entry, settings, ...otherProps },
     ref
   ) => {
+    const classes = useStyles();
+
     if (entry instanceof Date) {
-      let dateString = "";
-      let now = new Date(Date.now());
-      if (
-        entry.getYear() === now.getYear() &&
-        entry.getMonth() === now.getMonth() &&
-        entry.getDay() === now.getDay()
-      ) {
-        dateString = "Today";
-      } else {
-        dateString = entry.toDateString();
-      }
+      let dateString = moment(entry).calendar({
+        sameDay: "[Today], MMM Do, ddd",
+        lastDay: "[Yesterday] , MMM Do, ddd",
+        lastWeek: "MMM Do YYYY, ddd",
+        sameElse: "MMM Do YYYY, ddd",
+      });
       return (
-        <tr ref={ref}>
-          <td>{dateString}</td>
+        <tr ref={ref} className={classes.date}>
+          <td colSpan={2}>
+            <Typography variant="body2" align="center" color="textSecondary">
+              {dateString}
+            </Typography>{" "}
+          </td>
         </tr>
       );
     }
