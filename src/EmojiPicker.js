@@ -155,7 +155,13 @@ export function EmojiPicker(props) {
         selectedRow = props.emojiArray.length - 1;
       }
       setSelectedRow(selectedRow);
+    } else if (event.key === "Escape" || event.key === "Enter") {
+      props.inputRef.current.focus();
+    } else {
+      return;
     }
+
+    event.preventDefault();
   };
 
   if (props.emojiArray.length === 0) return null;

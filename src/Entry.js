@@ -57,6 +57,28 @@ export class EntryModel {
     return this._data.right;
   }
 
+  getEmojiArrays(emojiList) {
+    if (typeof this.description !== "string") return [[], []];
+    const all = Array.from(this.description).map((x) => Number(x));
+    let left = all.slice(0, emojiList.length);
+    let right = all.slice(emojiList.length);
+
+    for (let i = 0; i < emojiList.length; i++) {
+      left[i] = { value: left[i] == null ? 0 : left[i], ...emojiList[i] };
+      right[i] = { value: right[i] == null ? 0 : right[i], ...emojiList[i] };
+    }
+
+    return [left, right];
+  }
+
+  updateEmojiArrays(left, right) {
+    if (left.every((x) => x.value === 0) && right.every((x) => x.value === 0))
+      return this.setDescription("");
+    return this.setDescription(
+      left.map((x) => x.value).join("") + right.map((x) => x.value).join("")
+    );
+  }
+
   setDescription(description) {
     if (!this.isDataLoaded()) {
       console.error("bad status");
@@ -101,26 +123,6 @@ export class EntryModel {
   }
 }
 
-function descriptionToEmojiArray(descriptionString, emojiList) {
-  if (typeof descriptionString !== "string") return [[], []];
-  const all = Array.from(descriptionString).map((x) => Number(x));
-  let left = all.slice(0, emojiList.length);
-  let right = all.slice(emojiList.length);
-
-  for (let i = 0; i < emojiList.length; i++) {
-    left[i] = { value: left[i] == null ? 0 : left[i], ...emojiList[i] };
-    right[i] = { value: right[i] == null ? 0 : right[i], ...emojiList[i] };
-  }
-
-  return [left, right];
-}
-
-function emojiArraysToDescription(left, right) {
-  if (left.every((x) => x.value === 0) && right.every((x) => x.value === 0))
-    return "";
-  return left.map((x) => x.value).join("") + right.map((x) => x.value).join("");
-}
-
 const useStyles = makeStyles({
   inner: {
     display: "flex",
@@ -149,6 +151,7 @@ function SubItem({
   ...props
 }) {
   const classes = useStyles();
+  const inputRef = React.useRef();
   return (
     <div className={classes.outer}>
       <div className={classes.inner}>
@@ -157,18 +160,20 @@ function SubItem({
           fullWidth
           multiline
           variant="outlined"
+          inputRef={inputRef}
           {...props}
         />
         <EmojiPicker
           text={emojiText}
           onEmojiArrayChange={onEmojiArrayChange}
           emojiArray={emojiArray}
+          inputRef={inputRef}
         ></EmojiPicker>
       </div>
       {!!onDelete && (
         <IconButton aria-label="delete" size="small" onClick={onDelete}>
           <DeleteIcon
-            color={isFirst ? "disabled" : "secondary"}
+            color={isFirst ? "disabled" : ""}
             fontSize="small"
           ></DeleteIcon>
         </IconButton>
@@ -188,10 +193,7 @@ export const Entry = React.forwardRef(
       if (entry.data === EntryStatus.HIDDEN) onUpdate(entry.show());
     });
 
-    const classes = useStyles();
-
-    const [leftEmojiArray, rightEmojiArray] = descriptionToEmojiArray(
-      entry.description,
+    const [leftEmojiArray, rightEmojiArray] = entry.getEmojiArrays(
       settings.emojiList
     );
 
@@ -213,9 +215,7 @@ export const Entry = React.forwardRef(
               emojiArray={leftEmojiArray}
               onEmojiArrayChange={(newLeftEmojiArray) =>
                 onUpdate(
-                  entry.setDescription(
-                    emojiArraysToDescription(newLeftEmojiArray, rightEmojiArray)
-                  )
+                  entry.updateEmojiArrays(newLeftEmojiArray, rightEmojiArray)
                 )
               }
               {...otherProps}
@@ -244,9 +244,7 @@ export const Entry = React.forwardRef(
               emojiArray={rightEmojiArray}
               onEmojiArrayChange={(newRightEmojiArray) =>
                 onUpdate(
-                  entry.setDescription(
-                    emojiArraysToDescription(leftEmojiArray, newRightEmojiArray)
-                  )
+                  entry.updateEmojiArrays(leftEmojiArray, newRightEmojiArray)
                 )
               }
               {...otherProps}
