@@ -3,7 +3,7 @@ import { Typography, Zoom, makeStyles, SvgIcon } from "@material-ui/core";
 
 const useStyles = makeStyles((theme) => ({
   container: {
-    alignSelf: "center",
+    alignSelf: "flex-start",
     margin: 2,
     cursor: "pointer",
     borderColor: (focused) => (focused ? "gray" : "#0000"),
@@ -16,8 +16,8 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
-    left: -17,
     top: "1.5em",
+    minWidth: 140,
     zIndex: 2,
     background: theme.palette.background.paper,
     border: "gray solid 2px",
@@ -28,52 +28,49 @@ const useStyles = makeStyles((theme) => ({
     border: "2px solid",
     borderColor: (isActive) => (isActive ? "darkgray" : "#0000"),
     borderRadius: 4,
-    fontSize: 24,
+    fontSize: 20,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
   },
+
   icon: {
     cursor: "pointer",
     width: 15,
     margin: 0,
     padding: "4px 1px",
-    height: "40px",
+    height: "30px",
     border: "1px solid #0000",
 
-    "&:hover": { borderColor: "lightgray" },
+    borderColor: (isSelected) => (isSelected ? "gray" : "#0000"),
   },
 
   emoji: {
+    userSelect: "none",
     opacity: (value) => (value === 3 ? 1 : value === 2 ? 0.7 : 0.3),
   },
 }));
 
-function EmojiItem(props) {
+function EmojiItem({ emoji, text, ...props }) {
   const classes = useStyles(props.value);
   return (
-    <span className={classes.emoji} role="img" aria-label={props.text}>
-      {String.fromCodePoint(props.emoji)}
+    <span className={classes.emoji} role="img" aria-label={text} {...props}>
+      {String.fromCodePoint(emoji)}
     </span>
   );
 }
 
-function RadioIcon({ checked, value, ...props }) {
-  const classes = useStyles();
+function RadioIcon({ selectedValue, value, ...props }) {
+  const classes = useStyles(selectedValue === value);
 
   let height = 5 * (3 - value) + 1;
   return (
     <SvgIcon className={classes.icon} viewBox="1 1 7 15" {...props}>
       <rect
-        width="9"
-        height={height}
-        fill={checked ? "lightgreen" : "lightgray"}
-      />
-      <rect
         y={height}
         width="9"
         height={16 - height}
-        fill={checked ? "red" : "gray"}
+        fill={value <= selectedValue ? "red" : "lightGray"}
       />
     </SvgIcon>
   );
@@ -83,26 +80,29 @@ function EmojiSetupItem({ value, isActive, ...props }) {
   const classes = useStyles(isActive);
   return (
     <div className={classes.setupItem}>
-      <EmojiItem {...props} value={3} />
-
+      <EmojiItem
+        {...props}
+        value={3}
+        onClick={() => props.onChange((value + 1) % 4)}
+      />
       <RadioIcon
         onClick={() => props.onChange(0)}
-        checked={value === 0}
+        selectedValue={value}
         value={0}
       />
       <RadioIcon
         onClick={() => props.onChange(1)}
-        checked={value === 1}
+        selectedValue={value}
         value={1}
       />
       <RadioIcon
         onClick={() => props.onChange(2)}
-        checked={value === 2}
+        selectedValue={value}
         value={2}
       />
       <RadioIcon
         onClick={() => props.onChange(3)}
-        checked={value === 3}
+        selectedValue={value}
         value={3}
       />
     </div>
@@ -199,7 +199,6 @@ export function EmojiPicker(props) {
               <Typography align="center" variant="body1">
                 {props.text}
               </Typography>
-
               {props.emojiArray.map((x) => (
                 <EmojiSetupItem
                   key={x.codePoint}
