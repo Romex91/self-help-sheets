@@ -126,7 +126,8 @@ export function EmojiPicker(props) {
 
   let onKeyDown = (event) => {
     if (event.key === "ArrowLeft") {
-      if (selectedRow >= 0 && selectedRow < props.emojiArray.length) {
+      if (selectedRow < 0) setSelectedRow((selectedRow = 0));
+      if (selectedRow < props.emojiArray.length) {
         let clone = [...props.emojiArray];
         clone[selectedRow].value--;
         if (clone[selectedRow].value < 0) {
@@ -135,7 +136,8 @@ export function EmojiPicker(props) {
         props.onEmojiArrayChange(clone);
       }
     } else if (event.key === "ArrowRight") {
-      if (selectedRow >= 0 && selectedRow < props.emojiArray.length) {
+      if (selectedRow < 0) setSelectedRow((selectedRow = 0));
+      if (selectedRow < props.emojiArray.length) {
         let clone = [...props.emojiArray];
         clone[selectedRow].value++;
         if (clone[selectedRow].value > 3) {
