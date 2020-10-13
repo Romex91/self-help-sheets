@@ -54,22 +54,22 @@ export function VirtualizedList({
   const [scrollY, setScrollY] = React.useState(0);
   const [windowHeight, setWindowHeight] = React.useState(window.innerHeight);
 
-  // |realHeightsMap| asocciates each entry with a height obtained by
-  // ResizeObserver.
-  //
-  // WARINING!!! THis is not a true React state, but a hack allowing GC to
-  // eliminate memory leak when some entry is deleted.
-  // You cannot clone WeakMap. That's why it's impossible to use it as
-  // immutable React state.
-  // The alternative is to use Map instead of WeakMap and sync it with |entries|.
-  // But, I'd rather choose performance and simplicity over following React
-  // guidlines here.
-  const [realHeightsMap] = React.useState(new WeakMap());
+  const [realHeightsMap, setRealHeightsMap] = React.useState(new Map());
   const onHeightChanged = React.useCallback(
     (entry, height) => {
-      realHeightsMap.set(entry, height);
+      let newMap = new Map();
+      entries.forEach((x) => {
+        if (x.key === entry.key) {
+          newMap.set(x.key, height);
+        } else if (realHeightsMap.has(x.key)) {
+          newMap.set(x.key, realHeightsMap.get(x.key));
+        } else {
+          newMap.set(x.key, defaultHeight);
+        }
+      });
+      setRealHeightsMap(newMap);
     },
-    [realHeightsMap]
+    [realHeightsMap, entries, defaultHeight]
   );
 
   const onResizeOrScroll = () => {
@@ -95,11 +95,11 @@ export function VirtualizedList({
   let isFirstEntry = true;
   for (let entry of entries) {
     let entryHeight = defaultHeight;
-    if (realHeightsMap.has(entry)) {
-      entryHeight = realHeightsMap.get(entry);
+    if (realHeightsMap.has(entry.key)) {
+      entryHeight = realHeightsMap.get(entry.key);
     }
 
-    if (currentHeight < scrollY - window.innerHeight) {
+    if (currentHeight + entryHeight < scrollY - window.innerHeight) {
       placeholderTop += entryHeight;
     } else if (currentHeight < scrollY + 2 * windowHeight) {
       visibleEntries.push(
@@ -125,6 +125,7 @@ export function VirtualizedList({
       <PlaceholderComponent height={placeholderTop} key="placeholderTop" />
     );
   }
+
   if (placeholderBottom !== 0) {
     visibleEntries.push(
       <PlaceholderComponent
