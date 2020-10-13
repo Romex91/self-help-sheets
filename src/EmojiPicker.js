@@ -116,7 +116,8 @@ export function EmojiPicker(props) {
   const popupRef = React.useRef();
   const classes = useStyles(focused);
 
-  let onFocus = () => {
+  let onFocus = (event) => {
+    props.onFocus(event);
     setFocus(true);
   };
 

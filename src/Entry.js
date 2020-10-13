@@ -270,6 +270,7 @@ function SubItem({
           onEmojiArrayChange={onEmojiArrayChange}
           emojiArray={emojiArray}
           inputRef={inputRef}
+          onFocus={props.onFocus}
         ></EmojiPicker>
       </div>
       {!!onDelete && (
