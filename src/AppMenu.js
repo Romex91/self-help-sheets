@@ -7,7 +7,7 @@ import { SettingsWindow } from "./SettingsWindow.js";
 
 import {
   Settings as SettingsIcon,
-  ArrowDropDownCircle as ArrowIcon,
+  ArrowDropDown as ArrowIcon,
   Help as HelpIcon,
 } from "@material-ui/icons";
 

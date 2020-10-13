@@ -38,7 +38,10 @@ const styles = (theme) => ({
       overflow: "inherit !important",
     },
     "& td:nth-child(even)": {
-      borderLeft: "10px solid #0000",
+      borderLeft: "5px solid #0000",
+    },
+    "& td:nth-child(odd)": {
+      borderRight: "5px solid #0000",
     },
     "& h5": {
       display: "none",
@@ -62,6 +65,9 @@ const styles = (theme) => ({
 
       "& td:nth-child(even)": {
         borderLeft: 0,
+      },
+      "& td:nth-child(odd)": {
+        borderRight: 0,
       },
 
       "& tbody td": {
@@ -210,6 +216,7 @@ class EntriesTableRaw extends React.PureComponent {
               scrollableContainerRef={this._scrollableContainerRef}
               // Additional props for Entry
               onUpdate={this.props.model.onUpdate}
+              onFocus={this.props.onFocus}
               settings={this.state.settings}
             />
           </tbody>
