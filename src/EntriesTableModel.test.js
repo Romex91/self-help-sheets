@@ -905,54 +905,63 @@ test("sync hides deleted entries (without changing other entries)", async () => 
     JSON.stringify({
       left: "",
       right: "",
+      description: "",
     })
   );
   expect(JSON.stringify(entries1[1].data)).toBe(
     JSON.stringify({
       left: "lorem ipsum 1",
       right: "dolores 1",
+      description: "",
     })
   );
   expect(JSON.stringify(entries1[2].data)).toBe(
     JSON.stringify({
       left: "lorem ipsum 2",
       right: "dolores 2",
+      description: "",
     })
   );
   expect(JSON.stringify(entries1[3].data)).toBe(
     JSON.stringify({
       left: "lorem ipsum 4",
       right: "dolores 4",
+      description: "",
     })
   );
   expect(JSON.stringify(entries1[4].data)).toBe(
     JSON.stringify({
       left: "lorem ipsum 5",
       right: "dolores 5",
+      description: "",
     })
   );
   expect(JSON.stringify(entries1[5].data)).toBe(
     JSON.stringify({
       left: "lorem ipsum 6",
       right: "dolores 6",
+      description: "",
     })
   );
   expect(JSON.stringify(entries1[6].data)).toBe(
     JSON.stringify({
       left: "lorem ipsum 7",
       right: "dolores 7",
+      description: "",
     })
   );
   expect(JSON.stringify(entries1[7].data)).toBe(
     JSON.stringify({
       left: "lorem ipsum 8",
       right: "dolores 8",
+      description: "",
     })
   );
   expect(JSON.stringify(entries1[8].data)).toBe(
     JSON.stringify({
       left: "lorem ipsum 9",
       right: "dolores 9",
+      description: "",
     })
   );
 }, 10000);
@@ -999,60 +1008,70 @@ test("sync updates changed entries (without changing other entries)", async () =
     JSON.stringify({
       left: "",
       right: "",
+      description: "",
     })
   );
   expect(JSON.stringify(entries1[1].data)).toBe(
     JSON.stringify({
       left: "lorem ipsum 0",
       right: "dolores 0",
+      description: "",
     })
   );
   expect(JSON.stringify(entries1[2].data)).toBe(
     JSON.stringify({
       left: "lorem ipsum 2",
       right: "dolores 2",
+      description: "",
     })
   );
   expect(JSON.stringify(entries1[3].data)).toBe(
     JSON.stringify({
       left: "updated 3",
       right: "dolores 3",
+      description: "",
     })
   );
   expect(JSON.stringify(entries1[4].data)).toBe(
     JSON.stringify({
       left: "updated 4",
       right: "dolores 4",
+      description: "",
     })
   );
   expect(JSON.stringify(entries1[5].data)).toBe(
     JSON.stringify({
       left: "lorem ipsum 5",
       right: "dolores 5",
+      description: "",
     })
   );
   expect(JSON.stringify(entries1[6].data)).toBe(
     JSON.stringify({
       left: "updated 6",
       right: "dolores 6",
+      description: "",
     })
   );
   expect(JSON.stringify(entries1[7].data)).toBe(
     JSON.stringify({
       left: "updated 7",
       right: "dolores 7",
+      description: "",
     })
   );
   expect(JSON.stringify(entries1[8].data)).toBe(
     JSON.stringify({
       left: "lorem ipsum 8",
       right: "dolores 8",
+      description: "",
     })
   );
   expect(JSON.stringify(entries1[9].data)).toBe(
     JSON.stringify({
       left: "lorem ipsum 9",
       right: "dolores 9",
+      description: "",
     })
   );
 }, 10000);

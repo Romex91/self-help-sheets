@@ -185,7 +185,12 @@ export class EntriesTableModelImpl extends EntriesTableModel {
   }
 
   async _sendEntryToBackend(entry) {
-    const { description, ...otherData } = entry.data;
+    let { description, ...data } = entry.data;
+    if (entry.data === EntryStatus.DELETED) {
+      data = EntryStatus.DELETED;
+      description = "";
+    }
+
     let descriptionPromise = null;
     if (description !== this._descriptions.get(entry.key)) {
       descriptionPromise = this._backendMap.setDescription(
@@ -194,9 +199,10 @@ export class EntriesTableModelImpl extends EntriesTableModel {
       );
       this._descriptions.set(entry.key, description);
     }
+
     await Promise.all([
       descriptionPromise,
-      this._backendMap.set(entry.key, JSON.stringify(otherData)),
+      this._backendMap.set(entry.key, JSON.stringify(data)),
     ]);
   }
 
@@ -230,9 +236,11 @@ export class EntriesTableModelImpl extends EntriesTableModel {
           throw new Error("bad format " + content);
         }
 
-        let entry = new EntryModel(key, data).setDescription(
-          this._descriptions.get(key)
-        );
+        let entry = new EntryModel(key, data);
+
+        if (data !== EntryStatus.DELETED)
+          entry = entry.setDescription(this._descriptions.get(key));
+
         this._addHistoryItem(entry);
         this._entries.set(key, entry);
       }
