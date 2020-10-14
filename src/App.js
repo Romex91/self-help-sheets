@@ -7,10 +7,14 @@ import {
   ThemeProvider,
   useMediaQuery,
 } from "@material-ui/core";
+import { blue, blueGrey } from "@material-ui/core/colors";
+
 import { AppMenu } from "./AppMenu.js";
 import { AppContent } from "./AppContent.js";
-
-import { blue, blueGrey } from "@material-ui/core/colors";
+import { gdriveMap } from "./GDriveMap";
+import { gdriveAuthClient, GDriveStates } from "./GDriveAuthClient";
+import { EntriesTableModelImpl } from "./EntriesTableModel";
+import { applyQuotaSavers } from "./BackendQuotaSavers";
 
 function App() {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
@@ -36,12 +40,31 @@ function App() {
     setAppBarShown(true);
   }, []);
 
+  const [model, setModel] = React.useState(null);
+
+  React.useEffect(() => {
+    gdriveAuthClient.addStateListener((newState) => {
+      if (newState === GDriveStates.SIGNED_IN) {
+        setModel(
+          new EntriesTableModelImpl(
+            applyQuotaSavers(gdriveMap),
+            gdriveAuthClient
+          )
+        );
+      } else {
+        setModel((oldModel) => {
+          if (!!oldModel) oldModel.dispose();
+          return null;
+        });
+      }
+    });
+  });
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AppMenu shown={appBarShown} onShow={showAppBar}></AppMenu>
-
-      <AppContent onFocus={onTableEntryFocus} />
+      <AppMenu shown={appBarShown} onShow={showAppBar} model={model}></AppMenu>
+      <AppContent onFocus={onTableEntryFocus} model={model} />
     </ThemeProvider>
   );
 }

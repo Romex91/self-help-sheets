@@ -1,9 +1,6 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { EntriesTable } from "./EntriesTable.js";
-import { EntriesTableModelImpl } from "./EntriesTableModel";
 import { gdriveAuthClient, GDriveStates } from "./GDriveAuthClient";
-import { gdriveMap } from "./GDriveMap";
-import { applyQuotaSavers } from "./BackendQuotaSavers";
 import { Typography, makeStyles } from "@material-ui/core";
 
 const useStyles = makeStyles({
@@ -25,26 +22,12 @@ function CenteredTypography(props) {
   );
 }
 
-export function AppContent(props) {
+export function AppContent({ model, ...props }) {
   const [signInState, setSignInState] = React.useState(gdriveAuthClient.state);
-  const [model, setModel] = React.useState(null);
 
-  useEffect(() => {
-    gdriveAuthClient.waitForStateChange().then((newState) => {
-      if (newState === GDriveStates.SIGNED_IN) {
-        setModel(
-          new EntriesTableModelImpl(
-            applyQuotaSavers(gdriveMap),
-            gdriveAuthClient
-          )
-        );
-      } else {
-        if (!!model) model.dispose();
-        setModel(null);
-      }
-      setSignInState(newState);
-    });
-  });
+  React.useEffect(() => {
+    gdriveAuthClient.addStateListener(setSignInState);
+  }, []);
 
   if (signInState === GDriveStates.SIGNED_IN && !!model) {
     return <EntriesTable {...props} model={model} />;
