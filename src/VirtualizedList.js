@@ -55,22 +55,34 @@ export function VirtualizedList({
   const [windowHeight, setWindowHeight] = React.useState(window.innerHeight);
 
   const [realHeightsMap, setRealHeightsMap] = React.useState(new Map());
-  const onHeightChanged = React.useCallback(
-    (entry, height) => {
-      let newMap = new Map();
-      entries.forEach((x) => {
-        if (x.key === entry.key) {
-          newMap.set(x.key, height);
-        } else if (realHeightsMap.has(x.key)) {
-          newMap.set(x.key, realHeightsMap.get(x.key));
-        } else {
-          newMap.set(x.key, defaultHeight);
-        }
+  // Beware of maintainig VirtualizedItem pureness during refactoring.
+  // If one entry has changed it shouldn't lead to render() calls for other
+  // entries.
+  const onHeightChanged = React.useCallback((entry, height) => {
+    setRealHeightsMap((oldMap) => {
+      let newMap = new Map(oldMap);
+      oldMap.set(entry.key, height);
+      return newMap;
+    });
+  }, []);
+
+  const keys = new Set(entries.map((x) => x.key));
+  const keysToDelete = [];
+  realHeightsMap.forEach((_value, key) => {
+    if (!keys.has(key)) {
+      keysToDelete.push(key);
+    }
+  });
+  if (keysToDelete.length > 0) {
+    console.log(keysToDelete);
+    setRealHeightsMap((oldMap) => {
+      let newMap = new Map(oldMap);
+      keysToDelete.forEach((key) => {
+        if (oldMap.has(key)) newMap.delete(key);
       });
-      setRealHeightsMap(newMap);
-    },
-    [realHeightsMap, entries, defaultHeight]
-  );
+      return newMap;
+    });
+  }
 
   const onResizeOrScroll = () => {
     if (!!scrollableContainerRef.current)

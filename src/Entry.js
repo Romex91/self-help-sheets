@@ -298,6 +298,7 @@ export const Entry = React.forwardRef(
     },
     ref
   ) => {
+    console.log(entry);
     const classes = useStyles();
 
     if (entry instanceof Date) {
