@@ -16,7 +16,6 @@ class VirtualizedItem extends React.PureComponent {
 
   componentDidMount() {
     if (!!this.ref.current) {
-      this.#onHeightChanged();
       this.#resizeObserver = new ResizeObserver(this.#onHeightChanged);
       this.#resizeObserver.observe(this.ref.current);
     }
@@ -61,7 +60,8 @@ export function VirtualizedList({
   const onHeightChanged = React.useCallback((entry, height) => {
     setRealHeightsMap((oldMap) => {
       let newMap = new Map(oldMap);
-      oldMap.set(entry.key, height);
+
+      newMap.set(entry.key, height);
       return newMap;
     });
   }, []);
