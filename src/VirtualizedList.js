@@ -74,7 +74,6 @@ export function VirtualizedList({
     }
   });
   if (keysToDelete.length > 0) {
-    console.log(keysToDelete);
     setRealHeightsMap((oldMap) => {
       let newMap = new Map(oldMap);
       keysToDelete.forEach((key) => {

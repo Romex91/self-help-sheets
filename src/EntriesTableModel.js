@@ -277,7 +277,14 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     if (filteredEntries.length === 0) return filteredEntries;
 
     if (filteredEntries[0].data === EntryStatus.DELETED) {
-      filteredEntries[0] = filteredEntries[0].clear();
+      if (
+        this._cachedFirstEmptyItem == null ||
+        this._cachedFirstEmptyItem.key !== filteredEntries[0].key
+      ) {
+        this._cachedFirstEmptyItem = filteredEntries[0].clear();
+      }
+
+      filteredEntries[0] = this._cachedFirstEmptyItem;
     }
 
     filteredEntries = filteredEntries.filter(
