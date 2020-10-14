@@ -122,8 +122,11 @@ export function EmojiPicker(props) {
     setFocus(true);
   };
 
-  let onBlur = () => {
-    if (!popupRef.current.contains(document.activeElement)) setFocus(false);
+  let onBlur = (event) => {
+    if (!popupRef.current.contains(document.activeElement)) {
+      setFocus(false);
+      props.onBlur(event);
+    }
   };
 
   let onKeyDown = (event) => {

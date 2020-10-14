@@ -8,7 +8,9 @@ import {
   useMediaQuery,
 } from "@material-ui/core";
 import { AppMenu } from "./AppMenu.js";
-import { AppContent } from "./TestingAppContent.js";
+import { AppContent } from "./AppContent.js";
+
+import { blue, blueGrey } from "@material-ui/core/colors";
 
 function App() {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
@@ -18,6 +20,7 @@ function App() {
       createMuiTheme({
         palette: {
           type: prefersDarkMode ? "dark" : "light",
+          primary: { main: prefersDarkMode ? blueGrey[900] : blue[800] },
         },
       }),
     [prefersDarkMode]

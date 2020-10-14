@@ -224,7 +224,13 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     alignItems: "flex-start",
     flexDirection: "row",
-    border: "lightgray solid 1px",
+    border: "solid",
+    borderWidth: (focused) => {
+      return focused === true ? 2 : 1;
+    },
+    borderColor: (focused) => {
+      return focused === true ? theme.palette.primary.light : "gray";
+    },
     borderRadius: 4,
   },
   date: {
@@ -233,6 +239,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function SubItem({
+  onFocus: onFocusFromProps,
   emojiText,
   emojiArray,
   onDelete,
@@ -241,8 +248,19 @@ function SubItem({
   onEmojiArrayChange,
   ...props
 }) {
-  const classes = useStyles();
+  const [focused, setFocused] = React.useState(false);
+  const classes = useStyles(focused);
   const inputRef = React.useRef();
+
+  const onFocus = (event) => {
+    setFocused(true);
+    onFocusFromProps(event);
+  };
+
+  const onBlur = (event) => {
+    setFocused(false);
+  };
+
   return (
     <div className={classes.outer}>
       <div className={classes.inner}>
@@ -263,6 +281,8 @@ function SubItem({
           multiline
           variant="outlined"
           inputRef={inputRef}
+          onFocus={onFocus}
+          onBlur={onBlur}
           {...props}
         />
         <EmojiPicker
@@ -270,7 +290,8 @@ function SubItem({
           onEmojiArrayChange={onEmojiArrayChange}
           emojiArray={emojiArray}
           inputRef={inputRef}
-          onFocus={props.onFocus}
+          onFocus={onFocus}
+          onBlur={onBlur}
         ></EmojiPicker>
       </div>
       {!!onDelete && (
