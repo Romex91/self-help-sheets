@@ -47,6 +47,7 @@ const useStyles = makeStyles((theme) => ({
 
   emoji: {
     userSelect: "none",
+    fontWeight: (value) => (value === 3 ? "bold" : "unset"),
     opacity: (value) => (value === 3 ? 1 : value === 2 ? 0.7 : 0.3),
   },
 }));
