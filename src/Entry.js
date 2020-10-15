@@ -6,9 +6,10 @@ import {
   Typography,
 } from "@material-ui/core";
 import { Skeleton } from "@material-ui/lab";
-import { EmojiPicker } from "./EmojiPicker";
 import DeleteIcon from "@material-ui/icons/Delete";
 import moment from "moment";
+import { EmojiPicker } from "./EmojiPicker";
+import { Popup } from "./Popup";
 
 export const EntryStatus = {
   // The http request for the text of the entry has been sent.
@@ -218,13 +219,15 @@ const useStyles = makeStyles((theme) => ({
   },
   input: {
     padding: 0,
+    minHeight: 70,
+    alignItems: "flex-start",
   },
   outer: {
-    padding: 5,
     display: "flex",
     alignItems: "flex-start",
     flexDirection: "row",
     border: "solid",
+    padding: (focused) => (focused ? 4 : 5),
     borderWidth: (focused) => {
       return focused === true ? 2 : 1;
     },
@@ -235,6 +238,9 @@ const useStyles = makeStyles((theme) => ({
   },
   date: {
     border: "0px !important",
+  },
+  hint: {
+    whiteSpace: "pre-line",
   },
 }));
 
@@ -249,7 +255,8 @@ function SubItem({
   ...props
 }) {
   const [focused, setFocused] = React.useState(false);
-  const classes = useStyles(focused);
+  const [emojiFocused, setEmojiFocused] = React.useState(false);
+  const classes = useStyles(focused || emojiFocused);
   const inputRef = React.useRef();
 
   const onFocus = (event) => {
@@ -261,16 +268,19 @@ function SubItem({
     setFocused(false);
   };
 
+  const onEmojiFocused = (event) => {
+    onFocusFromProps(event);
+    setEmojiFocused(true);
+  };
+  const onEmojiBlur = (event) => {
+    setEmojiFocused(false);
+  };
+
   return (
     <div className={classes.outer}>
       <div className={classes.inner}>
         {creationTime && (
-          <Typography
-            variant="caption"
-            onClick={() => inputRef.current.focus()}
-            color="textSecondary"
-            align="center"
-          >
+          <Typography variant="caption" color="textSecondary" align="center">
             {moment(creationTime).format("h:mm a")}
           </Typography>
         )}
@@ -290,9 +300,20 @@ function SubItem({
           onEmojiArrayChange={onEmojiArrayChange}
           emojiArray={emojiArray}
           inputRef={inputRef}
-          onFocus={onFocus}
-          onBlur={onBlur}
+          onFocus={onEmojiFocused}
+          onBlur={onEmojiBlur}
         ></EmojiPicker>
+        {props.hint != null && props.hint.isEnabled && (
+          <Popup in={focused}>
+            <Typography
+              className={classes.hint}
+              color="textSecondary"
+              padding={10}
+            >
+              {props.hint.text}
+            </Typography>
+          </Popup>
+        )}
       </div>
       {!!onDelete && (
         <IconButton aria-label="delete" size="small" onClick={onDelete}>
@@ -352,15 +373,17 @@ export const Entry = React.forwardRef(
     let emojiLeft = [];
     let emojiRight = [];
 
-    for (let i = 0; i < settings.emojiList.length; i++) {
-      emojiLeft.push({
-        value: entry.emojiArrays[0][i] == null ? 0 : entry.emojiArrays[0][i],
-        ...settings.emojiList[i],
-      });
-      emojiRight.push({
-        value: entry.emojiArrays[1][i] == null ? 0 : entry.emojiArrays[1][i],
-        ...settings.emojiList[i],
-      });
+    if (settings != null) {
+      for (let i = 0; i < settings.emojiList.length; i++) {
+        emojiLeft.push({
+          value: entry.emojiArrays[0][i] == null ? 0 : entry.emojiArrays[0][i],
+          ...settings.emojiList[i],
+        });
+        emojiRight.push({
+          value: entry.emojiArrays[1][i] == null ? 0 : entry.emojiArrays[1][i],
+          ...settings.emojiList[i],
+        });
+      }
     }
 
     const onEntryChanged = (updatedEntry) => {
@@ -387,6 +410,7 @@ export const Entry = React.forwardRef(
               onChange={(event) =>
                 onEntryChanged(entry.setLeft(event.target.value))
               }
+              hint={settings == null ? null : settings.leftHint}
               emojiText="How do you feel now?"
               emojiArray={emojiLeft}
               onEmojiArrayChange={(newLeftEmojiArray) =>
@@ -418,6 +442,7 @@ export const Entry = React.forwardRef(
               onChange={(event) =>
                 onEntryChanged(entry.setRight(event.target.value))
               }
+              hint={settings == null ? null : settings.rightHint}
               emojiText="How do you feel after writing resolution?"
               emojiArray={emojiRight}
               onEmojiArrayChange={(newRightEmojiArray) =>

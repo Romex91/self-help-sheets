@@ -36,12 +36,13 @@ const useStyles = makeStyles({
   },
 });
 
-function ButtonController(props) {
+function ModalWindowButton(props) {
   const [open, setOpen] = React.useState(false);
   const onButtonClick = () => {
     setOpen(true);
   };
   const onWindowClose = () => {
+    if (props.model != null) props.model.sync();
     setOpen(false);
   };
 
@@ -59,7 +60,6 @@ function ButtonController(props) {
 
 export function AppMenu(props) {
   const classes = useStyles();
-
   return (
     <React.Fragment>
       <Collapse appear={false} in={props.shown}>
@@ -73,10 +73,10 @@ export function AppMenu(props) {
       <Slide appear={false} direction="down" in={props.shown}>
         <AppBar>
           <Toolbar>
-            <ButtonController edge="start">
+            <ModalWindowButton model={props.model} edge="start">
               <SettingsIcon />
-              <SettingsWindow />
-            </ButtonController>
+              <SettingsWindow model={props.model} />
+            </ModalWindowButton>
             <Hidden xsDown>
               <Typography>Settings</Typography>
             </Hidden>
@@ -93,10 +93,10 @@ export function AppMenu(props) {
               </Hidden>
             </Typography>
 
-            <ButtonController>
+            <ModalWindowButton>
               <HelpIcon />
               <HelpWindow></HelpWindow>
-            </ButtonController>
+            </ModalWindowButton>
 
             <GoogleSignInButton
               gdriveAuthClient={gdriveAuthClient}

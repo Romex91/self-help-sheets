@@ -1,8 +1,9 @@
 import { Interface } from "./Interface.js";
 import { BackendMap } from "./BackendMap";
 import { GDriveStates } from "./GDriveAuthClient";
-
+import { Settings } from "./Settings";
 import { EntryStatus, EntryModel } from "./Entry";
+import _ from "lodash";
 
 export class EntriesTableModel extends Interface {
   constructor() {
@@ -10,6 +11,7 @@ export class EntriesTableModel extends Interface {
     this.requireFunction("subscribe", "callback");
     this.requireFunction("unsubscribe", "callback");
     this.requireFunction("onUpdate", "entry");
+    this.requireFunction("onSettingsUpdate", "entry");
 
     this.requireFunction("undo");
     this.requireFunction("redo");
@@ -24,7 +26,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     super();
     this._backendMap = backendMap;
     this._authClient = authClient;
-    this.sync();
+    this._syncLoop();
     window.addEventListener("keydown", this._onKeyPress);
   }
 
@@ -36,7 +38,8 @@ export class EntriesTableModelImpl extends EntriesTableModel {
 
   subscribe(callback) {
     this._subscriptions.add(callback);
-    if (this._entries.size > 0) callback(this._getFilteredEntriesArray());
+    if (this._entries.size > 0)
+      callback(this._getFilteredEntriesArray(), this._settings);
   }
 
   unsubscribe(callback) {
@@ -100,6 +103,8 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     });
 
     let promises = [];
+    promises.push(this._fetchSettings());
+
     keys.reverse().forEach((x) => {
       if (x.outdated && newEntries.get(x.id).data !== EntryStatus.HIDDEN) {
         promises.push(this._fetch(x.id));
@@ -115,8 +120,11 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     this._onEntriesChanged();
 
     await Promise.all(promises);
-    setTimeout(this.sync, 15000);
   };
+
+  onSettingsUpdate = _.debounce((settings) => {
+    this._backendMap.setSettings(settings.stringify());
+  }, 1000);
 
   onUpdate = (entry) => {
     if (!this._entries.has(entry.key)) return;
@@ -148,8 +156,14 @@ export class EntriesTableModelImpl extends EntriesTableModel {
   // It is natural for |Map| to add new items to the end, but
   // in |EntriesTable| new items belong to the top.
   _entries = new Map();
+  _settings = null;
   _descriptions = new Map();
   _subscriptions = new Set();
+
+  _syncLoop = async () => {
+    await this.sync();
+    setTimeout(this._syncLoop, 15000);
+  };
 
   _onKeyPress = (e) => {
     if (e.ctrlKey) {
@@ -204,6 +218,17 @@ export class EntriesTableModelImpl extends EntriesTableModel {
       descriptionPromise,
       this._backendMap.set(entry.key, JSON.stringify(data)),
     ]);
+  }
+
+  async _fetchSettings() {
+    const serializedSettings = await this._backendMap.getSettings();
+    if (this._serializedSettings === serializedSettings) return;
+
+    this._serializedSettings = serializedSettings;
+
+    this._settings = new Settings(serializedSettings);
+
+    this._onEntriesChanged();
   }
 
   _fetch = async (key) => {
@@ -332,7 +357,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
 
   _notifySubscribers(entries) {
     this._subscriptions.forEach((callback) => {
-      callback(entries);
+      callback(entries, this._settings);
     });
   }
 }

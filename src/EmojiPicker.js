@@ -1,5 +1,6 @@
 import React from "react";
-import { Typography, Zoom, makeStyles, SvgIcon } from "@material-ui/core";
+import { Typography, makeStyles, SvgIcon } from "@material-ui/core";
+import { Popup } from "./Popup";
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -11,19 +12,6 @@ const useStyles = makeStyles((theme) => ({
     borderRadius: 4,
     position: "relative",
   },
-  popup: {
-    position: "absolute",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    top: "1.5em",
-    minWidth: 140,
-    zIndex: 2,
-    background: theme.palette.background.paper,
-    border: "gray solid 2px",
-    borderRadius: 4,
-  },
-
   setupItem: {
     border: "2px solid",
     borderColor: (isActive) => (isActive ? "darkgray" : "#0000"),
@@ -200,35 +188,31 @@ export function EmojiPicker(props) {
             add mood
           </Typography>
         )}
-        {focused && (
-          <Zoom in={focused}>
-            <div ref={popupRef} className={classes.popup}>
-              <Typography align="center" variant="body1">
-                {props.text}
-              </Typography>
-              {props.emojiArray.map((x) => (
-                <EmojiSetupItem
-                  key={x.codePoint}
-                  isActive={rowCounter++ === selectedRow}
-                  emoji={x.codePoint}
-                  text={x.text}
-                  value={x.value}
-                  onChange={(value) => {
-                    props.onEmojiArrayChange(
-                      props.emojiArray.map((y) =>
-                        y.codePoint === x.codePoint ? { ...y, value } : y
-                      )
-                    );
-                  }}
-                />
-              ))}
+        <Popup in={focused} ref={popupRef}>
+          <Typography align="center" variant="body1">
+            {props.text}
+          </Typography>
+          {props.emojiArray.map((x) => (
+            <EmojiSetupItem
+              key={x.codePoint}
+              isActive={rowCounter++ === selectedRow}
+              emoji={x.codePoint}
+              text={x.text}
+              value={x.value}
+              onChange={(value) => {
+                props.onEmojiArrayChange(
+                  props.emojiArray.map((y) =>
+                    y.codePoint === x.codePoint ? { ...y, value } : y
+                  )
+                );
+              }}
+            />
+          ))}
 
-              <Typography align="center" variant="caption">
-                Use arrow keys.
-              </Typography>
-            </div>
-          </Zoom>
-        )}
+          <Typography align="center" variant="caption">
+            Use arrow keys.
+          </Typography>
+        </Popup>{" "}
       </div>
     </React.Fragment>
   );

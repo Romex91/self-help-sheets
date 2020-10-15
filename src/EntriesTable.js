@@ -90,21 +90,9 @@ function Placeholder({ height, ...rest }) {
 class EntriesTableRaw extends React.PureComponent {
   state = {
     entries: [],
-    settings: {
-      emojiList: [
-        { codePoint: 0x1f44e, text: "discontent" },
-        { codePoint: 0x1f628, text: "fear" },
-        { codePoint: 0x1f622, text: "sadness" },
-        { codePoint: 0x1f62d, text: "grief" },
-        { codePoint: 0x1f631, text: "horror" },
-        { codePoint: 0x1f616, text: "pain" },
-        { codePoint: 0x1f621, text: "anger" },
-        { codePoint: 0x1f922, text: "disgust" },
-      ],
-    },
   };
 
-  _onEntriesChanged = (entries) => {
+  _onEntriesChanged = (entries, settings) => {
     if (entries.length > 1) {
       entries = [...entries];
       let dateToInsert = entries[entries.length - 1].creationTime;
@@ -129,7 +117,7 @@ class EntriesTableRaw extends React.PureComponent {
         dateToInsert = currentCreationTime;
       }
     }
-    this.setState({ entries });
+    this.setState({ entries, settings });
   };
 
   _tableRef = React.createRef();
