@@ -83,7 +83,7 @@ export class Settings {
           (x) => typeof String.fromCodePoint(x.codePoint) === "string"
         )
       ) {
-        throw new Error("Bad emoji list");
+        throw new Error("Bad emoji list: " + JSON.stringify(json));
       }
 
       this._emojiList = json.emojiList;
@@ -98,7 +98,7 @@ export class Settings {
   _mutateToDefaults() {
     this._leftHint = new Hint({
       isEnabled: true,
-      text: "What happened?\n What were your immediate thoughts?",
+      text: "What happened?\nWhat were your immediate thoughts?",
     });
 
     this._rightHint = new Hint({

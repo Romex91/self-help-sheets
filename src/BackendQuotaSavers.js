@@ -546,7 +546,6 @@ export class GetThrottler extends BackendMap {
               handleSingleRequest(),
               handleSingleRequest(),
               handleSingleRequest(),
-              handleSingleRequest(),
             ]);
             if (results.every((x) => x === false)) return;
           }
