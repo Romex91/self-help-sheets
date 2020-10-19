@@ -44,7 +44,7 @@ class VirtualizedItem extends React.PureComponent {
 
 export function VirtualizedList({
   entries,
-  defaultHeight = 30,
+  defaultHeight = 150,
   scrollableContainerRef,
   ItemComponent,
   PlaceholderComponent,

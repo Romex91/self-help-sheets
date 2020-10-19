@@ -7,6 +7,8 @@ import {
   Grid,
   Paper,
   IconButton,
+  Backdrop,
+  CircularProgress,
   Button,
   Typography,
 } from "@material-ui/core";
@@ -17,6 +19,8 @@ import { gdriveAuthClient, GDriveStates } from "./GDriveAuthClient";
 import { CenteredTypography } from "./CenteredTypography";
 import { Settings } from "./Settings";
 import classnames from "classnames";
+
+import { migrateEmoji } from "./migrateEmoji";
 
 const MemoizedEmojiPicker = React.memo(Picker);
 
@@ -57,9 +61,13 @@ const useStyles = makeStyles((theme) => ({
 
   clear: {
     clear: "both",
+    paddingTop: 20,
   },
   button: {
     paddingTop: 20,
+  },
+  backdrop: {
+    zIndex: 1002,
   },
 }));
 
@@ -104,7 +112,7 @@ function SettingsContent(props) {
 
   const [signInState, setSignInState] = React.useState(gdriveAuthClient.state);
   const [settings, setSettings] = React.useState(null);
-  const [entries, setEntries] = React.useState();
+  const [isLoading, setIsLoading] = React.useState(false);
 
   React.useEffect(() => {
     gdriveAuthClient.addStateListener(setSignInState);
@@ -115,7 +123,6 @@ function SettingsContent(props) {
       setSettings((oldSettings) => {
         return oldSettings == null ? settings : oldSettings;
       });
-      setEntries(entries);
     };
 
     if (props.model != null) {
@@ -129,25 +136,29 @@ function SettingsContent(props) {
     };
   }, [props.model]);
 
-  const onEmojiClick = React.useCallback((_event, emoji) => {
-    setSettings((oldSettings) => {
-      const codePoint = emoji.emoji.codePointAt(0);
-      const text =
-        emoji.names.length > 0 ? emoji.names[emoji.names.length - 1] : "";
-      if (
-        oldSettings.emojiList.findIndex((x) => x.codePoint === codePoint) !== -1
-      ) {
-        alert(text + " is already selected");
-        return oldSettings;
-      } else {
-        const listClone = [...oldSettings.emojiList];
-        listClone.push({ codePoint, text });
-        const newSettings = oldSettings.setEmojiList(listClone);
-        props.model.onSettingsUpdate(newSettings);
-        setSettings(newSettings);
-      }
-    });
-  }, []);
+  const onEmojiClick = React.useCallback(
+    (_event, emoji) => {
+      setSettings((oldSettings) => {
+        const codePoint = emoji.emoji.codePointAt(0);
+        const text =
+          emoji.names.length > 0 ? emoji.names[emoji.names.length - 1] : "";
+        if (
+          oldSettings.emojiList.findIndex((x) => x.codePoint === codePoint) !==
+          -1
+        ) {
+          alert(text + " is already selected");
+          return oldSettings;
+        } else {
+          const listClone = [...oldSettings.emojiList];
+          listClone.push({ codePoint, text });
+          const newSettings = oldSettings.setEmojiList(listClone);
+          props.model.onSettingsUpdate(newSettings);
+          setSettings(newSettings);
+        }
+      });
+    },
+    [props.model]
+  );
 
   if (signInState === GDriveStates.SIGNED_OUT) {
     return <CenteredTypography>Sign in to proceed...</CenteredTypography>;
@@ -159,19 +170,67 @@ function SettingsContent(props) {
     return <CenteredTypography>Loading...</CenteredTypography>;
   }
 
-  const onDeleteEmoji = (codePoint) => {
+  const onDeleteEmoji = async (codePoint) => {
     const listClone = [...settings.emojiList];
     const index = listClone.findIndex((y) => y.codePoint === codePoint);
     if (index === -1) return;
     listClone.splice(index, 1);
+
+    setIsLoading(true);
+    const { someValuesAreDeleted, newEntries } = await migrateEmoji(
+      props.model,
+      settings.emojiList,
+      listClone
+    );
+    setIsLoading(false);
+
+    if (
+      someValuesAreDeleted &&
+      !window.confirm(
+        "This will delete some moods from some of the entries. Are you sure?"
+      )
+    ) {
+      return;
+    }
+
+    newEntries.forEach((entry) => {
+      props.model.onUpdate(entry);
+    });
 
     const newSettings = settings.setEmojiList(listClone);
     props.model.onSettingsUpdate(newSettings);
     setSettings(newSettings);
   };
 
+  const resetDefaults = async () => {
+    let newSettings = new Settings();
+
+    setIsLoading(true);
+    const { someValuesAreDeleted, newEntries } = await migrateEmoji(
+      props.model,
+      settings.emojiList,
+      newSettings.emojiList
+    );
+    setIsLoading(false);
+
+    let consent = someValuesAreDeleted
+      ? "This will delete some moods from some entries. Reset settings?"
+      : "Reset settings?";
+
+    if (window.confirm(consent)) {
+      newEntries.forEach((entry) => {
+        props.model.onUpdate(entry);
+      });
+      props.model.onSettingsUpdate(newSettings);
+      setSettings(newSettings);
+    }
+  };
+
   return (
     <React.Fragment>
+      <Backdrop className={classes.backdrop} open={isLoading}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
       <h1>Settings</h1>
       <h2>Hints: </h2>
       <HintControl
@@ -217,13 +276,7 @@ function SettingsContent(props) {
       <Button
         className={classes.button}
         color="secondary"
-        onClick={() => {
-          if (window.confirm("Reset settings?")) {
-            let newSettings = new Settings();
-            props.model.onSettingsUpdate(newSettings);
-            setSettings(newSettings);
-          }
-        }}
+        onClick={resetDefaults}
       >
         Reset defaults
       </Button>

@@ -128,11 +128,7 @@ export class EntryModel {
 
   setEmojiArrays(left, right) {
     return this.setDescription(
-      EntryModel._generateDescription(
-        left.map((x) => x.value),
-        right.map((x) => x.value),
-        this._creationTime
-      )
+      EntryModel._generateDescription(left, right, this._creationTime)
     );
   }
 
@@ -152,7 +148,6 @@ export class EntryModel {
     if (!this.isDataLoaded()) {
       return this;
     }
-
     let emojiArrays = [[], []];
     let creationTime;
     if (typeof description === "string") {
@@ -367,7 +362,9 @@ export const Entry = React.forwardRef(
         scrollableContainerRef.current.scrollTop = ref.current.offsetTop - 60;
         onUpdate(entry.resetIsFresh());
       }
-      if (entry.data === EntryStatus.HIDDEN) onUpdate(entry.show());
+      if (entry.data === EntryStatus.HIDDEN) {
+        onUpdate(entry.show());
+      }
     });
 
     let emojiLeft = [];
@@ -415,7 +412,10 @@ export const Entry = React.forwardRef(
               emojiArray={emojiLeft}
               onEmojiArrayChange={(newLeftEmojiArray) =>
                 onEntryChanged(
-                  entry.setEmojiArrays(newLeftEmojiArray, emojiRight)
+                  entry.setEmojiArrays(
+                    newLeftEmojiArray.map((x) => x.value),
+                    emojiRight.map((x) => x.value)
+                  )
                 )
               }
               {...otherProps}
@@ -447,7 +447,10 @@ export const Entry = React.forwardRef(
               emojiArray={emojiRight}
               onEmojiArrayChange={(newRightEmojiArray) =>
                 onEntryChanged(
-                  entry.setEmojiArrays(emojiLeft, newRightEmojiArray)
+                  entry.setEmojiArrays(
+                    emojiLeft.map((x) => x.value),
+                    newRightEmojiArray.map((x) => x.value)
+                  )
                 )
               }
               {...otherProps}
