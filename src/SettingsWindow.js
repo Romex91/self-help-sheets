@@ -18,7 +18,6 @@ import Picker from "emoji-picker-react";
 import { gdriveAuthClient, GDriveStates } from "./GDriveAuthClient";
 import { CenteredTypography } from "./CenteredTypography";
 import { Settings } from "./Settings";
-import classnames from "classnames";
 
 import { migrateEmoji } from "./migrateEmoji";
 
@@ -36,8 +35,12 @@ const useStyles = makeStyles((theme) => ({
     borderRadius: 4,
     overflow: "auto",
     padding: 10,
+    [theme.breakpoints.up("sm")]: {
+      padding: 30,
+    },
   },
   emojiIcon: {
+    margin: "0px 5px 5px 0px ",
     fontSize: 20,
     display: "flex",
     alignItems: "center",
@@ -46,23 +49,8 @@ const useStyles = makeStyles((theme) => ({
   hintContainer: {
     display: "flex",
     flexDirection: "column",
-    width: "100%",
-    [theme.breakpoints.up("sm")]: {
-      width: "49.5%",
-    },
   },
 
-  hintContainerRight: {
-    float: "right",
-  },
-  hintContainerLeft: {
-    float: "left",
-  },
-
-  clear: {
-    clear: "both",
-    paddingTop: 20,
-  },
   button: {
     paddingTop: 20,
   },
@@ -75,13 +63,7 @@ function HintControl(props) {
   let classes = useStyles();
 
   return (
-    <div
-      className={classnames({
-        [classes.hintContainer]: true,
-        [classes.hintContainerLeft]: props.label === "Left",
-        [classes.hintContainerRight]: props.label === "Right",
-      })}
-    >
+    <div className={classes.hintContainer}>
       <FormControlLabel
         value="end"
         label={props.label}
@@ -227,33 +209,54 @@ function SettingsContent(props) {
   };
 
   return (
-    <React.Fragment>
+    <Grid container spacing={4}>
       <Backdrop className={classes.backdrop} open={isLoading}>
         <CircularProgress color="inherit" />
       </Backdrop>
-      <h1>Settings</h1>
-      <h2>Hints: </h2>
-      <HintControl
-        label="Left"
-        value={settings.leftHint}
-        onChange={(value) => {
-          let newSettings = settings.setLeftHint(value);
-          props.model.onSettingsUpdate(newSettings);
-          setSettings(newSettings);
-        }}
-      ></HintControl>
-      <HintControl
-        label="Right"
-        value={settings.rightHint}
-        onChange={(value) => {
-          let newSettings = settings.setRightHint(value);
-          props.model.onSettingsUpdate(newSettings);
-          setSettings(newSettings);
-        }}
-      ></HintControl>
+      <Grid item xs={12}>
+        <Typography variant="h4" align="center">
+          Settings
+        </Typography>
+      </Grid>
+      <Grid item xs={12}>
+        <Typography variant="h5">Hints:</Typography>
+      </Grid>
 
-      <h2 className={classes.clear}>Moods: </h2>
-      <Grid alignItems="flex-start" container spacing={1}>
+      <Grid item xs={12} sm={6}>
+        <HintControl
+          label="Left"
+          value={settings.leftHint}
+          onChange={(value) => {
+            let newSettings = settings.setLeftHint(value);
+            props.model.onSettingsUpdate(newSettings);
+            setSettings(newSettings);
+          }}
+        ></HintControl>
+      </Grid>
+      <Grid item xs={12} sm={6}>
+        <HintControl
+          label="Right"
+          value={settings.rightHint}
+          onChange={(value) => {
+            let newSettings = settings.setRightHint(value);
+            props.model.onSettingsUpdate(newSettings);
+            setSettings(newSettings);
+          }}
+        ></HintControl>
+      </Grid>
+
+      <Grid
+        container
+        alignItems="flex-start"
+        justify="flex-start"
+        alignContent="flex-start"
+        item
+        xs={12}
+        sm={6}
+      >
+        <Grid item xs={12}>
+          <Typography variant="h5">Moods: </Typography>
+        </Grid>
         {settings.emojiList.map((x) => (
           <Grid item key={x.codePoint}>
             <Paper className={classes.emojiIcon}>
@@ -266,21 +269,24 @@ function SettingsContent(props) {
         ))}
       </Grid>
 
-      <h2>Add new:</h2>
-      <MemoizedEmojiPicker
-        disableSkinTonePicker
-        disableAutoFocus
-        onEmojiClick={onEmojiClick}
-      />
-
-      <Button
-        className={classes.button}
-        color="secondary"
-        onClick={resetDefaults}
-      >
-        Reset defaults
-      </Button>
-    </React.Fragment>
+      <Grid item xs={12} sm={6}>
+        <Typography variant="h5">Add new:</Typography>
+        <MemoizedEmojiPicker
+          disableSkinTonePicker
+          disableAutoFocus
+          onEmojiClick={onEmojiClick}
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <Button
+          className={classes.button}
+          color="secondary"
+          onClick={resetDefaults}
+        >
+          Reset defaults
+        </Button>
+      </Grid>
+    </Grid>
   );
 }
 
