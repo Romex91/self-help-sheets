@@ -20,14 +20,14 @@ function EntriesSubscription(model) {
   this.waitForNewEntries = () => {
     return new Promise((resolve) => {
       expect(callback).toBe(null);
-      callback = (entries) => {
-        resolve(entries);
+      callback = (entries, settings) => {
+        resolve({ entries, settings });
         callback = null;
       };
     });
   };
 
-  model.subscribe((entries) => {
+  model.subscribe((entries, settings) => {
     // Some model methods notify subscriptions immediately.
     // |setTimeout| allows checking wether it happened.
     //
@@ -40,7 +40,7 @@ function EntriesSubscription(model) {
     setTimeout(() => {
       this.currentEntries = entries;
       this.callCount++;
-      if (!!callback) callback(entries);
+      if (!!callback) callback(entries, settings);
     });
   });
 }
@@ -59,8 +59,9 @@ async function fillTestingBackendMap(
 async function waitForModelFullyLoad(model) {
   const subscription = new EntriesSubscription(model);
   let entries = null;
+  let settings = null;
   while (true) {
-    entries = await subscription.waitForNewEntries();
+    ({ entries, settings } = await subscription.waitForNewEntries());
 
     for (let i = 0; i < entries.length; i++) {
       if (entries[i].data === EntryStatus.HIDDEN) {
@@ -70,6 +71,7 @@ async function waitForModelFullyLoad(model) {
     }
 
     if (
+      settings != null &&
       entries.length > 0 &&
       entries[0].left === "" &&
       entries[0].right === "" &&
@@ -144,7 +146,7 @@ test("EntriesTableModel has at least one empty item", async () => {
   const { subscription } = createModel();
 
   while (true) {
-    let entries = await subscription.waitForNewEntries();
+    let entries = (await subscription.waitForNewEntries()).entries;
 
     if (
       entries.length === 11 &&
@@ -177,7 +179,7 @@ test("EntriesTableModel cannot have more than one empty item at front", async ()
   // you cannot delete the first item
   model.onUpdate(entries[0].delete());
 
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
   expect(entries.length).toBe(11);
   expect(entries[0].key).toBe("2-1");
   expect(entries[0].left).toBe("");
@@ -186,7 +188,7 @@ test("EntriesTableModel cannot have more than one empty item at front", async ()
   // deleting the second item should do the trick
   expect(entries[1].key).toBe("1-1");
   model.onUpdate(entries[1].delete());
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
   expect(entries.length).toBe(10);
 
   // now the second item is empty and it is in the place of the first item.
@@ -212,14 +214,14 @@ test("EntriesTableModel cannot have more than one empty item at front", async ()
 
   // setting left and right items empty is the same as deleting them
   model.onUpdate(entries[2].setLeft(""));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
   model.onUpdate(entries[2].setRight(""));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
 
   model.onUpdate(entries[3].setLeft(""));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
   model.onUpdate(entries[3].setRight(""));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
 
   // Clearing items in the middle of the table does nothing.
   expect(entries.length).toBe(10);
@@ -244,9 +246,9 @@ test("EntriesTableModel cannot have more than one empty item at front", async ()
 
   // But clearing the second item should clear all empty items at table top.
   model.onUpdate(entries[1].setLeft(""));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
   model.onUpdate(entries[1].setRight(""));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
 
   expect(entries.length).toBe(7);
   expect(entries[0].key).toBe("6-0");
@@ -276,50 +278,50 @@ test("EntriesTableModel reuses deleted keys", async () => {
   expect(entries[5].key).toBe("5-0");
 
   model.onUpdate(entries[1].delete());
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
   expect(entries[0].key).toBe("1-1");
 
   model.onUpdate(entries[1].delete());
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
   expect(entries[0].key).toBe("0-1");
 
   model.onUpdate(entries[1].delete());
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
   expect(entries[0].key).toBe("7-0");
 
   model.onUpdate(entries[1].delete());
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
   expect(entries[0].key).toBe("6-0");
 
   model.onUpdate(entries[1].delete());
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
   expect(entries[0].key).toBe("5-0");
 
   model.onUpdate(entries[0].setLeft("foo"));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
   expect(entries[0].key).toBe("6-0");
 
   model.onUpdate(entries[0].setLeft("foo"));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
   expect(entries[0].key).toBe("7-0");
 
   model.onUpdate(entries[0].setLeft("foo"));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
   expect(entries[0].key).toBe("0-1");
 
   model.onUpdate(entries[0].setLeft("foo"));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
   expect(entries[0].key).toBe("1-1");
 
   model.onUpdate(entries[0].setLeft("foo"));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
   expect(entries[0].key).toBe("2-1");
 
   model.onUpdate(entries[0].setLeft("foo"));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
 
   expect(entries[0].key).toBe("2-1");
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
 
   expect(entries[0].key).toBe("3-1");
   expect(entries[1].key).toBe("2-1");
@@ -337,29 +339,29 @@ test("EntriesTableModel reuses deleted keys", async () => {
   model.onUpdate(entries[5].delete());
 
   while (subscription.currentEntries.length !== 7) {
-    entries = await subscription.waitForNewEntries();
+    entries = (await subscription.waitForNewEntries()).entries;
   }
 
   expect(entries[0].key).toBe("6-0");
 
   model.onUpdate(entries[0].setLeft("foo"));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
   expect(entries[0].key).toBe("7-0");
 
   model.onUpdate(entries[0].setLeft("foo"));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
   expect(entries[0].key).toBe("0-1");
 
   model.onUpdate(entries[0].setLeft("foo"));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
   expect(entries[0].key).toBe("1-1");
 
   model.onUpdate(entries[0].setLeft("foo"));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
   expect(entries[0].key).toBe("2-1");
 
   model.onUpdate(entries[0].setLeft("foo"));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
 
   expect(entries[0].key).toBe("3-1");
   expect(entries[1].key).toBe("2-1");
@@ -427,7 +429,7 @@ test("EntriesTableModel has at least one item", async () => {
   const { subscription } = createModel();
 
   while (true) {
-    let entries = await subscription.waitForNewEntries();
+    let entries = (await subscription.waitForNewEntries()).entries;
     if (
       entries.length === 1 &&
       entries[0].isDataLoaded() &&
@@ -446,7 +448,7 @@ test("EntriesTableModel loads only 30 entries at start", async () => {
   await fillTestingBackendMap(100);
   const { model, subscription } = createModel();
 
-  let entries = await subscription.waitForNewEntries();
+  let entries = (await subscription.waitForNewEntries()).entries;
   expect(entries.length).toBe(100);
   let i = 0;
   for (; i < 30; i++) {
@@ -457,7 +459,7 @@ test("EntriesTableModel loads only 30 entries at start", async () => {
   }
 
   while (true) {
-    entries = (await subscription.waitForNewEntries()).slice(1);
+    entries = (await subscription.waitForNewEntries()).entries.slice(1);
     if (entries.slice(0, 30).every((x) => x.isDataLoaded() && x.key !== null))
       break;
   }
@@ -474,7 +476,7 @@ test("EntriesTableModel loads only 30 entries at start", async () => {
   }
 
   while (true) {
-    entries = (await subscription.waitForNewEntries()).slice(1);
+    entries = (await subscription.waitForNewEntries()).entries.slice(1);
     if (entries.slice(0, 40).every((x) => x.isDataLoaded() && x.key !== null))
       break;
   }
@@ -498,12 +500,12 @@ test("EntriesTableModel deletes poorly formatted entries", async () => {
 
   const { subscription } = createModel();
 
-  let entries = await subscription.waitForNewEntries();
+  let entries = (await subscription.waitForNewEntries()).entries;
   expect(entries.length).toBe(10);
   expect(entries.every((x) => !x.isDataLoaded())).toBe(true);
 
   while (true) {
-    entries = await subscription.waitForNewEntries();
+    entries = (await subscription.waitForNewEntries()).entries;
     // console.log(entries.map((x) => x.data));
     if (
       entries.length === 8 &&
@@ -551,12 +553,12 @@ test("EntriesTableModel deletes non existing entries", async () => {
 
   const { subscription } = createModel();
 
-  let entries = await subscription.waitForNewEntries();
+  let entries = (await subscription.waitForNewEntries()).entries;
   expect(entries.length).toBe(10);
   expect(entries.every((x) => !x.isDataLoaded())).toBe(true);
 
   while (true) {
-    entries = await subscription.waitForNewEntries();
+    entries = (await subscription.waitForNewEntries()).entries;
     if (
       entries.length === 8 &&
       entries.every((entry) => entry.isDataLoaded()) &&
@@ -579,19 +581,19 @@ test("EntriesTableModel deletes non existing entries", async () => {
 test("EntriesTableModel creates items in map", async () => {
   const { model, subscription } = createModel();
 
-  let entries = await subscription.waitForNewEntries();
+  let entries = (await subscription.waitForNewEntries()).entries;
   expect(entries.length).toBe(1);
 
   // Update with empty string shouldn't change anything.
   model.onUpdate(entries[0].setLeft(""));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
   expect(entries.length).toBe(1);
 
   // Update with not empty string should add empty item to front.
   model.onUpdate(entries[0].setLeft("newLeft"));
 
   while (entries.length !== 2) {
-    entries = await subscription.waitForNewEntries();
+    entries = (await subscription.waitForNewEntries()).entries;
   }
   expect(entries[0].left).toBe("");
   expect(entries[0].right).toBe("");
@@ -601,7 +603,7 @@ test("EntriesTableModel creates items in map", async () => {
   model.onUpdate(entries[0].setLeft("ultraLeft"));
 
   while (entries.length !== 3) {
-    entries = await subscription.waitForNewEntries();
+    entries = (await subscription.waitForNewEntries()).entries;
   }
 
   expect(entries[0].left).toBe("");
@@ -618,7 +620,7 @@ test("EntriesTableModel creates items in map", async () => {
   expect(entries.length).toBe(3);
 
   model.onUpdate(entries[2].setLeft("oldUltraLeft"));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
   expect(entries.length).toBe(3);
 
   subscription.callCount = 0;
@@ -629,7 +631,7 @@ test("EntriesTableModel creates items in map", async () => {
   model.onUpdate(entries[0].setLeft("youngLeft"));
 
   while (entries.length !== 4) {
-    entries = await subscription.waitForNewEntries();
+    entries = (await subscription.waitForNewEntries()).entries;
   }
   expect(entries[0].left).toBe("");
   expect(entries[1].left).toBe("youngLeft");
@@ -646,16 +648,16 @@ test("EntriesTableModel updates item in map", async () => {
   let entries = await waitForModelFullyLoad(model);
 
   model.onUpdate(entries[5].setLeft("new left value 5"));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
 
   model.onUpdate(entries[5].setRight("new right value 5"));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
 
   model.onUpdate(entries[10].setLeft("new left value 10"));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
 
   model.onUpdate(entries[10].setRight("new right value 10"));
-  entries = await subscription.waitForNewEntries();
+  entries = (await subscription.waitForNewEntries()).entries;
 
   await sleep(100);
   expect(await testingBackendMap.get(entries[10].key)).toBe(
@@ -684,10 +686,10 @@ test("EntriesTableModel deletes items in map", async () => {
   let entries = await waitForModelFullyLoad(model);
 
   model.onUpdate(entries[5].delete());
-  await subscription.waitForNewEntries();
+  (await subscription.waitForNewEntries()).entries;
 
   model.onUpdate(entries[10].delete());
-  await subscription.waitForNewEntries();
+  (await subscription.waitForNewEntries()).entries;
 
   await sleep(100);
   expect(await testingBackendMap.get(entries[10].key)).toBe(
@@ -733,7 +735,7 @@ test("async set/delete doesn't explode", async () => {
   model.onUpdate(entries[8].setLeft("").setRight(""));
 
   while (entries.length !== 1) {
-    entries = await subscription.waitForNewEntries();
+    entries = (await subscription.waitForNewEntries()).entries;
   }
 
   expect(entries[0].left).toBe("");
@@ -824,12 +826,12 @@ test("BackendMultiplexor handles incorrect data", async () => {
 
   model.onUpdate(entries[0].setLeft("newLeft"));
   while (entries.length !== 5) {
-    entries = await subscription.waitForNewEntries();
+    entries = (await subscription.waitForNewEntries()).entries;
   }
 
   model.onUpdate(entries[0].setLeft("newNewLeft"));
   while (entries.length !== 6) {
-    entries = await subscription.waitForNewEntries();
+    entries = (await subscription.waitForNewEntries()).entries;
   }
 
   await sleep(1500);
@@ -893,10 +895,10 @@ test("sync hides deleted entries (without changing other entries)", async () => 
   model2.sync();
 
   while (entries1.length !== 9) {
-    entries1 = await subscription1.waitForNewEntries();
+    entries1 = (await subscription1.waitForNewEntries()).entries;
   }
   while (subscription2.currentEntries.length !== 9) {
-    entries2 = await subscription2.waitForNewEntries();
+    entries2 = (await subscription2.waitForNewEntries()).entries;
   }
 
   await expectModelToHaveEntries({ model: model2, entries: entries1 });
