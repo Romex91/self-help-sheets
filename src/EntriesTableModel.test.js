@@ -686,10 +686,10 @@ test("EntriesTableModel deletes items in map", async () => {
   let entries = await waitForModelFullyLoad(model);
 
   model.onUpdate(entries[5].delete());
-  (await subscription.waitForNewEntries()).entries;
+  await subscription.waitForNewEntries();
 
   model.onUpdate(entries[10].delete());
-  (await subscription.waitForNewEntries()).entries;
+  await subscription.waitForNewEntries();
 
   await sleep(100);
   expect(await testingBackendMap.get(entries[10].key)).toBe(
@@ -989,7 +989,7 @@ test("sync updates changed entries (without changing other entries)", async () =
   await sleep(1200);
   model1.sync();
   model2.sync();
-  await sleep(200);
+  await sleep(1000);
 
   model1.onUpdate(entries1[4].setLeft("updated 4"));
   model1.onUpdate(entries1[6].setLeft("updated 6"));
@@ -997,7 +997,7 @@ test("sync updates changed entries (without changing other entries)", async () =
   await sleep(1200);
   model1.sync();
   model2.sync();
-  await sleep(200);
+  await sleep(1000);
 
   entries1 = subscription1.currentEntries;
   entries2 = subscription2.currentEntries;
@@ -1108,7 +1108,7 @@ test("without sync new entries overwrite previous items in chunk", async () => {
   await sleep(1200);
   model1.sync();
   // model2 didn't sync
-  await sleep(200);
+  await sleep(1000);
 
   await addItem(model2, subscription2, "item 1 model 2");
   await addItem(model2, subscription2, "item 2 model 2");
@@ -1120,7 +1120,7 @@ test("without sync new entries overwrite previous items in chunk", async () => {
   await sleep(1200);
   model1.sync();
   model2.sync();
-  await sleep(200);
+  await sleep(1000);
 
   entries1 = subscription1.currentEntries;
 
@@ -1173,7 +1173,7 @@ test("with sync new entries adds up to previous items in chunk", async () => {
   await sleep(1200);
   model1.sync();
   model2.sync();
-  await sleep(200);
+  await sleep(1000);
 
   await addItem(model2, subscription2, "item 1 model 2");
   await addItem(model2, subscription2, "item 2 model 2");
@@ -1185,7 +1185,7 @@ test("with sync new entries adds up to previous items in chunk", async () => {
   await sleep(1200);
   model1.sync();
   model2.sync();
-  await sleep(200);
+  await sleep(1000);
 
   entries1 = subscription1.currentEntries;
 
