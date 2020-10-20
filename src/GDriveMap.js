@@ -19,8 +19,9 @@ class GDriveMap extends BackendMap {
     console.error("Invalid state. Multiple settings.json. ");
     let [firstKey, ...restKeys] = keys;
 
-    restKeys.map((x) => deleteFile(x));
-    return firstKey;
+    restKeys.map((x) => deleteFile(x.id));
+
+    return firstKey.id;
   }
 
   async createKey() {

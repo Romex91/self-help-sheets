@@ -2,11 +2,14 @@ import { BackendMap } from "./BackendMap";
 import _ from "lodash";
 import md5 from "md5";
 import { Mutex } from "async-mutex";
+import Bottleneck from "bottleneck";
 
 const chunkSize = 8;
 
 export function applyQuotaSavers(backendMap) {
-  return new BackendMultiplexor(new GetThrottler(new ErrorHandler(backendMap)));
+  return new BackendMultiplexor(
+    new RequestThrottler(new ErrorHandler(backendMap))
+  );
 }
 
 // Asociates several pseudo keys with each Google Drive key.
@@ -415,11 +418,11 @@ export class ErrorHandler extends BackendMap {
 
   async _exponentialRetry(callback) {
     let retriesCount = 1;
-    while (retriesCount < 6) {
+    while (retriesCount < 10) {
       try {
         return await callback();
       } catch (error) {
-        let secondsToNextRetry = 1 * 2 ** retriesCount++;
+        let secondsToNextRetry = 1 * 3 ** retriesCount++;
         console.error(
           `Failed running ${callback.name} : ${error.message}. Will try again after ${secondsToNextRetry} seconds.`
         );
@@ -497,7 +500,7 @@ export class ErrorHandler extends BackendMap {
   }
 }
 
-export class GetThrottler extends BackendMap {
+export class RequestThrottler extends BackendMap {
   _innerBackendMap = null;
   constructor(innerMap) {
     super();
@@ -506,76 +509,61 @@ export class GetThrottler extends BackendMap {
         "CachingBackendMap have to accepts instance of BackendMap"
       );
     this._innerBackendMap = innerMap;
-  }
-
-  createKey() {
-    return this._innerBackendMap.createKey();
-  }
-
-  delete(key) {
-    return this._innerBackendMap.delete(key);
-  }
-
-  set(key, value) {
-    return this._innerBackendMap.set(key, value);
-  }
-
-  async get(key) {
-    return await new Promise((resolve) => {
-      this._pendingGetRequests.set(key, resolve);
-
-      if (this._handlePendingRequests === null) {
-        this._handlePendingRequests = async () => {
-          while (true) {
-            let handleSingleRequest = async () => {
-              if (this._pendingGetRequests.size === 0) {
-                this._handlePendingRequests = null;
-                return false;
-              }
-
-              let [
-                key,
-                callback,
-              ] = this._pendingGetRequests.entries().next().value;
-              this._pendingGetRequests.delete(key);
-              callback(await this._innerBackendMap.get(key));
-              return true;
-            };
-
-            let results = await Promise.all([
-              handleSingleRequest(),
-              handleSingleRequest(),
-              handleSingleRequest(),
-            ]);
-            if (results.every((x) => x === false)) return;
-          }
-        };
-        this._handlePendingRequests();
-      }
+    this._limiter = new Bottleneck({
+      maxConcurrent: 5,
+      minTime: 50,
     });
   }
 
-  getMd5(key) {
-    return this._innerBackendMap.getMd5(key);
+  async createKey() {
+    return await this._limiter.schedule(() =>
+      this._innerBackendMap.createKey()
+    );
   }
 
-  getAllKeys() {
-    return this._innerBackendMap.getAllKeys();
+  async delete(key) {
+    return await this._limiter.schedule(() =>
+      this._innerBackendMap.delete(key)
+    );
   }
 
-  getSettings() {
-    return this._innerBackendMap.getSettings();
+  async set(key, value) {
+    return await this._limiter.schedule(() =>
+      this._innerBackendMap.set(key, value)
+    );
   }
 
-  setSettings(settingsContent) {
-    return this._innerBackendMap.setSettings(settingsContent);
+  async get(key) {
+    return await this._limiter.schedule(() => this._innerBackendMap.get(key));
   }
 
-  setDescription(key, description) {
-    return this._innerBackendMap.setDescription(key, description);
+  async getMd5(key) {
+    return await this._limiter.schedule(() =>
+      this._innerBackendMap.getMd5(key)
+    );
   }
 
-  _pendingGetRequests = new Map();
+  async getAllKeys() {
+    return await this._limiter.schedule(() =>
+      this._innerBackendMap.getAllKeys()
+    );
+  }
 
-  _handlePendingRequests = null;
+  async getSettings() {
+    return await this._limiter.schedule(() =>
+      this._innerBackendMap.getSettings()
+    );
+  }
+
+  async setSettings(settingsContent) {
+    return await this._limiter.schedule(() =>
+      this._innerBackendMap.setSettings(settingsContent)
+    );
+  }
+
+  async setDescription(key, description) {
+    return await this._limiter.schedule(() =>
+      this._innerBackendMap.setDescription(key, description)
+    );
+  }
 }
