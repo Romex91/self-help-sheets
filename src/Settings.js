@@ -105,7 +105,6 @@ export class Settings {
       isEnabled: true,
       text:
         "Why is it bad?\n" +
-        "Did it happen before?\n" +
         "What would your therapist say?\n" +
         "Is your view of the problem biased?\n" +
         "What would an adequate response be?",

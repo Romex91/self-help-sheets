@@ -41,8 +41,17 @@ function ModalWindowButton(props) {
   const onButtonClick = () => {
     setOpen(true);
   };
+
+  React.useEffect(() => {
+    if (props.model) props.model.setIgnoreKeys(open);
+  }, [open, props.model]);
+
   const onWindowClose = () => {
-    if (props.model != null) props.model.sync();
+    if (props.model != null) {
+      props.model.sync();
+      props.model.setIgnoreKeys(false);
+    }
+
     setOpen(false);
   };
 

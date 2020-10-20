@@ -11,7 +11,8 @@ export class EntriesTableModel extends Interface {
     this.requireFunction("subscribe", "callback");
     this.requireFunction("unsubscribe", "callback");
     this.requireFunction("onUpdate", "entry");
-    this.requireFunction("onSettingsUpdate", "entry");
+    this.requireFunction("onSettingsUpdate", "settings");
+    this.requireFunction("setIgnoreKeys", "ignoreKeys");
 
     this.requireFunction("undo");
     this.requireFunction("redo");
@@ -146,6 +147,10 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     this._onEntriesChanged();
   };
 
+  setIgnoreKeys(ignoreKeys) {
+    this._ignoreKeys = ignoreKeys;
+  }
+
   _disposed = false;
   _historyIndex = 0;
   _history = [];
@@ -166,6 +171,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
   };
 
   _onKeyPress = (e) => {
+    if (this._ignoreKeys) return;
     if (e.ctrlKey) {
       if (e.keyCode === 90) this.undo();
       else if (e.keyCode === 89) this.redo();
