@@ -95,7 +95,7 @@ export function AppMenu(props) {
               variant="body2"
               align="center"
             >
-              Self help sheets
+              Self-help sheets
               <Hidden xsDown>
                 <br />
                 Document your inner dialog
