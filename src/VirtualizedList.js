@@ -36,7 +36,12 @@ class VirtualizedItem extends React.PureComponent {
   }
 
   render() {
-    const { ItemComponent, onHeightChanged, ...otherProps } = this.props;
+    const {
+      scrollableContainerRef,
+      ItemComponent,
+      onHeightChanged,
+      ...otherProps
+    } = this.props;
 
     return <ItemComponent ref={this.ref} {...otherProps} />;
   }

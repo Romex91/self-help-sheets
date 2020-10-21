@@ -71,22 +71,6 @@ export class EntryModel {
     return this._creationTime;
   }
 
-  get isFresh() {
-    return this._isFresh;
-  }
-
-  resetIsFresh() {
-    if (!this._isFresh) return this;
-    let newModel = new EntryModel(
-      this._key,
-      this._data,
-      this._emojiArrays,
-      this._creationTime
-    );
-    newModel._isFresh = false;
-    return newModel;
-  }
-
   setLeft(left) {
     if (!this.isDataLoaded()) {
       console.error("bad status");
@@ -133,15 +117,13 @@ export class EntryModel {
   }
 
   setCreationTime(creationTime) {
-    let newModel = this.setDescription(
+    return this.setDescription(
       EntryModel._generateDescription(
         this._emojiArrays[0],
         this._emojiArrays[1],
         creationTime
       )
     );
-    newModel._isFresh = true;
-    return newModel;
   }
 
   setDescription(description) {
@@ -179,14 +161,11 @@ export class EntryModel {
     this._key = key;
 
     this._emojiArrays = emojiArrays != null ? emojiArrays : [[], []];
-
-    if (this.isDataLoaded() && !this.isVacant())
-      this._creationTime = creationTime;
+    this._creationTime = creationTime;
   }
 
   _data;
   _key;
-  _isFresh = false;
   // Cached values for performance. Got recomputed only when setDescription is called.
   _emojiArrays;
   _creationTime;
@@ -324,15 +303,7 @@ function SubItem({
 
 export const Entry = React.forwardRef(
   (
-    {
-      scrollableContainerRef,
-      isFirst,
-      onUpdate,
-      onRightChanged,
-      entry,
-      settings,
-      ...otherProps
-    },
+    { isFirst, onUpdate, onRightChanged, entry, settings, ...otherProps },
     ref
   ) => {
     const classes = useStyles();
@@ -358,13 +329,7 @@ export const Entry = React.forwardRef(
     console.assert(entry instanceof EntryModel);
 
     React.useEffect(() => {
-      if (entry.isFresh && !isFirst) {
-        scrollableContainerRef.current.scrollTop = ref.current.offsetTop - 60;
-        onUpdate(entry.resetIsFresh());
-      }
-      if (entry.data === EntryStatus.HIDDEN) {
-        onUpdate(entry.show());
-      }
+      if (entry.data === EntryStatus.HIDDEN) onUpdate(entry.show());
     });
 
     let emojiLeft = [];

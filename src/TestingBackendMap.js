@@ -7,7 +7,7 @@ BackendMap.prototype.addEntry = async function (left, right) {
   let key = await this.createKey();
   await this.set(
     key,
-    JSON.stringify(new EntryModel("", {}).setLeft(left).setRight(right).data)
+    JSON.stringify(new EntryModel().setLeft(left).setRight(right).data)
   );
 };
 
