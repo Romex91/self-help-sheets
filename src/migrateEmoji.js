@@ -1,7 +1,5 @@
-import { EntryStatus } from "./Entry";
-
 // Emoji values are stored as arrays of values in gdrive files description.
-// E.G.: 0200331000. Each number is asociated with its index in
+// E.G.: 02003:31000. Each number is asociated with its index in
 // |settings.emojiList|.
 // This way it is compact and may be requested in single request in
 // |GRriveMap.getAllKeys|.
@@ -18,15 +16,8 @@ export async function migrateEmoji(
   // Some entries may be initially hidden. We should request data for them before proceeding.
   const entries = await new Promise((resolve) => {
     const onEntriesUpdate = (entries) => {
-      if (entries.every((x) => x.isDataLoaded())) {
-        entryTableModel.unsubscribe(onEntriesUpdate);
-        resolve(entries);
-      }
-
-      entries.forEach((entry) => {
-        if (entry.data === EntryStatus.HIDDEN)
-          entryTableModel.onUpdate(entry.show());
-      });
+      entryTableModel.unsubscribe(onEntriesUpdate);
+      resolve(entries);
     };
     entryTableModel.subscribe(onEntriesUpdate);
   });
@@ -40,10 +31,9 @@ export async function migrateEmoji(
     if (updatedEmojiArrays.some((y) => y.someValuesAreDeleted))
       someValuesAreDeleted = true;
 
-    return x.setEmojiArrays(
-      updatedEmojiArrays[0].newArray,
-      updatedEmojiArrays[1].newArray
-    );
+    return x
+      .setEmojiLeft(updatedEmojiArrays[0].newArray)
+      .setEmojiRight(updatedEmojiArrays[1].newArray);
   });
 
   return { someValuesAreDeleted, newEntries };

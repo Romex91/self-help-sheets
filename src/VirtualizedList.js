@@ -108,7 +108,6 @@ export function VirtualizedList({
   let placeholderTop = 0;
   let placeholderBottom = 0;
 
-  let isFirstEntry = true;
   for (let entry of entries) {
     let entryHeight = defaultHeight;
     if (realHeightsMap.has(entry.key)) {
@@ -116,12 +115,15 @@ export function VirtualizedList({
     }
 
     if (currentHeight + entryHeight < scrollY - window.innerHeight) {
+      if (entry.focused && !!scrollableContainerRef.current) {
+        scrollableContainerRef.current.scrollTop = currentHeight;
+      }
+
       placeholderTop += entryHeight;
     } else if (currentHeight < scrollY + 2 * windowHeight) {
       visibleEntries.push(
         <VirtualizedItem
           key={entry.key}
-          isFirst={isFirstEntry}
           onHeightChanged={onHeightChanged}
           entry={entry}
           ItemComponent={ItemComponent}
@@ -130,11 +132,13 @@ export function VirtualizedList({
         />
       );
     } else {
+      if (entry.focused && !!scrollableContainerRef.current) {
+        scrollableContainerRef.current.scrollTop = currentHeight;
+      }
+
       placeholderBottom += entryHeight;
     }
     currentHeight += entryHeight;
-
-    isFirstEntry = false;
   }
   if (placeholderTop !== 0) {
     visibleEntries.unshift(

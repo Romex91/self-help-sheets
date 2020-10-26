@@ -7,8 +7,6 @@ import {
   Grid,
   Paper,
   IconButton,
-  Backdrop,
-  CircularProgress,
   Button,
   Typography,
 } from "@material-ui/core";
@@ -50,12 +48,8 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     flexDirection: "column",
   },
-
   button: {
-    paddingTop: 20,
-  },
-  backdrop: {
-    zIndex: 1002,
+    marginTop: 20,
   },
 }));
 
@@ -94,7 +88,6 @@ function SettingsContent(props) {
 
   const [signInState, setSignInState] = React.useState(gdriveAuthClient.state);
   const [settings, setSettings] = React.useState(null);
-  const [isLoading, setIsLoading] = React.useState(false);
 
   React.useEffect(() => {
     gdriveAuthClient.addStateListener(setSignInState);
@@ -158,13 +151,11 @@ function SettingsContent(props) {
     if (index === -1) return;
     listClone.splice(index, 1);
 
-    setIsLoading(true);
     const { someValuesAreDeleted, newEntries } = await migrateEmoji(
       props.model,
       settings.emojiList,
       listClone
     );
-    setIsLoading(false);
 
     if (
       someValuesAreDeleted &&
@@ -187,13 +178,11 @@ function SettingsContent(props) {
   const resetDefaults = async () => {
     let newSettings = new Settings();
 
-    setIsLoading(true);
     const { someValuesAreDeleted, newEntries } = await migrateEmoji(
       props.model,
       settings.emojiList,
       newSettings.emojiList
     );
-    setIsLoading(false);
 
     let consent = someValuesAreDeleted
       ? "This will delete some moods from some entries. Reset settings?"
@@ -210,9 +199,6 @@ function SettingsContent(props) {
 
   return (
     <Grid container spacing={4}>
-      <Backdrop className={classes.backdrop} open={isLoading}>
-        <CircularProgress color="inherit" />
-      </Backdrop>
       <Grid item xs={12}>
         <Typography variant="h4" align="center">
           Settings

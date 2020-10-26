@@ -124,6 +124,7 @@ export class BackendMultiplexor extends BackendMap {
               connector: this._createChunkConnector(innerKey.id),
               serializedDescriptions: innerKey.description,
               isFirstChunk,
+              md5Checksum: innerKey.md5Checksum,
             })
           );
         }
@@ -197,8 +198,9 @@ export class BackendMultiplexor extends BackendMap {
   //
   // md5Checksum is common for all subkeys.
   _Chunk = class {
-    constructor({ connector, serializedDescriptions }) {
+    constructor({ connector, serializedDescriptions, md5Checksum }) {
       this._connector = connector;
+      this._initialMd5Checksum = md5Checksum;
       if (serializedDescriptions === undefined) {
         this._values = Array(chunkSize).fill("");
         this._descriptions = [];

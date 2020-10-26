@@ -2,8 +2,9 @@ import React from "react";
 import { Entry } from "./Entry.js";
 import ColumnResizer from "column-resizer";
 import _ from "lodash";
+import moment from "moment";
 
-import { withStyles } from "@material-ui/core";
+import { withStyles, Button } from "@material-ui/core";
 import { VirtualizedList } from "./VirtualizedList";
 
 const styles = (theme) => ({
@@ -75,6 +76,12 @@ const styles = (theme) => ({
       },
     },
   },
+  addNewItem: {
+    "& button": {
+      zIndex: 10,
+    },
+    border: "0 !important",
+  },
 });
 
 function Placeholder({ height, ...rest }) {
@@ -93,15 +100,30 @@ class EntriesTableRaw extends React.PureComponent {
   };
 
   _onEntriesChanged = (entries, settings) => {
-    if (entries.length > 1) {
+    if (entries.length > 0) {
+      function DateEntry(date) {
+        this.key = this.text = moment(date).calendar({
+          sameDay: "[Today], MMM Do, ddd",
+          lastDay: "[Yesterday] , MMM Do, ddd",
+          lastWeek: "MMM Do YYYY, ddd",
+          sameElse: "MMM Do YYYY, ddd",
+        });
+      }
       entries = [...entries];
       let dateToInsert = entries[entries.length - 1].creationTime;
       for (let i = entries.length - 2; i >= 0; i--) {
         let currentCreationTime = entries[i].creationTime;
+
         if (dateToInsert == null) {
-          dateToInsert = entries[i].creationTime;
+          dateToInsert = currentCreationTime;
           continue;
         }
+
+        if (
+          currentCreationTime == null ||
+          currentCreationTime.getTime() < dateToInsert.getTime()
+        )
+          continue;
 
         if (
           currentCreationTime != null &&
@@ -112,11 +134,15 @@ class EntriesTableRaw extends React.PureComponent {
           continue;
         }
 
-        dateToInsert.key = "time" + dateToInsert.getTime();
-        entries.splice(i + 1, 0, dateToInsert);
+        entries.splice(i + 1, 0, new DateEntry(dateToInsert));
         dateToInsert = currentCreationTime;
       }
+
+      if (dateToInsert != null) {
+        entries.splice(0, 0, new DateEntry(dateToInsert));
+      }
     }
+
     this.setState({ entries, settings });
   };
 
@@ -197,6 +223,13 @@ class EntriesTableRaw extends React.PureComponent {
           </thead>
 
           <tbody>
+            <tr className={this.props.classes.addNewItem}>
+              <td colSpan={2}>
+                <Button fullWidth onClick={this.props.model.addNewItem}>
+                  Add new item
+                </Button>
+              </td>
+            </tr>
             <VirtualizedList
               entries={this.state.entries}
               ItemComponent={Entry}
