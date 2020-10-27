@@ -1,26 +1,26 @@
 {
   "files": {
-    "main.css": "/self-help-sheets/static/css/main.d0d2824d.chunk.css",
-    "main.js": "/self-help-sheets/static/js/main.d4086ef3.chunk.js",
-    "main.js.map": "/self-help-sheets/static/js/main.d4086ef3.chunk.js.map",
+    "main.css": "/self-help-sheets/static/css/main.9c7f035d.chunk.css",
+    "main.js": "/self-help-sheets/static/js/main.dd1b7725.chunk.js",
+    "main.js.map": "/self-help-sheets/static/js/main.dd1b7725.chunk.js.map",
     "runtime-main.js": "/self-help-sheets/static/js/runtime-main.85fa248b.js",
     "runtime-main.js.map": "/self-help-sheets/static/js/runtime-main.85fa248b.js.map",
     "static/css/2.c5d2d74c.chunk.css": "/self-help-sheets/static/css/2.c5d2d74c.chunk.css",
-    "static/js/2.9dd6ffdc.chunk.js": "/self-help-sheets/static/js/2.9dd6ffdc.chunk.js",
-    "static/js/2.9dd6ffdc.chunk.js.map": "/self-help-sheets/static/js/2.9dd6ffdc.chunk.js.map",
+    "static/js/2.6ae7749e.chunk.js": "/self-help-sheets/static/js/2.6ae7749e.chunk.js",
+    "static/js/2.6ae7749e.chunk.js.map": "/self-help-sheets/static/js/2.6ae7749e.chunk.js.map",
     "index.html": "/self-help-sheets/index.html",
-    "precache-manifest.d89a11dccc51ad42f8835d108d1f6b6a.js": "/self-help-sheets/precache-manifest.d89a11dccc51ad42f8835d108d1f6b6a.js",
+    "precache-manifest.e53b9bb016578ac4a9d0b596b622926b.js": "/self-help-sheets/precache-manifest.e53b9bb016578ac4a9d0b596b622926b.js",
     "service-worker.js": "/self-help-sheets/service-worker.js",
     "static/css/2.c5d2d74c.chunk.css.map": "/self-help-sheets/static/css/2.c5d2d74c.chunk.css.map",
-    "static/css/main.d0d2824d.chunk.css.map": "/self-help-sheets/static/css/main.d0d2824d.chunk.css.map",
-    "static/js/2.9dd6ffdc.chunk.js.LICENSE.txt": "/self-help-sheets/static/js/2.9dd6ffdc.chunk.js.LICENSE.txt",
+    "static/css/main.9c7f035d.chunk.css.map": "/self-help-sheets/static/css/main.9c7f035d.chunk.css.map",
+    "static/js/2.6ae7749e.chunk.js.LICENSE.txt": "/self-help-sheets/static/js/2.6ae7749e.chunk.js.LICENSE.txt",
     "static/media/index.css": "/self-help-sheets/static/media/roboto-vietnamese-400-normal.a8be5b46.woff2"
   },
   "entrypoints": [
     "static/js/runtime-main.85fa248b.js",
     "static/css/2.c5d2d74c.chunk.css",
-    "static/js/2.9dd6ffdc.chunk.js",
-    "static/css/main.d0d2824d.chunk.css",
-    "static/js/main.d4086ef3.chunk.js"
+    "static/js/2.6ae7749e.chunk.js",
+    "static/css/main.9c7f035d.chunk.css",
+    "static/js/main.dd1b7725.chunk.js"
   ]
 }
