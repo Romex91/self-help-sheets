@@ -49,14 +49,15 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     this._subscriptions.delete(callback);
   }
 
-  addNewItem = async () => {
+  addNewItem = async (omitHistory = false) => {
     const entry = this._tryFindVacantEntry() || (await this._createNewEntry());
     this.onUpdate(
       entry
         .clear()
         .setFocused(true)
         .setInitiallyCollapsed(true)
-        .setCreationTime(new Date(Date.now()))
+        .setCreationTime(new Date(Date.now())),
+      omitHistory
     );
   };
 
@@ -115,7 +116,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
 
     this._entries.set(entry.key, entry);
     this._sendEntryToBackend(entry);
-    this._notifySubscribers();
+    this._onEntriesChanged();
   }
 
   redo() {
@@ -132,7 +133,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
 
     this._entries.set(entry.key, entry);
     this._sendEntryToBackend(entry);
-    this._notifySubscribers();
+    this._onEntriesChanged();
   }
 
   sync = async () => {
@@ -187,7 +188,12 @@ export class EntriesTableModelImpl extends EntriesTableModel {
 
     this._entries = newEntries;
 
-    this._notifySubscribers();
+    if (this._entries.size === 0) {
+      await this.addNewItem(true);
+      return;
+    }
+
+    this._onEntriesChanged();
 
     await Promise.all(promises);
   };
@@ -213,7 +219,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     if (!omitHistory) this._addHistoryItem(entry);
     this._entries.set(entry.key, entry);
 
-    this._notifySubscribers();
+    this._onEntriesChanged();
   };
 
   setIgnoreKeys(ignoreKeys) {
@@ -305,7 +311,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
 
     this._settings = new Settings(serializedSettings);
 
-    this._notifySubscribers();
+    this._onEntriesChanged();
   }
 
   _fetch = async (key) => {
@@ -319,7 +325,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     if (content === undefined) {
       console.error("Key " + key + " is missing");
       this._entries.delete(key);
-      this._notifySubscribers();
+      this._onEntriesChanged();
       return;
     }
 
@@ -359,7 +365,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
       }
     }
 
-    this._notifySubscribers();
+    this._onEntriesChanged();
   };
 
   _getFilteredEntriesArray() {
@@ -368,7 +374,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
       .filter((x) => x.data !== EntryStatus.DELETED && x.key !== null);
   }
 
-  _notifySubscribers() {
+  _onEntriesChanged() {
     const entries = this._getFilteredEntriesArray();
     this._subscriptions.forEach((callback) => {
       callback(entries, this._settings);
