@@ -9,6 +9,7 @@ import _, { initial } from "lodash";
 
 // TESTING DATA
 let testingBackendMap;
+let testingBackendMapRaw;
 let testingAuthClient;
 
 function EntriesSubscription(model) {
@@ -109,7 +110,9 @@ async function expectNewModelToHaveEntries(entries) {
 beforeEach(async () => {
   testingAuthClient = new TestingGDriveAuthClient();
   testingAuthClient.setStateFromTest(GDriveStates.SIGNED_IN);
-  testingBackendMap = sinon.spy(applyQuotaSavers(new TestingBackendMap()));
+
+  testingBackendMapRaw = new TestingBackendMap();
+  testingBackendMap = sinon.spy(applyQuotaSavers(testingBackendMapRaw));
 
   await testingBackendMap.getAllKeys();
 });
@@ -1439,6 +1442,105 @@ test("undo/redo", async () => {
   await sleep(10);
   await expectModelToHaveEntries({ model, entries: entries4 });
 }, 10000);
+
+test("can add new item as early as possible", async () => {
+  await fillTestingBackendMap(10);
+  await sleep(1200);
+  testingBackendMap = sinon.spy(applyQuotaSavers(testingBackendMapRaw));
+  const { model } = createModel();
+  model.addNewItem();
+
+  const entries = await waitForModelFullyLoad(model);
+
+  expect(entries[0].left).toBe("");
+  expect(entries[1].left).toBe("lorem ipsum 0");
+  expect(entries[2].left).toBe("lorem ipsum 1");
+  expect(entries[3].left).toBe("lorem ipsum 2");
+  expect(entries[4].left).toBe("lorem ipsum 3");
+  expect(entries[5].left).toBe("lorem ipsum 4");
+  expect(entries[6].left).toBe("lorem ipsum 5");
+  expect(entries[7].left).toBe("lorem ipsum 6");
+  expect(entries[8].left).toBe("lorem ipsum 7");
+  expect(entries[9].left).toBe("lorem ipsum 8");
+
+  await sleep(1200);
+
+  expect((await testingBackendMapRaw.getAllKeys()).length).toBe(2);
+});
+
+test("can add new item when model is paritally loaded", async () => {
+  await fillTestingBackendMap(16);
+  let { model } = createModel();
+  let entries = await waitForModelFullyLoad(model);
+  model.onUpdate(entries[0].delete());
+  model.onUpdate(entries[1].delete());
+  model.onUpdate(entries[2].delete());
+  model.onUpdate(entries[3].delete());
+  model.onUpdate(entries[4].delete());
+  model.onUpdate(entries[5].delete());
+  model.onUpdate(entries[6].delete());
+  await sleep(1200);
+  model.dispose();
+
+  testingBackendMap = sinon.spy(applyQuotaSavers(testingBackendMapRaw));
+  let subscription;
+  ({ model, subscription } = createModel());
+  entries = (await subscription.waitForNewEntries()).entries;
+
+  model.addNewItem();
+  model.addNewItem();
+  model.addNewItem();
+  model.addNewItem();
+  model.addNewItem();
+  model.addNewItem();
+  model.addNewItem();
+
+  entries = await waitForModelFullyLoad(model);
+
+  expect(entries[0].left).toBe("");
+  expect(entries[1].left).toBe("");
+  expect(entries[2].left).toBe("");
+  expect(entries[3].left).toBe("");
+  expect(entries[4].left).toBe("");
+  expect(entries[5].left).toBe("");
+  expect(entries[6].left).toBe("");
+  expect(entries[7].left).toBe("lorem ipsum 7");
+  expect(entries[8].left).toBe("lorem ipsum 8");
+
+  await sleep(1200);
+
+  expect((await testingBackendMapRaw.getAllKeys()).length).toBe(2);
+
+  // (await testingBackendMapRaw.getAllKeys()).forEach(async (key) => {
+  //   console.log(await testingBackendMapRaw.get(key.id));
+  // });
+  // await sleep(1000);
+});
+
+test("can add new items asynchroniously", async () => {
+  await fillTestingBackendMap(10);
+  const { model, subscription } = createModel();
+  let entries = await waitForModelFullyLoad(model);
+  model.addNewItem();
+  model.addNewItem();
+  model.addNewItem();
+
+  while (entries.length !== 13)
+    entries = (await subscription.waitForNewEntries()).entries;
+
+  expect(entries[0].left).toBe("");
+  expect(entries[1].left).toBe("");
+  expect(entries[2].left).toBe("");
+  expect(entries[3].left).toBe("lorem ipsum 0");
+  expect(entries[4].left).toBe("lorem ipsum 1");
+  expect(entries[5].left).toBe("lorem ipsum 2");
+  expect(entries[6].left).toBe("lorem ipsum 3");
+  expect(entries[7].left).toBe("lorem ipsum 4");
+  expect(entries[8].left).toBe("lorem ipsum 5");
+  expect(entries[9].left).toBe("lorem ipsum 6");
+  expect(entries[10].left).toBe("lorem ipsum 7");
+  expect(entries[11].left).toBe("lorem ipsum 8");
+});
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

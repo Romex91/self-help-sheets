@@ -4,6 +4,7 @@ import { GDriveStates } from "./GDriveAuthClient";
 import { Settings } from "./Settings";
 import { EntryStatus, EntryModel } from "./Entry";
 import _ from "lodash";
+import { Mutex } from "async-mutex";
 
 export class EntriesTableModel extends Interface {
   constructor() {
@@ -50,7 +51,10 @@ export class EntriesTableModelImpl extends EntriesTableModel {
   }
 
   addNewItem = async (omitHistory = false) => {
+    let release = await this._addNewItemMutex.acquire();
+
     const entry = this._tryFindVacantEntry() || (await this._createNewEntry());
+
     this.onUpdate(
       entry
         .clear()
@@ -59,6 +63,8 @@ export class EntriesTableModelImpl extends EntriesTableModel {
         .setCreationTime(new Date(Date.now())),
       omitHistory
     );
+
+    release();
   };
 
   // If user deletes entries from top of the table than keys assigned to these
@@ -74,9 +80,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
       }
     });
 
-    if (lastVacantEntry != null) {
-      return lastVacantEntry;
-    }
+    return lastVacantEntry;
   }
 
   // If there is no deleted entry to reuse the only option is creating a new one.
@@ -231,6 +235,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
   _history = [];
   _authClient = null;
   _backendMap = null;
+  _addNewItemMutex = new Mutex();
 
   // |_entries| is in reverse order.
   // It is natural for |Map| to add new items to the end, but
