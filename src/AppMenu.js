@@ -5,11 +5,7 @@ import { GoogleSignInButton } from "./GoogleSignInButton.js";
 import { HelpWindow } from "./HelpWindow.js";
 import { SettingsWindow } from "./SettingsWindow.js";
 
-import {
-  Settings as SettingsIcon,
-  ArrowDropDown as ArrowIcon,
-  Help as HelpIcon,
-} from "@material-ui/icons";
+import { Settings as SettingsIcon, Help as HelpIcon } from "@material-ui/icons";
 
 import {
   AppBar,
@@ -27,12 +23,8 @@ const useStyles = makeStyles({
   placeholder: {
     flex: 1,
   },
-  showAppBarButton: {
-    position: "fixed",
-    top: 0,
-    left: "50%",
-    transform: "translate(-50%, -30%)",
-    zIndex: 2000,
+  settingsLabel: {
+    paddingRight: 50,
   },
 });
 
@@ -74,11 +66,6 @@ export function AppMenu(props) {
       <Collapse appear={false} in={props.shown}>
         <Toolbar />
       </Collapse>
-      {!props.shown && (
-        <IconButton className={classes.showAppBarButton} onClick={props.onShow}>
-          <ArrowIcon color="primary" fontSize="large" />
-        </IconButton>
-      )}
       <Slide appear={false} direction="down" in={props.shown}>
         <AppBar>
           <Toolbar>
@@ -87,7 +74,9 @@ export function AppMenu(props) {
               <SettingsWindow model={props.model} />
             </ModalWindowButton>
             <Hidden xsDown>
-              <Typography>Settings</Typography>
+              <Typography className={classes.settingsLabel}>
+                Settings
+              </Typography>
             </Hidden>
 
             <Typography

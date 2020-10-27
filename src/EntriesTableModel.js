@@ -105,7 +105,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     return newEntry;
   }
 
-  undo() {
+  undo = () => {
     if (this._historyIndex === 0) return;
 
     this._historyIndex--;
@@ -121,9 +121,9 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     this._entries.set(entry.key, entry);
     this._sendEntryToBackend(entry);
     this._onEntriesChanged();
-  }
+  };
 
-  redo() {
+  redo = () => {
     if (this._historyIndex >= this._history.length) return;
 
     let historyItem = this._history[this._historyIndex++];
@@ -138,7 +138,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     this._entries.set(entry.key, entry);
     this._sendEntryToBackend(entry);
     this._onEntriesChanged();
-  }
+  };
 
   sync = async () => {
     if (this._disposed) return;
@@ -382,7 +382,10 @@ export class EntriesTableModelImpl extends EntriesTableModel {
   _onEntriesChanged() {
     const entries = this._getFilteredEntriesArray();
     this._subscriptions.forEach((callback) => {
-      callback(entries, this._settings);
+      callback(entries, this._settings, {
+        canRedo: this._history.length > this._historyIndex,
+        canUndo: this._history.length > 0 && this._historyIndex > 0,
+      });
     });
   }
 }

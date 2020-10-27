@@ -63,8 +63,13 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AppMenu shown={appBarShown} onShow={showAppBar} model={model}></AppMenu>
-      <AppContent onFocus={onTableEntryFocus} model={model} />
+      <AppMenu shown={appBarShown} model={model}></AppMenu>
+      <AppContent
+        onFocus={onTableEntryFocus}
+        appBarShown={appBarShown}
+        onShowAppBar={showAppBar}
+        model={model}
+      />
     </ThemeProvider>
   );
 }

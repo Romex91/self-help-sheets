@@ -4,8 +4,10 @@ import ColumnResizer from "column-resizer";
 import _ from "lodash";
 import moment from "moment";
 
-import { withStyles, Button } from "@material-ui/core";
+import { withStyles, Button, IconButton, Grid } from "@material-ui/core";
 import { VirtualizedList } from "./VirtualizedList";
+
+import { ArrowDropDown as ArrowIcon } from "@material-ui/icons";
 
 const styles = (theme) => ({
   container: {
@@ -76,11 +78,14 @@ const styles = (theme) => ({
       },
     },
   },
-  addNewItem: {
-    "& button": {
-      zIndex: 10,
-    },
-    border: "0 !important",
+
+  buttonsContainer: {
+    backgroundColor: theme.palette.background.paper,
+  },
+
+  buttons: {
+    display: "flex",
+    justifyContent: "center",
   },
 });
 
@@ -99,7 +104,7 @@ class EntriesTableRaw extends React.PureComponent {
     entries: [],
   };
 
-  _onEntriesChanged = (entries, settings) => {
+  _onEntriesChanged = (entries, settings, { canRedo, canUndo }) => {
     if (entries.length > 0) {
       function DateEntry(date) {
         this.key = this.text = moment(date).calendar({
@@ -143,7 +148,7 @@ class EntriesTableRaw extends React.PureComponent {
       }
     }
 
-    this.setState({ entries, settings });
+    this.setState({ entries, settings, canRedo, canUndo });
   };
 
   _tableRef = React.createRef();
@@ -200,49 +205,89 @@ class EntriesTableRaw extends React.PureComponent {
 
   render() {
     return (
-      <div
-        ref={this._scrollableContainerRef}
-        className={this.props.classes.container}
-        tabIndex={0}
-      >
-        <table
-          cellPadding={0}
-          cellSpacing={0}
-          className={this.props.classes.entriesTable}
-          ref={this._tableRef}
+      <React.Fragment>
+        <Grid
+          className={this.props.classes.buttonsContainer}
+          container
+          justify="space-between"
+          spacing={0}
         >
-          <thead>
-            <tr>
-              <th>
-                <div>issue</div>
-              </th>
-              <th>
-                <div>resolution</div>
-              </th>
-            </tr>
-          </thead>
+          <Grid item xs={1} sm={2}>
+            {!this.props.appBarShown && (
+              <IconButton size="small" onClick={this.props.onShowAppBar}>
+                <ArrowIcon color="primary" />
+              </IconButton>
+            )}
+          </Grid>
+          <Grid className={this.props.classes.buttons} item xs={6} sm={3}>
+            <Button
+              size="small"
+              onClick={() => {
+                this.props.model.addNewItem();
+              }}
+            >
+              Add new item
+            </Button>
+          </Grid>
+          <Grid className={this.props.classes.buttons} item xs={5} sm={2}>
+            <Button
+              fullWidth
+              size="small"
+              fontSize="small"
+              onClick={this.props.model.undo}
+              disabled={!this.state.canUndo}
+            >
+              Undo
+            </Button>
+            <Button
+              fullWidth
+              size="small"
+              fontSize="small"
+              disabled={!this.state.canRedo}
+              onClick={this.props.model.redo}
+            >
+              Redo
+            </Button>
+          </Grid>
+        </Grid>
 
-          <tbody>
-            <tr className={this.props.classes.addNewItem}>
-              <td colSpan={2}>
-                <Button fullWidth onClick={this.props.model.addNewItem}>
-                  Add new item
-                </Button>
-              </td>
-            </tr>
-            <VirtualizedList
-              entries={this.state.entries}
-              ItemComponent={Entry}
-              PlaceholderComponent={Placeholder}
-              scrollableContainerRef={this._scrollableContainerRef}
-              // Additional props for Entry
-              onUpdate={this.props.model.onUpdate}
-              onFocus={this.props.onFocus}
-              settings={this.state.settings}
-            />
-          </tbody>
-        </table>
-      </div>
+        <div
+          ref={this._scrollableContainerRef}
+          className={this.props.classes.container}
+          tabIndex={0}
+        >
+          <table
+            cellPadding={0}
+            cellSpacing={0}
+            className={this.props.classes.entriesTable}
+            ref={this._tableRef}
+          >
+            <thead>
+              <tr>
+                <th>
+                  <div>issue</div>
+                </th>
+                <th>
+                  <div>resolution</div>
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <VirtualizedList
+                entries={this.state.entries}
+                ItemComponent={Entry}
+                PlaceholderComponent={Placeholder}
+                scrollableContainerRef={this._scrollableContainerRef}
+                // Additional props for Entry
+                onUpdate={this.props.model.onUpdate}
+                onFocus={this.props.onFocus}
+                settings={this.state.settings}
+              />
+            </tbody>
+          </table>
+        </div>
+      </React.Fragment>
     );
   }
 }

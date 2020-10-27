@@ -5,7 +5,7 @@ import { TestingGDriveAuthClient } from "./TestingGDriveAuthClient";
 import { EntriesTableModelImpl } from "./EntriesTableModel";
 import { GDriveStates } from "./GDriveAuthClient.js";
 import { EntryModel, EntryStatus } from "./Entry";
-import _, { initial } from "lodash";
+import _ from "lodash";
 
 // TESTING DATA
 let testingBackendMap;
