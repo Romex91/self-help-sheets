@@ -2,6 +2,7 @@ import React from "react";
 import { EntriesTable } from "./EntriesTable.js";
 import { gdriveAuthClient, GDriveStates } from "./GDriveAuthClient";
 import { CenteredTypography } from "./CenteredTypography";
+import { Backdrop, CircularProgress } from "@material-ui/core";
 
 export function AppContent({ model, ...props }) {
   const [signInState, setSignInState] = React.useState(gdriveAuthClient.state);
@@ -14,6 +15,13 @@ export function AppContent({ model, ...props }) {
   } else if (signInState === GDriveStates.SIGNED_OUT) {
     return <CenteredTypography>Sign in to proceed...</CenteredTypography>;
   } else {
-    return <CenteredTypography> Loading...</CenteredTypography>;
+    return (
+      <React.Fragment>
+        <Backdrop invisible open={true}>
+          <CircularProgress color="inherit" />
+        </Backdrop>
+        ;<CenteredTypography> Loading...</CenteredTypography>{" "}
+      </React.Fragment>
+    );
   }
 }
