@@ -44,6 +44,7 @@ const styles = (theme) => ({
     },
     "& td:nth-child(odd)": {
       borderRight: "5px solid #0000",
+      borderLeft: "20px solid #0000",
     },
     "& h5": {
       display: "none",
@@ -67,6 +68,7 @@ const styles = (theme) => ({
 
       "& td:nth-child(odd)": {
         borderRight: 0,
+        borderLeft: 0,
       },
 
       "& tbody td": {
@@ -259,14 +261,11 @@ class EntriesTableRaw extends React.PureComponent {
             className={this.props.classes.entriesTable}
             ref={this._tableRef}
           >
+            {/* ColumnResizer doesn't work without thead */}
             <thead>
               <tr>
-                <th>
-                  <div>issue</div>
-                </th>
-                <th>
-                  <div>resolution</div>
-                </th>
+                <th></th>
+                <th></th>
               </tr>
             </thead>
 
