@@ -17,12 +17,18 @@ const styles = (theme) => ({
     willChange: "transform",
   },
   grip: {
-    width: 10,
-    marginLeft: 5,
+    "&:hover": {
+      backgroundColor: "#00F8",
+      transitionDuration: "0s",
+    },
+    width: 8,
+    zIndex: 10,
     position: "absolute",
     height: "100%",
     backgroundColor: "#0000",
     cursor: "col-resize",
+    transitionProperty: "background-color",
+    transitionDuration: "1s",
   },
   entriesTable: {
     width: "100%",
