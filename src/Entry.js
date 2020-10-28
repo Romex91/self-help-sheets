@@ -337,7 +337,12 @@ function SubItem({
       }}
     >
       <div className={classes.outer}>
-        <div className={classes.inner}>
+        <div
+          className={classes.inner}
+          onClick={() => {
+            inputRef.current.focus();
+          }}
+        >
           {creationTime && (
             <Typography variant="caption" color="textSecondary" align="center">
               {moment(creationTime).format("h:mm a")}
