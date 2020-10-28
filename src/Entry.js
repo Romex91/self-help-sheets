@@ -340,7 +340,8 @@ function SubItem({
         <div
           className={classes.inner}
           onClick={() => {
-            inputRef.current.focus();
+            if (window.getSelection().toString().length === 0)
+              inputRef.current.focus();
           }}
         >
           {creationTime && (
