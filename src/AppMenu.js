@@ -59,7 +59,7 @@ function ModalWindowButton(props) {
         {props.children[0]}
       </IconButton>
       <Modal open={open} onClose={onWindowClose}>
-        {props.children[1]}
+        {React.cloneElement(props.children[1], { onClose: onWindowClose })}
       </Modal>
     </React.Fragment>
   );

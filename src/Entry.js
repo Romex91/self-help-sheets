@@ -231,23 +231,27 @@ export class EntryModel {
   }
 }
 
+const paperStyle = (theme) => ({
+  border: "solid",
+  borderRadius: 4,
+  backgroundColor: theme.palette.background.paper,
+  padding: ({ focused }) => (focused ? 4 : 5),
+  borderWidth: ({ focused }) => {
+    return focused === true ? 2 : 1;
+  },
+  borderColor: ({ focused }) => {
+    return focused === true ? theme.palette.primary.light : "gray";
+  },
+});
+
 const useStyles = makeStyles((theme) => ({
   inner: {
     display: "flex",
     flex: 1,
+
     flexDirection: "column",
     position: "relative",
-    [theme.breakpoints.up("sm")]: {
-      border: "solid",
-      padding: ({ focused }) => (focused ? 4 : 5),
-      borderWidth: ({ focused }) => {
-        return focused === true ? 2 : 1;
-      },
-      borderColor: ({ focused }) => {
-        return focused === true ? theme.palette.primary.light : "gray";
-      },
-      borderRadius: 4,
-    },
+    [theme.breakpoints.up("sm")]: paperStyle(theme),
   },
   input: {
     padding: 0,
@@ -259,22 +263,13 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     alignItems: "flex-start",
     flexDirection: "row",
-    [theme.breakpoints.down("xs")]: {
-      border: "solid",
-      padding: ({ focused }) => (focused ? 4 : 5),
-      borderWidth: ({ focused }) => {
-        return focused === true ? 2 : 1;
-      },
-      borderColor: ({ focused }) => {
-        return focused === true ? theme.palette.primary.light : "gray";
-      },
-      borderRadius: 4,
-    },
+    [theme.breakpoints.down("xs")]: paperStyle(theme),
   },
   date: {
     border: "0px !important",
   },
   hint: {
+    backgroundColor: theme.palette.background.paper,
     whiteSpace: "pre-line",
   },
 }));

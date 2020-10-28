@@ -29,7 +29,7 @@ const useStyles = makeStyles((theme) => ({
     left: "5%",
     width: "90%",
     height: "90%",
-    backgroundColor: theme.palette.background.paper,
+    backgroundColor: theme.palette.background.default,
     zIndex: 1000,
     borderRadius: 4,
     overflow: "auto",
@@ -49,8 +49,13 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     flexDirection: "column",
   },
-  button: {
+  buttons: {
     marginTop: 20,
+    display: "flex",
+    justifyContent: "space-between",
+  },
+  input: {
+    backgroundColor: theme.palette.background.paper,
   },
 }));
 
@@ -77,6 +82,7 @@ function HintControl(props) {
         onChange={(event) =>
           props.onChange(props.value.setText(event.target.value))
         }
+        className={classes.input}
         variant="outlined"
         multiline
       ></TextField>
@@ -199,7 +205,7 @@ function SettingsContent(props) {
   };
 
   return (
-    <Grid container spacing={4}>
+    <Grid container justify="center" spacing={2}>
       <Grid item xs={12}>
         <Typography variant="h4" align="center">
           Settings
@@ -276,13 +282,13 @@ function SettingsContent(props) {
             onEmojiClick={onEmojiClick}
           />
         </Grid>
-        <Grid item xs={12}>
-          <Button
-            className={classes.button}
-            color="secondary"
-            onClick={resetDefaults}
-          >
+        <Grid item xs={12} className={classes.buttons}>
+          <Button color="secondary" onClick={resetDefaults}>
             Reset defaults
+          </Button>
+
+          <Button color="primary" onClick={props.onClose}>
+            Close
           </Button>
         </Grid>
       </Grid>

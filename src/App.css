@@ -4,3 +4,7 @@
   height: 100vh;
   overflow: hidden hidden;
 }
+
+.emoji-picker-react {
+  border: solid lightgray 1px !important;
+}

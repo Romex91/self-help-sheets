@@ -11,6 +11,7 @@ const useStyles = makeStyles((theme) => ({
     border: "solid 2px",
     borderRadius: 4,
     position: "relative",
+    backgroundColor: theme.palette.background.paper,
   },
   setupItem: {
     border: "2px solid",

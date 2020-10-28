@@ -33,7 +33,7 @@ const styles = (theme) => ({
       top: 0,
       position: "sticky",
       borderSpacing: 0,
-      borderBottom: "1px solid #000",
+      borderBottom: "1px solid lightGray",
     },
     "& td": {
       padding: 2,
