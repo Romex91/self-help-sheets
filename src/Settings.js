@@ -106,8 +106,7 @@ export class Settings {
       text:
         "Why is it bad?\n" +
         "What would your therapist say?\n" +
-        "Is your view of the problem biased?\n" +
-        "What would an adequate response be?",
+        "Is your view of the problem biased?",
     });
 
     this._emojiList = [

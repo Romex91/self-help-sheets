@@ -178,7 +178,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     });
 
     let promises = [];
-    promises.push(this._fetchSettings());
+    if (this._settings == null) promises.push(this._fetchSettings());
 
     keys.reverse().forEach((x) => {
       if (x.outdated && newEntries.get(x.id).data !== EntryStatus.HIDDEN) {
@@ -203,6 +203,8 @@ export class EntriesTableModelImpl extends EntriesTableModel {
   };
 
   onSettingsUpdate = _.debounce((settings) => {
+    this._settings = settings;
+    this._onEntriesChanged();
     this._backendMap.setSettings(settings.stringify());
   }, 1000);
 

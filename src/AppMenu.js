@@ -40,7 +40,6 @@ function ModalWindowButton(props) {
 
   const onWindowClose = () => {
     if (props.model != null) {
-      props.model.sync();
       props.model.setIgnoreKeys(false);
     }
 

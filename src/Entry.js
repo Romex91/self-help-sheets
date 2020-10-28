@@ -239,7 +239,8 @@ const useStyles = makeStyles((theme) => ({
   },
   input: {
     padding: 0,
-    minHeight: ({ minHeight }) => minHeight,
+    marginTop: ({ hasCreationTime }) => (hasCreationTime ? 0 : 19),
+    minHeight: ({ hasEmoji }) => (hasEmoji ? 76 : 76 + 28),
     alignItems: "flex-start",
   },
   outer: {
@@ -278,10 +279,6 @@ function SubItem({
   const [focused, setFocused] = React.useState(false);
   const [emojiFocused, setEmojiFocused] = React.useState(false);
 
-  let minHeight = 47;
-  if (!creationTime) minHeight += 19;
-  if (emojiArray.length === 0) minHeight += 28;
-
   React.useEffect(() => {
     if (focused) {
       onFocusOuter(null, true);
@@ -289,7 +286,8 @@ function SubItem({
   }, [focused, onFocusOuter]);
 
   const classes = useStyles({
-    minHeight,
+    hasCreationTime: !!creationTime,
+    hasEmoji: emojiArray.length > 0,
     focused: focused || emojiFocused,
   });
   const inputRef = React.useRef();
@@ -339,6 +337,7 @@ function SubItem({
             className={classes.input}
             fullWidth
             multiline
+            placeholder={!!props.hint ? props.hint.text : ""}
             variant="outlined"
             inputRef={inputRef}
             onFocus={onFocus}
@@ -353,17 +352,19 @@ function SubItem({
             onFocus={onEmojiFocused}
             onBlur={onEmojiBlur}
           ></EmojiPicker>
-          {props.hint != null && props.hint.isEnabled && (
-            <Popup in={focused}>
-              <Typography
-                className={classes.hint}
-                color="textSecondary"
-                padding={10}
-              >
-                {props.hint.text}
-              </Typography>
-            </Popup>
-          )}
+          {props.hint != null &&
+            props.hint.isEnabled &&
+            props.value.length > 0 && (
+              <Popup in={focused}>
+                <Typography
+                  className={classes.hint}
+                  color="textSecondary"
+                  padding={10}
+                >
+                  {props.hint.text}
+                </Typography>
+              </Popup>
+            )}
         </div>
         {!!onDelete && (
           <IconButton aria-label="delete" size="small" onClick={onDelete}>
@@ -404,7 +405,7 @@ export const Entry = React.forwardRef(
             <Collapse in={!collapsed}>
               <Typography variant="body2" align="center" color="textSecondary">
                 {entry.text}
-              </Typography>{" "}
+              </Typography>
             </Collapse>
           </td>
         </tr>
@@ -459,7 +460,6 @@ export const Entry = React.forwardRef(
               }
               color="secondary"
               creationTime={entry.creationTime}
-              placeholder="What bothers you?"
               value={entry.left}
               onChange={(event) =>
                 onEntryChanged(entry.setLeft(event.target.value))
@@ -489,7 +489,6 @@ export const Entry = React.forwardRef(
                 entry.focused && entry.lastChange === LastChange.EDIT_RIGHT
               }
               color="primary"
-              placeholder="What can you do to resolve the problem?"
               variant="outlined"
               value={entry.right}
               onChange={(event) =>

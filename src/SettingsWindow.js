@@ -5,6 +5,7 @@ import {
   Checkbox,
   FormControlLabel,
   Grid,
+  Divider,
   Paper,
   IconButton,
   Button,
@@ -58,9 +59,10 @@ function HintControl(props) {
 
   return (
     <div className={classes.hintContainer}>
+      <Typography variant="h6">{props.label + ":"}</Typography>
       <FormControlLabel
         value="end"
-        label={props.label}
+        label="Enable popup"
         control={
           <Checkbox
             checked={props.value.isEnabled}
@@ -75,7 +77,6 @@ function HintControl(props) {
         onChange={(event) =>
           props.onChange(props.value.setText(event.target.value))
         }
-        disabled={!props.value.isEnabled}
         variant="outlined"
         multiline
       ></TextField>
@@ -204,73 +205,86 @@ function SettingsContent(props) {
           Settings
         </Typography>
       </Grid>
-      <Grid item xs={12}>
-        <Typography variant="h5">Hints:</Typography>
-      </Grid>
 
-      <Grid item xs={12} sm={6}>
-        <HintControl
-          label="Left"
-          value={settings.leftHint}
-          onChange={(value) => {
-            let newSettings = settings.setLeftHint(value);
-            props.model.onSettingsUpdate(newSettings);
-            setSettings(newSettings);
-          }}
-        ></HintControl>
-      </Grid>
-      <Grid item xs={12} sm={6}>
-        <HintControl
-          label="Right"
-          value={settings.rightHint}
-          onChange={(value) => {
-            let newSettings = settings.setRightHint(value);
-            props.model.onSettingsUpdate(newSettings);
-            setSettings(newSettings);
-          }}
-        ></HintControl>
-      </Grid>
-
-      <Grid
-        container
-        alignItems="flex-start"
-        justify="flex-start"
-        alignContent="flex-start"
-        item
-        xs={12}
-        sm={6}
-      >
+      <Grid container item xs={12} spacing={2}>
         <Grid item xs={12}>
-          <Typography variant="h5">Moods: </Typography>
+          <Typography variant="h5">Helper questions</Typography>
         </Grid>
-        {settings.emojiList.map((x) => (
-          <Grid item key={x.codePoint}>
-            <Paper className={classes.emojiIcon}>
-              <Typography>{String.fromCodePoint(x.codePoint)}</Typography>
-              <IconButton onClick={() => onDeleteEmoji(x.codePoint)}>
-                <DeleteIcon></DeleteIcon>
-              </IconButton>
-            </Paper>
-          </Grid>
-        ))}
+
+        <Grid item xs={12} sm={6}>
+          <HintControl
+            label="Left"
+            value={settings.leftHint}
+            onChange={(value) => {
+              let newSettings = settings.setLeftHint(value);
+              props.model.onSettingsUpdate(newSettings);
+              setSettings(newSettings);
+            }}
+          ></HintControl>
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <HintControl
+            label="Right"
+            value={settings.rightHint}
+            onChange={(value) => {
+              let newSettings = settings.setRightHint(value);
+              props.model.onSettingsUpdate(newSettings);
+              setSettings(newSettings);
+            }}
+          ></HintControl>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Divider></Divider>
+        </Grid>
       </Grid>
 
-      <Grid item xs={12} sm={6}>
-        <Typography variant="h5">Add new:</Typography>
-        <MemoizedEmojiPicker
-          disableSkinTonePicker
-          disableAutoFocus
-          onEmojiClick={onEmojiClick}
-        />
-      </Grid>
-      <Grid item xs={12}>
-        <Button
-          className={classes.button}
-          color="secondary"
-          onClick={resetDefaults}
+      <Grid container item xs={12} spacing={2}>
+        <Grid item xs={12}>
+          <Typography variant="h5">Moods</Typography>
+        </Grid>
+
+        <Grid
+          container
+          alignItems="flex-start"
+          justify="flex-start"
+          alignContent="flex-start"
+          item
+          xs={12}
+          sm={6}
         >
-          Reset defaults
-        </Button>
+          <Grid item xs={12}>
+            <Typography variant="h6">Active: </Typography>
+          </Grid>
+          {settings.emojiList.map((x) => (
+            <Grid item key={x.codePoint}>
+              <Paper className={classes.emojiIcon}>
+                <Typography>{String.fromCodePoint(x.codePoint)}</Typography>
+                <IconButton onClick={() => onDeleteEmoji(x.codePoint)}>
+                  <DeleteIcon></DeleteIcon>
+                </IconButton>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <Typography variant="h6">Add new:</Typography>
+          <MemoizedEmojiPicker
+            disableSkinTonePicker
+            disableAutoFocus
+            onEmojiClick={onEmojiClick}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <Button
+            className={classes.button}
+            color="secondary"
+            onClick={resetDefaults}
+          >
+            Reset defaults
+          </Button>
+        </Grid>
       </Grid>
     </Grid>
   );

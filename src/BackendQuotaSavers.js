@@ -152,7 +152,9 @@ export class BackendMultiplexor extends BackendMap {
   }
 
   async setSettings(settingsContent) {
-    return await this._innerBackendMap.setSettings(settingsContent);
+    let release = await this._changeKeysMutex.acquire();
+    await this._innerBackendMap.setSettings(settingsContent);
+    release();
   }
 
   async setDescription(key, description) {
