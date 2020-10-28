@@ -463,7 +463,6 @@ export const Entry = React.forwardRef(
     return (
       <tr ref={ref}>
         <td key="issueElement">
-          <h5>issue</h5>
           {entry.isDataLoaded() ? (
             <SubItem
               autoFocus={
@@ -497,7 +496,6 @@ export const Entry = React.forwardRef(
         </td>
 
         <td key="resolutionElement">
-          <h5>resolution</h5>
           {entry.isDataLoaded() ? (
             <SubItem
               autoFocus={

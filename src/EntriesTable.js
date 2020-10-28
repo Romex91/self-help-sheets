@@ -46,23 +46,16 @@ const styles = (theme) => ({
       borderRight: "5px solid #0000",
       borderLeft: "20px solid #0000",
     },
-    "& h5": {
-      display: "none",
-    },
 
     [theme.breakpoints.down("xs")]: {
       "& thead": {
         display: "none",
       },
 
-      "& h5": {
-        display: "block",
-        margin: 0,
-      },
-
       "& tbody tr": {
         display: "grid",
         padding: 5,
+        borderRadius: 4,
         border: "1px solid #000",
       },
 
