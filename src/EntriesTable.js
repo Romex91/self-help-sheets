@@ -37,11 +37,9 @@ const styles = (theme) => ({
     "& td": {
       padding: 2,
       verticalAlign: "top",
+      borderLeft: "5px solid #0000",
       // ColumnResizer sets it to "hidden". This cuts emoji popups.
       overflow: "inherit !important",
-    },
-    "& td:nth-child(even)": {
-      borderLeft: "5px solid #0000",
     },
     "& td:nth-child(odd)": {
       borderRight: "5px solid #0000",
@@ -66,15 +64,13 @@ const styles = (theme) => ({
         border: "1px solid #000",
       },
 
-      "& td:nth-child(even)": {
-        borderLeft: 0,
-      },
       "& td:nth-child(odd)": {
         borderRight: 0,
       },
 
       "& tbody td": {
         display: "block",
+        borderLeft: 0,
       },
     },
   },

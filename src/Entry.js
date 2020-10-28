@@ -236,6 +236,15 @@ const useStyles = makeStyles((theme) => ({
     flex: 1,
     flexDirection: "column",
     position: "relative",
+    border: "solid",
+    padding: ({ focused }) => (focused ? 4 : 5),
+    borderWidth: ({ focused }) => {
+      return focused === true ? 2 : 1;
+    },
+    borderColor: ({ focused }) => {
+      return focused === true ? theme.palette.primary.light : "gray";
+    },
+    borderRadius: 4,
   },
   input: {
     padding: 0,
@@ -247,15 +256,6 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     alignItems: "flex-start",
     flexDirection: "row",
-    border: "solid",
-    padding: ({ focused }) => (focused ? 4 : 5),
-    borderWidth: ({ focused }) => {
-      return focused === true ? 2 : 1;
-    },
-    borderColor: ({ focused }) => {
-      return focused === true ? theme.palette.primary.light : "gray";
-    },
-    borderRadius: 4,
   },
   date: {
     border: "0px !important",
