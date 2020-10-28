@@ -220,7 +220,7 @@ class EntriesTableRaw extends React.PureComponent {
             <Button
               size="small"
               onClick={() => {
-                this.props.model.addNewItem();
+                this.props.model.addNewItemThrottled();
               }}
             >
               Add new item

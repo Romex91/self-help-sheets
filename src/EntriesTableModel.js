@@ -50,6 +50,10 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     this._subscriptions.delete(callback);
   }
 
+  addNewItemThrottled = _.throttle(() => {
+    this.addNewItem();
+  }, 500);
+
   addNewItem = async (omitHistory = false) => {
     let release = await this._addNewItemMutex.acquire();
 
@@ -263,7 +267,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
         this.redo();
       } else if (e.keyCode === 13) {
         // ENTER
-        this.addNewItem();
+        this.addNewItemThrottled();
       } else return;
       e.preventDefault();
     }
