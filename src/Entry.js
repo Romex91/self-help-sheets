@@ -497,7 +497,7 @@ export const Entry = React.forwardRef(
               {...otherProps}
             ></SubItem>
           ) : (
-            <Skeleton variant="rect" height={106}></Skeleton>
+            <Skeleton variant="rect" height={135}></Skeleton>
           )}
         </td>
 
@@ -532,7 +532,7 @@ export const Entry = React.forwardRef(
               {...otherProps}
             />
           ) : (
-            <Skeleton variant="rect" height={106}></Skeleton>
+            <Skeleton variant="rect" height={135}></Skeleton>
           )}
         </td>
       </tr>
