@@ -17,14 +17,21 @@ import {
   makeStyles,
   Toolbar,
   Typography,
+  Grid,
 } from "@material-ui/core";
 
 const useStyles = makeStyles({
-  placeholder: {
-    flex: 1,
+  buttonsContainer: {
+    display: "flex",
+    justifyContent: "flex-end",
+    alignItems: "center",
   },
-  settingsLabel: {
-    paddingRight: 50,
+
+  titleContainer: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
 
@@ -68,36 +75,41 @@ export function AppMenu(props) {
       <Slide appear={false} direction="down" in={props.shown}>
         <AppBar>
           <Toolbar>
-            <ModalWindowButton model={props.model} edge="start">
-              <SettingsIcon />
-              <SettingsWindow model={props.model} />
-            </ModalWindowButton>
-            <Hidden xsDown>
-              <Typography className={classes.settingsLabel}>
-                Settings
-              </Typography>
-            </Hidden>
-
-            <Typography
-              className={classes.placeholder}
-              variant="body2"
-              align="center"
-            >
-              Self-help sheets
+            <Grid container justify="space-between">
               <Hidden xsDown>
-                <br />
-                Document your inner dialog
+                <Grid item xs={4}></Grid>
               </Hidden>
-            </Typography>
+              <Grid item xs={4} className={classes.titleContainer}>
+                <Hidden xsDown>
+                  <Typography variant="h6" align="center">
+                    Self-help sheets
+                  </Typography>
+                  <Typography variant="caption" align="center">
+                    Document your inner dialog
+                  </Typography>
+                </Hidden>
+                <Hidden smUp>
+                  <Typography variant="h7" align="center">
+                    Self-help sheets
+                  </Typography>
+                </Hidden>
+              </Grid>
+              <Grid item className={classes.buttonsContainer} xs={8} sm={4}>
+                <ModalWindowButton>
+                  <HelpIcon />
+                  <HelpWindow></HelpWindow>
+                </ModalWindowButton>
 
-            <ModalWindowButton>
-              <HelpIcon />
-              <HelpWindow></HelpWindow>
-            </ModalWindowButton>
+                <ModalWindowButton model={props.model} edge="start">
+                  <SettingsIcon />
+                  <SettingsWindow model={props.model} />
+                </ModalWindowButton>
 
-            <GoogleSignInButton
-              gdriveAuthClient={gdriveAuthClient}
-            ></GoogleSignInButton>
+                <GoogleSignInButton
+                  gdriveAuthClient={gdriveAuthClient}
+                ></GoogleSignInButton>
+              </Grid>
+            </Grid>
           </Toolbar>
         </AppBar>
       </Slide>

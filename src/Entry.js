@@ -5,6 +5,7 @@ import {
   makeStyles,
   Typography,
   Collapse,
+  Hidden,
 } from "@material-ui/core";
 import { Skeleton } from "@material-ui/lab";
 import DeleteIcon from "@material-ui/icons/Delete";
@@ -236,15 +237,17 @@ const useStyles = makeStyles((theme) => ({
     flex: 1,
     flexDirection: "column",
     position: "relative",
-    border: "solid",
-    padding: ({ focused }) => (focused ? 4 : 5),
-    borderWidth: ({ focused }) => {
-      return focused === true ? 2 : 1;
+    [theme.breakpoints.up("sm")]: {
+      border: "solid",
+      padding: ({ focused }) => (focused ? 4 : 5),
+      borderWidth: ({ focused }) => {
+        return focused === true ? 2 : 1;
+      },
+      borderColor: ({ focused }) => {
+        return focused === true ? theme.palette.primary.light : "gray";
+      },
+      borderRadius: 4,
     },
-    borderColor: ({ focused }) => {
-      return focused === true ? theme.palette.primary.light : "gray";
-    },
-    borderRadius: 4,
   },
   input: {
     padding: 0,
@@ -256,6 +259,17 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     alignItems: "flex-start",
     flexDirection: "row",
+    [theme.breakpoints.down("xs")]: {
+      border: "solid",
+      padding: ({ focused }) => (focused ? 4 : 5),
+      borderWidth: ({ focused }) => {
+        return focused === true ? 2 : 1;
+      },
+      borderColor: ({ focused }) => {
+        return focused === true ? theme.palette.primary.light : "gray";
+      },
+      borderRadius: 4,
+    },
   },
   date: {
     border: "0px !important",
@@ -274,6 +288,8 @@ function SubItem({
   onEmojiArrayChange,
   onCollapseExited,
   collapsed,
+  deleteXsDown,
+  deleteSmUp,
   ...props
 }) {
   const [focused, setFocused] = React.useState(false);
@@ -366,11 +382,11 @@ function SubItem({
               </Popup>
             )}
         </div>
-        {!!onDelete && (
+        <Hidden xsDown={!deleteXsDown} smUp={!deleteSmUp}>
           <IconButton aria-label="delete" size="small" onClick={onDelete}>
             <DeleteIcon color="action" fontSize="small"></DeleteIcon>
           </IconButton>
-        )}
+        </Hidden>
       </div>
     </Collapse>
   );
@@ -465,6 +481,10 @@ export const Entry = React.forwardRef(
                 onEntryChanged(entry.setLeft(event.target.value))
               }
               onFocus={onFocus}
+              onDelete={() => {
+                setCollapsed(true);
+              }}
+              deleteXsDown
               collapsed={collapsed}
               hint={settings == null ? null : settings.leftHint}
               emojiText="How do you feel now?"
@@ -495,6 +515,7 @@ export const Entry = React.forwardRef(
                 onEntryChanged(entry.setRight(event.target.value))
               }
               onFocus={onFocus}
+              deleteSmUp
               onDelete={() => {
                 setCollapsed(true);
               }}

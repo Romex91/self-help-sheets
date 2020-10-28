@@ -135,7 +135,7 @@ export class GoogleSignInButton extends React.PureComponent {
         <ButtonContent key={2}>
           {this.state.authState === GDriveStates.SIGNED_IN
             ? "Sign Out"
-            : "Sign in with Google"}
+            : "Sign In "}
         </ButtonContent>
 
         {!!alertElement && !!this.state.buttonAnchor && (
