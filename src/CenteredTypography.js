@@ -13,7 +13,7 @@ export function CenteredTypography(props) {
   const classes = useStyles();
   return (
     <div className={classes.container}>
-      <Typography variant="h4" {...props}>
+      <Typography align="center" variant="h4" {...props}>
         {props.children}
       </Typography>
     </div>

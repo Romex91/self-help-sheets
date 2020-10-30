@@ -106,6 +106,10 @@ export function EmojiPicker(props) {
   const popupRef = React.useRef();
   const classes = useStyles(focused);
 
+  let onClick = (event) => {
+    event.stopPropagation();
+  };
+
   let onFocus = (event) => {
     props.onFocus(event);
     setFocus(true);
@@ -170,6 +174,7 @@ export function EmojiPicker(props) {
     <React.Fragment>
       <div
         tabIndex={0}
+        onClick={onClick}
         onFocus={onFocus}
         onBlur={onBlur}
         className={classes.container}

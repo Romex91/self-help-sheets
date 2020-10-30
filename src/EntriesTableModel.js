@@ -16,6 +16,7 @@ export class EntriesTableModel extends Interface {
     this.requireFunction("setIgnoreKeys", "ignoreKeys");
 
     this.requireFunction("addNewItem");
+    this.requireFunction("addNewItemThrottled");
 
     this.requireFunction("undo");
     this.requireFunction("redo");

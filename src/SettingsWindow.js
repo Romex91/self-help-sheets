@@ -1,14 +1,16 @@
 import React from "react";
 import {
-  makeStyles,
-  TextField,
+  Backdrop,
+  Button,
   Checkbox,
+  CircularProgress,
+  Divider,
   FormControlLabel,
   Grid,
-  Divider,
-  Paper,
   IconButton,
-  Button,
+  makeStyles,
+  Paper,
+  TextField,
   Typography,
 } from "@material-ui/core";
 import { Delete as DeleteIcon } from "@material-ui/icons";
@@ -134,7 +136,15 @@ export default function SettingsWindow(props) {
     settings == null ||
     props.model == null
   ) {
-    return <CenteredTypography>Loading...</CenteredTypography>;
+    return (
+      <React.Fragment>
+        <Backdrop invisible open={true}>
+          <CircularProgress color="inherit" />
+        </Backdrop>
+
+        <CenteredTypography>Loading...</CenteredTypography>
+      </React.Fragment>
+    );
   }
 
   const onDeleteEmoji = async (codePoint) => {

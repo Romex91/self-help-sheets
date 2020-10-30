@@ -267,6 +267,8 @@ const useStyles = makeStyles((theme) => ({
   },
   date: {
     border: "0px !important",
+    marginBottom: "0px !important",
+    paddingBottom: "0px !important",
   },
   hint: {
     backgroundColor: theme.palette.background.paper,
@@ -283,6 +285,7 @@ function SubItem({
   onEmojiArrayChange,
   onCollapseExited,
   collapsed,
+  example,
   deleteXsDown,
   deleteSmUp,
   ...props
@@ -339,9 +342,10 @@ function SubItem({
       <div className={classes.outer}>
         <div
           className={classes.inner}
-          onClick={() => {
-            if (window.getSelection().toString().length === 0)
+          onClick={(event) => {
+            if (window.getSelection().toString().length === 0) {
               inputRef.current.focus();
+            }
           }}
         >
           {creationTime && (
@@ -383,9 +387,18 @@ function SubItem({
               </Popup>
             )}
         </div>
+
         <Hidden xsDown={!deleteXsDown} smUp={!deleteSmUp}>
-          <IconButton aria-label="delete" size="small" onClick={onDelete}>
-            <DeleteIcon color="action" fontSize="small"></DeleteIcon>
+          <IconButton
+            disabled={!!example}
+            aria-label="delete"
+            size="small"
+            onClick={onDelete}
+          >
+            <DeleteIcon
+              color={!!example ? "disabled" : "action"}
+              fontSize="small"
+            ></DeleteIcon>
           </IconButton>
         </Hidden>
       </div>
@@ -463,7 +476,7 @@ export const Entry = React.forwardRef(
 
     const onFocus = (event, alreadyFocused) => {
       if (entry.focused) onUpdate(entry.setFocused(false), true);
-      if (!alreadyFocused) onFocusOuter(event);
+      if (!alreadyFocused && !!onFocusOuter) onFocusOuter(event);
     };
 
     return (

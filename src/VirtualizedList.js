@@ -22,13 +22,6 @@ class VirtualizedItem extends React.PureComponent {
   }
 
   componentWillUnmount() {
-    if (
-      this.ref.current.contains(document.activeElement) &&
-      !!this.props.scrollableContainerRef.current
-    ) {
-      this.props.scrollableContainerRef.current.focus();
-    }
-
     if (!!this.#resizeObserver) {
       this.#resizeObserver.disconnect();
       this.#resizeObserver = null;
@@ -53,7 +46,7 @@ export function VirtualizedList({
   scrollableContainerRef,
   ItemComponent,
   PlaceholderComponent,
-  ...restProps
+  ...props
 }) {
   const [scrollY, setScrollY] = React.useState(0);
   const [windowHeight, setWindowHeight] = React.useState(window.innerHeight);
@@ -114,13 +107,16 @@ export function VirtualizedList({
       entryHeight = realHeightsMap.get(entry.key);
     }
 
-    if (currentHeight + entryHeight < scrollY - window.innerHeight) {
+    if (
+      !props.example &&
+      currentHeight + entryHeight < scrollY - window.innerHeight
+    ) {
       if (entry.focused && !!scrollableContainerRef.current) {
         scrollableContainerRef.current.scrollTop = currentHeight;
       }
 
       placeholderTop += entryHeight;
-    } else if (currentHeight < scrollY + 2 * windowHeight) {
+    } else if (!!props.example || currentHeight < scrollY + 2 * windowHeight) {
       visibleEntries.push(
         <VirtualizedItem
           key={entry.key}
@@ -128,7 +124,7 @@ export function VirtualizedList({
           entry={entry}
           ItemComponent={ItemComponent}
           scrollableContainerRef={scrollableContainerRef}
-          {...restProps}
+          {...props}
         />
       );
     } else {

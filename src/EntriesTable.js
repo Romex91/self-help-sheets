@@ -11,8 +11,8 @@ import { VirtualizedList } from "./VirtualizedList";
 import { ArrowDropDown as ArrowIcon } from "@material-ui/icons";
 
 const styles = (theme) => ({
-  container: {
-    overflow: "auto",
+  scrollableContainer: {
+    overflow: (props) => (props.example ? "hide" : "auto"),
     flex: 1,
     willChange: "transform",
   },
@@ -33,14 +33,6 @@ const styles = (theme) => ({
   entriesTable: {
     width: "100%",
     borderSpacing: 0,
-    "& th": {
-      backgroundColor: theme.palette.background.paper,
-      zIndex: 3,
-      top: 0,
-      position: "sticky",
-      borderSpacing: 0,
-      borderBottom: "1px solid lightGray",
-    },
     "& td": {
       padding: 2,
       verticalAlign: "top",
@@ -61,8 +53,10 @@ const styles = (theme) => ({
       "& tbody tr": {
         display: "grid",
         padding: 5,
+        marginBottom: 5,
         borderRadius: 4,
-        border: "1px solid #000",
+        border: "1px solid",
+        borderColor: theme.palette.text.secondary,
       },
 
       "& td:nth-child(odd)": {
@@ -79,6 +73,7 @@ const styles = (theme) => ({
 
   buttonsContainer: {
     backgroundColor: theme.palette.background.paper,
+    borderBottom: "1px solid lightGray",
   },
 
   buttons: {
@@ -123,10 +118,12 @@ class EntriesTableRaw extends React.PureComponent {
         }
 
         if (
-          currentCreationTime == null ||
-          currentCreationTime.getTime() < dateToInsert.getTime()
-        )
+          !this.props.example &&
+          (currentCreationTime == null ||
+            currentCreationTime.getTime() < dateToInsert.getTime())
+        ) {
           continue;
+        }
 
         if (
           currentCreationTime != null &&
@@ -156,6 +153,8 @@ class EntriesTableRaw extends React.PureComponent {
 
   componentDidMount() {
     this.props.model.subscribe(this._onEntriesChanged);
+
+    if (!!this.props.example) return;
 
     this._columnResizer = new ColumnResizer(this._tableRef.current, {
       liveDrag: true,
@@ -197,6 +196,8 @@ class EntriesTableRaw extends React.PureComponent {
   componentWillUnmount() {
     this.props.model.unsubscribe(this._onEntriesChanged);
 
+    if (!!this.props.example) return;
+
     this._columnResizer.destroy();
     this._resizeObserver.unobserve(this._tableRef.current);
   }
@@ -204,55 +205,56 @@ class EntriesTableRaw extends React.PureComponent {
   render() {
     return (
       <React.Fragment>
-        <Grid
-          className={this.props.classes.buttonsContainer}
-          container
-          justify="space-between"
-          spacing={0}
-        >
-          <Grid item xs={1} sm={2}>
-            {!this.props.appBarShown && (
-              <IconButton size="small" onClick={this.props.onShowAppBar}>
-                <ArrowIcon color="primary" />
-              </IconButton>
-            )}
+        {!this.props.example && (
+          <Grid
+            className={this.props.classes.buttonsContainer}
+            container
+            justify="space-between"
+            spacing={0}
+          >
+            <Grid item xs={1} sm={2}>
+              {!this.props.appBarShown && (
+                <IconButton size="small" onClick={this.props.onShowAppBar}>
+                  <ArrowIcon color="primary" />
+                </IconButton>
+              )}
+            </Grid>
+            <Grid className={this.props.classes.buttons} item xs={6} sm={3}>
+              <Button
+                size="small"
+                onClick={() => {
+                  this.props.model.addNewItemThrottled();
+                }}
+              >
+                Add new item
+              </Button>
+            </Grid>
+            <Grid className={this.props.classes.buttons} item xs={5} sm={2}>
+              <Button
+                fullWidth
+                size="small"
+                fontSize="small"
+                onClick={this.props.model.undo}
+                disabled={!this.state.canUndo}
+              >
+                Undo
+              </Button>
+              <Button
+                fullWidth
+                size="small"
+                fontSize="small"
+                disabled={!this.state.canRedo}
+                onClick={this.props.model.redo}
+              >
+                Redo
+              </Button>
+            </Grid>
           </Grid>
-          <Grid className={this.props.classes.buttons} item xs={6} sm={3}>
-            <Button
-              size="small"
-              onClick={() => {
-                this.props.model.addNewItemThrottled();
-              }}
-            >
-              Add new item
-            </Button>
-          </Grid>
-          <Grid className={this.props.classes.buttons} item xs={5} sm={2}>
-            <Button
-              fullWidth
-              size="small"
-              fontSize="small"
-              onClick={this.props.model.undo}
-              disabled={!this.state.canUndo}
-            >
-              Undo
-            </Button>
-            <Button
-              fullWidth
-              size="small"
-              fontSize="small"
-              disabled={!this.state.canRedo}
-              onClick={this.props.model.redo}
-            >
-              Redo
-            </Button>
-          </Grid>
-        </Grid>
+        )}
 
         <div
           ref={this._scrollableContainerRef}
-          className={this.props.classes.container}
-          tabIndex={0}
+          className={this.props.classes.scrollableContainer}
         >
           <table
             cellPadding={0}
@@ -278,6 +280,7 @@ class EntriesTableRaw extends React.PureComponent {
                 onUpdate={this.props.model.onUpdate}
                 onFocus={this.props.onFocus}
                 settings={this.state.settings}
+                example={this.props.example}
               />
             </tbody>
           </table>
