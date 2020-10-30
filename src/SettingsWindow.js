@@ -23,21 +23,6 @@ import { migrateEmoji } from "./migrateEmoji";
 const MemoizedEmojiPicker = React.memo(Picker);
 
 const useStyles = makeStyles((theme) => ({
-  root: {
-    position: "absolute",
-    top: "5%",
-    left: "5%",
-    width: "90%",
-    height: "90%",
-    backgroundColor: theme.palette.background.default,
-    zIndex: 1000,
-    borderRadius: 4,
-    overflow: "auto",
-    padding: 10,
-    [theme.breakpoints.up("sm")]: {
-      padding: 30,
-    },
-  },
   emojiIcon: {
     margin: "0px 5px 5px 0px ",
     fontSize: 20,
@@ -90,7 +75,7 @@ function HintControl(props) {
   );
 }
 
-function SettingsContent(props) {
+export default function SettingsWindow(props) {
   const classes = useStyles();
 
   const [signInState, setSignInState] = React.useState(gdriveAuthClient.state);
@@ -295,13 +280,3 @@ function SettingsContent(props) {
     </Grid>
   );
 }
-
-export const SettingsWindow = React.forwardRef((props, ref) => {
-  let styles = useStyles();
-
-  return (
-    <div className={styles.root} {...props} ref={ref}>
-      <SettingsContent {...props}></SettingsContent>
-    </div>
-  );
-});
