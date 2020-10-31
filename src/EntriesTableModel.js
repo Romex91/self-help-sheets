@@ -13,7 +13,6 @@ export class EntriesTableModel extends Interface {
     this.requireFunction("unsubscribe", "callback");
     this.requireFunction("onUpdate", "entry", "omitHistory");
     this.requireFunction("onSettingsUpdate", "settings");
-    this.requireFunction("setIgnoreKeys", "ignoreKeys");
 
     this.requireFunction("addNewItem");
     this.requireFunction("addNewItemThrottled");
@@ -32,12 +31,10 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     this._backendMap = backendMap;
     this._authClient = authClient;
     this._syncLoop();
-    window.addEventListener("keydown", this._onKeyPress);
   }
 
   dispose() {
     this._disposed = true;
-    window.removeEventListener("keydown", this._onKeyPress);
     this._subscriptions = new Set();
   }
 
@@ -233,10 +230,6 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     this._onEntriesChanged();
   };
 
-  setIgnoreKeys(ignoreKeys) {
-    this._ignoreKeys = ignoreKeys;
-  }
-
   _disposed = false;
   _historyIndex = 0;
   _history = [];
@@ -255,23 +248,6 @@ export class EntriesTableModelImpl extends EntriesTableModel {
   _syncLoop = async () => {
     await this.sync();
     setTimeout(this._syncLoop, 15000);
-  };
-
-  _onKeyPress = (e) => {
-    if (this._ignoreKeys) return;
-    if (e.ctrlKey) {
-      if (e.keyCode === 90) {
-        // Z
-        this.undo();
-      } else if (e.keyCode === 89) {
-        // Y
-        this.redo();
-      } else if (e.keyCode === 13) {
-        // ENTER
-        this.addNewItemThrottled();
-      } else return;
-      e.preventDefault();
-    }
   };
 
   _addHistoryItem(newEntry) {

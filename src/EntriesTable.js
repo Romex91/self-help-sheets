@@ -8,6 +8,7 @@ import { withStyles, Button, IconButton, Grid } from "@material-ui/core";
 
 import { VirtualizedList } from "./VirtualizedList";
 
+import KeyboardEventHandler from "react-keyboard-event-handler";
 import { ArrowDropDown as ArrowIcon } from "@material-ui/icons";
 
 const styles = (theme) => ({
@@ -146,10 +147,56 @@ class EntriesTableRaw extends React.PureComponent {
     this.setState({ entries, settings, canRedo, canUndo });
   };
 
+  _scrollBy = (top) => {
+    requestAnimationFrame(() => {
+      if (this._scrollableContainerRef.current == null) return;
+      const timeSinceLastScroll = Date.now() - this._lastScrollTime;
+      this._lastScrollTime = Date.now();
+
+      this._scrollableContainerRef.current.scrollBy({
+        top,
+        behavior: timeSinceLastScroll > 300 ? "smooth" : "auto",
+      });
+    });
+  };
+
+  _onKeyPress = (key, e) => {
+    if (key === "ctrl+z") {
+      this.props.model.undo();
+      e.preventDefault();
+    } else if (key === "ctrl+y") {
+      this.props.model.redo();
+      e.preventDefault();
+    } else if (key === "ctrl+enter") {
+      this.props.model.addNewItemThrottled();
+      e.preventDefault();
+    } else {
+      // When focused item goes out of |VirtualizedList| browsers reset active element to
+      // |docuent.body| and keypresses "pageup/pagedown/up/down" stop scrolling
+      // |scrollableContainer|.
+      // The code below is a workaround for that.
+      if (e.target.tabIndex === 0) return;
+      if (key === "pageup") {
+        this._scrollBy(-window.innerHeight * 0.8);
+        e.preventDefault();
+      } else if (key === "pagedown") {
+        this._scrollBy(window.innerHeight * 0.8);
+        e.preventDefault();
+      } else if (key === "down") {
+        this._scrollBy(100);
+        e.preventDefault();
+      } else if (key === "up") {
+        this._scrollBy(-100);
+        e.preventDefault();
+      }
+    }
+  };
+
   _tableRef = React.createRef();
   _scrollableContainerRef = React.createRef();
   _columnResizer = null;
   _resizeObserver = null;
+  _lastScrollTime = Date.now();
 
   componentDidMount() {
     this.props.model.subscribe(this._onEntriesChanged);
@@ -205,6 +252,19 @@ class EntriesTableRaw extends React.PureComponent {
   render() {
     return (
       <React.Fragment>
+        <KeyboardEventHandler
+          handleFocusableElements
+          handleKeys={[
+            "ctrl+z",
+            "ctrl+y",
+            "ctrl+enter",
+            "up",
+            "down",
+            "pagedown",
+            "pageup",
+          ]}
+          onKeyEvent={this._onKeyPress}
+        />
         {!this.props.example && (
           <Grid
             className={this.props.classes.buttonsContainer}

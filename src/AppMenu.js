@@ -21,6 +21,7 @@ import { gdriveAuthClient } from "./GDriveAuthClient.js";
 import { GoogleSignInButton } from "./GoogleSignInButton.js";
 import { HelpWindow } from "./HelpWindow.js";
 import { CenteredTypography } from "./CenteredTypography";
+import KeyboardEventHandler from "react-keyboard-event-handler";
 const SettingsWindow = React.lazy(() => import("./SettingsWindow"));
 
 const useStyles = makeStyles((theme) => ({
@@ -55,21 +56,13 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function ModalWindowButton({ setOpen, open, model, ...props }) {
+function ModalWindowButton({ setOpen, open, ...props }) {
   const styles = useStyles();
   const onButtonClick = () => {
     setOpen(true);
   };
 
-  React.useEffect(() => {
-    if (model) model.setIgnoreKeys(open);
-  }, [open, model]);
-
   const onWindowClose = () => {
-    if (model != null) {
-      model.setIgnoreKeys(false);
-    }
-
     setOpen(false);
   };
 
@@ -84,11 +77,12 @@ function ModalWindowButton({ setOpen, open, model, ...props }) {
             fallback={
               <CenteredTypography>
                 Something went wrong. <br />
-                Reload the page.
-                <br /> Ц_Ц
+                Reload the page. <br />
+                Ц_Ц
               </CenteredTypography>
             }
           >
+            <KeyboardEventHandler isExclusive />
             <Suspense
               fallback={
                 <React.Fragment>
@@ -149,11 +143,7 @@ export function AppMenu(props) {
                 </Hidden>
               </Grid>
               <Grid item className={classes.buttonsContainer} xs={8} sm={4}>
-                <ModalWindowButton
-                  model={props.model}
-                  open={helpOpen}
-                  setOpen={setHelpOpen}
-                >
+                <ModalWindowButton open={helpOpen} setOpen={setHelpOpen}>
                   <HelpIcon />
                   <HelpWindow
                     onOpenSettings={() => {
@@ -164,7 +154,6 @@ export function AppMenu(props) {
                 </ModalWindowButton>
 
                 <ModalWindowButton
-                  model={props.model}
                   open={settingsOpen}
                   setOpen={setSettingsOpen}
                   edge="start"
