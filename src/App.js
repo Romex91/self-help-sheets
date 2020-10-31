@@ -27,6 +27,7 @@ function App() {
           primary: { main: prefersDarkMode ? blueGrey[900] : blue[800] },
           background: {
             default: prefersDarkMode ? "#303030" : blueGrey[50],
+            aside: prefersDarkMode ? "#303030" : blueGrey[50],
           },
         },
       }),

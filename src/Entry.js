@@ -254,7 +254,7 @@ const useStyles = makeStyles((theme) => ({
     [theme.breakpoints.up("sm")]: paperStyle(theme),
   },
   input: {
-    padding: 0,
+    padding: "0px 7px",
     marginTop: ({ hasCreationTime }) => (hasCreationTime ? 0 : 19),
     minHeight: ({ hasEmoji }) => (hasEmoji ? 76 : 76 + 28),
     alignItems: "flex-start",

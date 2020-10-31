@@ -40,19 +40,23 @@ const useStyles = makeStyles((theme) => ({
   },
 
   modal: {
-    position: "absolute",
-    top: "5%",
-    left: "5%",
-    width: "90%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  modalWindow: {
+    maxWidth: 1000,
     height: "90%",
+    width: "90%",
     backgroundColor: theme.palette.background.default,
     zIndex: 1000,
     borderRadius: 4,
     overflow: "auto",
     display: "flex",
-    padding: 10,
-    [theme.breakpoints.up("sm")]: {
-      padding: 30,
+    padding: 30,
+    [theme.breakpoints.down("xs")]: {
+      padding: 10,
     },
   },
 }));
@@ -72,8 +76,8 @@ function ModalWindowButton({ setOpen, open, ...props }) {
       <IconButton {...props} onClick={onButtonClick}>
         {props.children[0]}
       </IconButton>
-      <Modal open={open} onClose={onWindowClose}>
-        <div className={styles.modal}>
+      <Modal open={open} className={styles.modal} onClose={onWindowClose}>
+        <div className={styles.modalWindow}>
           <ErrorBoundary
             fallback={
               <CenteredTypography>
