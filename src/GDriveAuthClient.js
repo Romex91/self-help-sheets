@@ -1,3 +1,5 @@
+import isBot from "isbot";
+
 // PUBLIC SECTION
 export const GDriveStates = {
   LOADING: "loading",
@@ -41,6 +43,11 @@ class GDriveAuthClient {
   }
 
   constructor() {
+    if (isBot(window.navigator.userAgent)) {
+      this.#state = GDriveStates.SIGNED_OUT;
+      this._notifyStateChanged();
+    }
+
     loadGapi(async () => {
       try {
         if (!window.gapi) {

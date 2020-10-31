@@ -21,6 +21,7 @@ import { gdriveAuthClient } from "./GDriveAuthClient.js";
 import { GoogleSignInButton } from "./GoogleSignInButton.js";
 import { HelpWindow } from "./HelpWindow.js";
 import { CenteredTypography } from "./CenteredTypography";
+import isBot from "isbot";
 import KeyboardEventHandler from "react-keyboard-event-handler";
 const SettingsWindow = React.lazy(() => import("./SettingsWindow"));
 
@@ -110,7 +111,8 @@ const urlParams = new URLSearchParams(window.location.search);
 export function AppMenu(props) {
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [helpOpen, setHelpOpen] = React.useState(
-    isFirstRender && !!urlParams.get("help")
+    (isFirstRender && !!urlParams.get("help")) ||
+      isBot(window.navigator.userAgent)
   );
 
   const classes = useStyles();
