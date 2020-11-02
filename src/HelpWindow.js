@@ -1,5 +1,6 @@
 import React from "react";
-import { Button, makeStyles } from "@material-ui/core";
+import { IconButton, Button, makeStyles } from "@material-ui/core";
+import { Settings as SettingsIcon } from "@material-ui/icons";
 import { EntriesTable } from "./EntriesTable";
 import { EntriesTableModel } from "./EntriesTableModel";
 import { EntryModel } from "./Entry";
@@ -201,10 +202,10 @@ export const HelpWindow = React.forwardRef((props, ref) => {
         <p>
           A suffering mind tends to speak to itself coloring its view of the
           world negatively. Such thoughts don't help feeling good, instead they
-          defense bad moods. Reactions to negative emotions become negative
-          emotions themselves. When unhappy we talk to ourselves every reason
-          why we are unhappy and this talking produces more unhappiness. Writing
-          is one of the ways of breaking this vicious circle.
+          defend bad moods. Reactions to negative emotions become negative
+          emotions themselves. When unhappy we tell ourselves every reason why
+          we are unhappy and this talking produces more unhappiness. Writing is
+          one of the ways of breaking this vicious circle.
         </p>
         <p>
           Negative thoughts are subconscious, they are crude and contain a lot
@@ -230,15 +231,10 @@ export const HelpWindow = React.forwardRef((props, ref) => {
           (<b>Ctrl+E</b>) and just start answering questions.
         </p>
         <p>
-          If some of the questions don't fit you open{" "}
-          <Button
-            onClick={props.onOpenSettings}
-            size="small"
-            variant="contained"
-            color="primary"
-          >
-            Settings
-          </Button>{" "}
+          If some of the questions don't fit you click
+          <IconButton onClick={props.onOpenSettings} size="small">
+            <SettingsIcon></SettingsIcon>
+          </IconButton>
           and change them.
         </p>
         <aside>
