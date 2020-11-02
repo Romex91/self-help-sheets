@@ -1,30 +1,30 @@
 {
   "files": {
     "main.css": "/self-help-sheets/static/css/main.a3f01916.chunk.css",
-    "main.js": "/self-help-sheets/static/js/main.39feb120.chunk.js",
-    "main.js.map": "/self-help-sheets/static/js/main.39feb120.chunk.js.map",
-    "runtime-main.js": "/self-help-sheets/static/js/runtime-main.eba5a1c2.js",
-    "runtime-main.js.map": "/self-help-sheets/static/js/runtime-main.eba5a1c2.js.map",
+    "main.js": "/self-help-sheets/static/js/main.953eea2e.chunk.js",
+    "main.js.map": "/self-help-sheets/static/js/main.953eea2e.chunk.js.map",
+    "runtime-main.js": "/self-help-sheets/static/js/runtime-main.10c00c02.js",
+    "runtime-main.js.map": "/self-help-sheets/static/js/runtime-main.10c00c02.js.map",
     "static/css/2.c5d2d74c.chunk.css": "/self-help-sheets/static/css/2.c5d2d74c.chunk.css",
-    "static/js/2.232178a1.chunk.js": "/self-help-sheets/static/js/2.232178a1.chunk.js",
-    "static/js/2.232178a1.chunk.js.map": "/self-help-sheets/static/js/2.232178a1.chunk.js.map",
-    "static/js/3.d14e76d3.chunk.js": "/self-help-sheets/static/js/3.d14e76d3.chunk.js",
-    "static/js/3.d14e76d3.chunk.js.map": "/self-help-sheets/static/js/3.d14e76d3.chunk.js.map",
-    "static/js/4.c4f913a2.chunk.js": "/self-help-sheets/static/js/4.c4f913a2.chunk.js",
-    "static/js/4.c4f913a2.chunk.js.map": "/self-help-sheets/static/js/4.c4f913a2.chunk.js.map",
+    "static/js/2.70ffd7a6.chunk.js": "/self-help-sheets/static/js/2.70ffd7a6.chunk.js",
+    "static/js/2.70ffd7a6.chunk.js.map": "/self-help-sheets/static/js/2.70ffd7a6.chunk.js.map",
+    "static/js/3.ca3ebd3e.chunk.js": "/self-help-sheets/static/js/3.ca3ebd3e.chunk.js",
+    "static/js/3.ca3ebd3e.chunk.js.map": "/self-help-sheets/static/js/3.ca3ebd3e.chunk.js.map",
+    "static/js/4.fbf869eb.chunk.js": "/self-help-sheets/static/js/4.fbf869eb.chunk.js",
+    "static/js/4.fbf869eb.chunk.js.map": "/self-help-sheets/static/js/4.fbf869eb.chunk.js.map",
     "index.html": "/self-help-sheets/index.html",
-    "precache-manifest.36c4bd9fdf5e64aff0b23eaaab947272.js": "/self-help-sheets/precache-manifest.36c4bd9fdf5e64aff0b23eaaab947272.js",
+    "precache-manifest.d9ba03ec25fca3f061a8c346969a6ca3.js": "/self-help-sheets/precache-manifest.d9ba03ec25fca3f061a8c346969a6ca3.js",
     "service-worker.js": "/self-help-sheets/service-worker.js",
     "static/css/2.c5d2d74c.chunk.css.map": "/self-help-sheets/static/css/2.c5d2d74c.chunk.css.map",
     "static/css/main.a3f01916.chunk.css.map": "/self-help-sheets/static/css/main.a3f01916.chunk.css.map",
-    "static/js/2.232178a1.chunk.js.LICENSE.txt": "/self-help-sheets/static/js/2.232178a1.chunk.js.LICENSE.txt",
+    "static/js/2.70ffd7a6.chunk.js.LICENSE.txt": "/self-help-sheets/static/js/2.70ffd7a6.chunk.js.LICENSE.txt",
     "static/media/index.css": "/self-help-sheets/static/media/roboto-vietnamese-400-normal.a8be5b46.woff2"
   },
   "entrypoints": [
-    "static/js/runtime-main.eba5a1c2.js",
+    "static/js/runtime-main.10c00c02.js",
     "static/css/2.c5d2d74c.chunk.css",
-    "static/js/2.232178a1.chunk.js",
+    "static/js/2.70ffd7a6.chunk.js",
     "static/css/main.a3f01916.chunk.css",
-    "static/js/main.39feb120.chunk.js"
+    "static/js/main.953eea2e.chunk.js"
   ]
 }
