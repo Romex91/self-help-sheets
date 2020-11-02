@@ -67,7 +67,7 @@ export class ExampleModel extends EntriesTableModel {
           .setCreationTime(new Date(Date.now() - 1000000))
           .setEmojiLeft([1])
           .setEmojiRight([]),
-        new EntryModel(3)
+        new EntryModel(4)
           .setLeft(
             "I worry I'll give up the diary because it is less entertaining than videogames or netflix. "
           )

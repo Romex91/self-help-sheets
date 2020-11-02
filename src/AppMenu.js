@@ -61,15 +61,20 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function ModalWindowButton({ setOpen, open, ...props }) {
+function ModalWindowButton({ setOpen, open, hash, ...props }) {
   const styles = useStyles();
   const onButtonClick = () => {
     setOpen(true);
   };
 
   const onWindowClose = () => {
+    window.history.replaceState(null, null, " ");
     setOpen(false);
   };
+
+  if (open && window.location.hash !== "#" + hash) {
+    window.location.hash = hash;
+  }
 
   return (
     <React.Fragment>
@@ -109,20 +114,28 @@ function ModalWindowButton({ setOpen, open, ...props }) {
   );
 }
 
-let isFirstRender = true;
-const urlParams = new URLSearchParams(window.location.search);
-
 export function AppMenu(props) {
-  const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const [settingsOpen, setSettingsOpen] = React.useState(
+    window.location.hash === "#settings"
+  );
   const [helpOpen, setHelpOpen] = React.useState(
-    (isFirstRender && !!urlParams.get("help")) ||
-      isBot(window.navigator.userAgent)
+    window.location.hash === "#help" || isBot(window.navigator.userAgent)
   );
 
-  const classes = useStyles();
   React.useEffect(() => {
-    isFirstRender = false;
-  }, []);
+    const onHashChange = () => {
+      setSettingsOpen(window.location.hash === "#settings");
+      setHelpOpen(
+        window.location.hash === "#help" || isBot(window.navigator.userAgent)
+      );
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => {
+      window.removeEventListener("hashchange", onHashChange);
+    };
+  });
+
+  const classes = useStyles();
   return (
     <React.Fragment>
       <Collapse appear={false} in={props.shown}>
@@ -149,7 +162,11 @@ export function AppMenu(props) {
                 </Hidden>
               </Grid>
               <Grid item className={classes.buttonsContainer} xs={8} sm={4}>
-                <ModalWindowButton open={helpOpen} setOpen={setHelpOpen}>
+                <ModalWindowButton
+                  hash="help"
+                  open={helpOpen}
+                  setOpen={setHelpOpen}
+                >
                   <HelpIcon />
                   <HelpWindow
                     onOpenSettings={() => {
@@ -162,6 +179,7 @@ export function AppMenu(props) {
                 <ModalWindowButton
                   open={settingsOpen}
                   setOpen={setSettingsOpen}
+                  hash="settings"
                   edge="start"
                 >
                   <SettingsIcon />
