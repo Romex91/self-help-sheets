@@ -273,6 +273,16 @@ export const HelpWindow = React.forwardRef((props, ref) => {
           TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
           SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         </p>
+
+        <p>
+          Found a bug or have a feature request?{" "}
+          <a href="https://github.com/Romex91/self-help-sheets/issues/new">
+            Let me know
+          </a>
+          .
+        </p>
+
+        <p> Copyright (c) 2020 Roman Kuksin</p>
       </section>
 
       <div className={classes.stretched}>
