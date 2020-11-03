@@ -1,39 +1,55 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "68b8b720987c737bb59102b3ea6564e1",
+    "revision": "25b58d4f59796bb081291d33795dea2b",
     "url": "/self-help-sheets/index.html"
   },
   {
-    "revision": "310f16480b6c89ce5417",
-    "url": "/self-help-sheets/static/css/2.c5d2d74c.chunk.css"
+    "revision": "4eeacadc9af8fd1ccca9",
+    "url": "/self-help-sheets/static/css/4.c5d2d74c.chunk.css"
   },
   {
-    "revision": "aeaacabaeb31ee8c8c04",
+    "revision": "42a90737d738b87fce8a",
     "url": "/self-help-sheets/static/css/main.a3f01916.chunk.css"
   },
   {
-    "revision": "310f16480b6c89ce5417",
-    "url": "/self-help-sheets/static/js/2.70ffd7a6.chunk.js"
+    "revision": "9c13daa38fab86387097",
+    "url": "/self-help-sheets/static/js/0.5a4c2147.chunk.js"
   },
   {
-    "revision": "82d265533fd0b4372fda749c06faf9be",
-    "url": "/self-help-sheets/static/js/2.70ffd7a6.chunk.js.LICENSE.txt"
+    "revision": "8e7fa176b006150306288bd092a696c0",
+    "url": "/self-help-sheets/static/js/0.5a4c2147.chunk.js.LICENSE.txt"
   },
   {
-    "revision": "bb32c6aa5917f57d1551",
-    "url": "/self-help-sheets/static/js/3.ca3ebd3e.chunk.js"
+    "revision": "f2ac52c655709692630e",
+    "url": "/self-help-sheets/static/js/1.dea887e5.chunk.js"
   },
   {
-    "revision": "ce7636885ecfebde5f99",
-    "url": "/self-help-sheets/static/js/4.fbf869eb.chunk.js"
+    "revision": "4eeacadc9af8fd1ccca9",
+    "url": "/self-help-sheets/static/js/4.43988995.chunk.js"
   },
   {
-    "revision": "aeaacabaeb31ee8c8c04",
-    "url": "/self-help-sheets/static/js/main.4d5d6bfa.chunk.js"
+    "revision": "68d36767ccf1200ebd9e928dca1afb2d",
+    "url": "/self-help-sheets/static/js/4.43988995.chunk.js.LICENSE.txt"
   },
   {
-    "revision": "87a28e5cbb8379e5bb23",
-    "url": "/self-help-sheets/static/js/runtime-main.10c00c02.js"
+    "revision": "bae51ad80ff713297d8e",
+    "url": "/self-help-sheets/static/js/5.5492afd8.chunk.js"
+  },
+  {
+    "revision": "ae2c32ab687952687d72",
+    "url": "/self-help-sheets/static/js/6.ff2a8b1c.chunk.js"
+  },
+  {
+    "revision": "888c582418d925f575b0",
+    "url": "/self-help-sheets/static/js/7.3a0bcb11.chunk.js"
+  },
+  {
+    "revision": "42a90737d738b87fce8a",
+    "url": "/self-help-sheets/static/js/main.e02b8cd4.chunk.js"
+  },
+  {
+    "revision": "7508e4fa56742253f9fc",
+    "url": "/self-help-sheets/static/js/runtime-main.53849fc4.js"
   },
   {
     "revision": "c762d850e2e8d0e29047608715196736",
