@@ -104,8 +104,11 @@ export class ExampleModel extends EntriesTableModel {
 let useStyles = makeStyles((theme) => ({
   article: {
     display: "grid",
-    gridTemplateColumns:
-      "[first-line] repeat(auto-fill, minmax(350px, 1fr)) [last-line]",
+    gridTemplateColumns: "[first-line] 1fr [last-line]",
+    [theme.breakpoints.up("sm")]: {
+      gridTemplateColumns: "[first-line] 1fr 1fr [last-line]",
+    },
+
     gridGap: "1rem",
     gridAutoFlow: "dense",
 
