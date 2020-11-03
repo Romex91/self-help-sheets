@@ -1,8 +1,8 @@
 {
   "files": {
     "main.css": "/self-help-sheets/static/css/main.a3f01916.chunk.css",
-    "main.js": "/self-help-sheets/static/js/main.5320ecc2.chunk.js",
-    "main.js.map": "/self-help-sheets/static/js/main.5320ecc2.chunk.js.map",
+    "main.js": "/self-help-sheets/static/js/main.4d5d6bfa.chunk.js",
+    "main.js.map": "/self-help-sheets/static/js/main.4d5d6bfa.chunk.js.map",
     "runtime-main.js": "/self-help-sheets/static/js/runtime-main.10c00c02.js",
     "runtime-main.js.map": "/self-help-sheets/static/js/runtime-main.10c00c02.js.map",
     "static/css/2.c5d2d74c.chunk.css": "/self-help-sheets/static/css/2.c5d2d74c.chunk.css",
@@ -13,7 +13,7 @@
     "static/js/4.fbf869eb.chunk.js": "/self-help-sheets/static/js/4.fbf869eb.chunk.js",
     "static/js/4.fbf869eb.chunk.js.map": "/self-help-sheets/static/js/4.fbf869eb.chunk.js.map",
     "index.html": "/self-help-sheets/index.html",
-    "precache-manifest.e5afc1cd2575a8acd444531f32fdc519.js": "/self-help-sheets/precache-manifest.e5afc1cd2575a8acd444531f32fdc519.js",
+    "precache-manifest.b9f5ca335fd34e9090502e11e424edc5.js": "/self-help-sheets/precache-manifest.b9f5ca335fd34e9090502e11e424edc5.js",
     "service-worker.js": "/self-help-sheets/service-worker.js",
     "static/css/2.c5d2d74c.chunk.css.map": "/self-help-sheets/static/css/2.c5d2d74c.chunk.css.map",
     "static/css/main.a3f01916.chunk.css.map": "/self-help-sheets/static/css/main.a3f01916.chunk.css.map",
@@ -25,6 +25,6 @@
     "static/css/2.c5d2d74c.chunk.css",
     "static/js/2.70ffd7a6.chunk.js",
     "static/css/main.a3f01916.chunk.css",
-    "static/js/main.5320ecc2.chunk.js"
+    "static/js/main.4d5d6bfa.chunk.js"
   ]
 }
