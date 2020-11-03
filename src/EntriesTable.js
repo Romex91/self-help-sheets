@@ -161,13 +161,13 @@ class EntriesTableRaw extends React.PureComponent {
   };
 
   _onKeyPress = (key, e) => {
-    if (key === "ctrl+z") {
+    if (key === "ctrl+z" || key === "cmd+z") {
       this.props.model.undo();
       e.preventDefault();
-    } else if (key === "ctrl+y") {
+    } else if (key === "ctrl+y" || key === "cmd+y") {
       this.props.model.redo();
       e.preventDefault();
-    } else if (key === "ctrl+enter") {
+    } else if (key === "ctrl+enter" || key === "cmd+enter") {
       this.props.model.addNewItemThrottled();
       e.preventDefault();
     } else {
@@ -256,8 +256,11 @@ class EntriesTableRaw extends React.PureComponent {
           handleFocusableElements
           handleKeys={[
             "ctrl+z",
+            "cmd+z",
             "ctrl+y",
+            "cmd+y",
             "ctrl+enter",
+            "cmd+enter",
             "up",
             "down",
             "pagedown",
