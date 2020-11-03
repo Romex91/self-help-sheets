@@ -104,7 +104,7 @@ let useStyles = makeStyles((theme) => ({
   article: {
     display: "grid",
     gridTemplateColumns:
-      "[first-line] repeat(auto-fill, minmax(300px, 1fr)) [last-line]",
+      "[first-line] repeat(auto-fill, minmax(350px, 1fr)) [last-line]",
     gridGap: "1rem",
     gridAutoFlow: "dense",
 
@@ -129,6 +129,8 @@ let useStyles = makeStyles((theme) => ({
       "& aside": {
         border: "1px solid lightGray",
         borderRadius: 4,
+        alignSelf: "center",
+        maxWidth: 500,
         margin: "0px 0px 20px 0px",
         padding: "10px 10px 0px 10px",
         backgroundColor: theme.palette.background.aside,
@@ -141,6 +143,14 @@ let useStyles = makeStyles((theme) => ({
       borderRadius: 4,
       padding: "10px 10px 0px 10px",
       backgroundColor: theme.palette.background.paper,
+    },
+
+    "& footer": {
+      padding: 20,
+      paddingTop: 0,
+      display: "flex",
+      justifyContent: "space-between",
+      flexDirection: "row",
     },
   },
 
@@ -228,7 +238,7 @@ export const HelpWindow = React.forwardRef((props, ref) => {
         <h4>How to use it?</h4>
         <p>
           When something bothers you open the site and click <b>ADD NEW ITEM</b>{" "}
-          (<b>Ctrl+E</b>) and just start answering questions.
+          (<b>Ctrl+Enter</b>) and just start answering questions.
         </p>
         <p>
           If some of the questions don't fit you click
@@ -274,22 +284,26 @@ export const HelpWindow = React.forwardRef((props, ref) => {
           SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         </p>
 
-        <p>
-          Found a bug or have a feature request?{" "}
-          <a href="https://github.com/Romex91/self-help-sheets/issues/new">
-            Let me know
-          </a>
-          .
-        </p>
-
-        <p> Copyright (c) 2020 Roman Kuksin</p>
+        <aside>
+          <p>
+            This is an Open Source{" "}
+            <a href="https://github.com/Romex91/self-help-sheets">project</a>{" "}
+            under the MIT License. <br />
+            Report a bug or request a feature:{" "}
+            <a href="https://github.com/Romex91/self-help-sheets/issues/new">
+              issue form
+            </a>
+            .
+          </p>
+        </aside>
       </section>
 
-      <div className={classes.stretched}>
+      <footer className={classes.stretched}>
+        <p> Copyright © 2020 Roman Kuksin</p>
         <Button color="primary" onClick={props.onClose}>
           Close
         </Button>
-      </div>
+      </footer>
     </article>
   );
 });
