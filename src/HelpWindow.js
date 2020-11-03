@@ -1,11 +1,12 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { IconButton, Button, makeStyles } from "@material-ui/core";
 import { Settings as SettingsIcon } from "@material-ui/icons";
-import { EntriesTable } from "./EntriesTable";
 import { EntriesTableModel } from "./EntriesTableModel";
-import { EntryModel } from "./Entry";
+import { EntryModel } from "./EntryModel";
 import { Settings } from "./Settings";
+import { LoadingPlaceholder } from "./LoadingPlaceholder";
 import classnames from "classnames";
+const EntriesTable = React.lazy(() => import("./EntriesTable"));
 
 export class ExampleModel extends EntriesTableModel {
   subscribe(callback) {
@@ -269,7 +270,9 @@ export const HelpWindow = React.forwardRef((props, ref) => {
       >
         <h4>A fictional example of a boy struggling with his fear of cats:</h4>
 
-        <EntriesTable example model={new ExampleModel()}></EntriesTable>
+        <Suspense fallback={<LoadingPlaceholder />}>
+          <EntriesTable example model={new ExampleModel()}></EntriesTable>
+        </Suspense>
       </section>
 
       <section className={classes.stretched}>

@@ -13,7 +13,7 @@ import { AppMenu } from "./AppMenu.js";
 import { AppContent } from "./AppContent.js";
 import { gdriveMap } from "./GDriveMap";
 import { gdriveAuthClient, GDriveStates } from "./GDriveAuthClient";
-import { EntriesTableModelImpl } from "./EntriesTableModel";
+
 import { applyQuotaSavers } from "./BackendQuotaSavers";
 
 function App() {
@@ -47,8 +47,10 @@ function App() {
   const [model, setModel] = React.useState(null);
 
   React.useEffect(() => {
-    gdriveAuthClient.addStateListener((newState) => {
+    const importPromise = import("./EntriesTableModelImpl");
+    gdriveAuthClient.addStateListener(async (newState) => {
       if (newState === GDriveStates.SIGNED_IN) {
+        const { EntriesTableModelImpl } = await importPromise;
         setModel(
           new EntriesTableModelImpl(
             applyQuotaSavers(gdriveMap),

@@ -1,9 +1,7 @@
 import React from "react";
 import {
-  Backdrop,
   Button,
   Checkbox,
-  CircularProgress,
   Divider,
   FormControlLabel,
   Grid,
@@ -19,6 +17,7 @@ import Picker from "emoji-picker-react";
 import { gdriveAuthClient, GDriveStates } from "./GDriveAuthClient";
 import { CenteredTypography } from "./CenteredTypography";
 import { Settings } from "./Settings";
+import { LoadingPlaceholder } from "./LoadingPlaceholder";
 
 import { migrateEmoji } from "./migrateEmoji";
 
@@ -136,15 +135,7 @@ export default function SettingsWindow(props) {
     settings == null ||
     props.model == null
   ) {
-    return (
-      <React.Fragment>
-        <Backdrop invisible open={true}>
-          <CircularProgress color="inherit" />
-        </Backdrop>
-
-        <CenteredTypography>Loading...</CenteredTypography>
-      </React.Fragment>
-    );
+    return <LoadingPlaceholder />;
   }
 
   const onDeleteEmoji = async (codePoint) => {

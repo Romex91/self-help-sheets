@@ -4,8 +4,6 @@ import { ErrorBoundary } from "react-error-boundary";
 import { Settings as SettingsIcon, Help as HelpIcon } from "@material-ui/icons";
 import {
   AppBar,
-  Backdrop,
-  CircularProgress,
   Collapse,
   Grid,
   Hidden,
@@ -17,6 +15,7 @@ import {
   Typography,
 } from "@material-ui/core";
 
+import { LoadingPlaceholder } from "./LoadingPlaceholder";
 import { gdriveAuthClient } from "./GDriveAuthClient.js";
 import { GoogleSignInButton } from "./GoogleSignInButton.js";
 import { HelpWindow } from "./HelpWindow.js";
@@ -93,16 +92,7 @@ function ModalWindowButton({ setOpen, open, hash, ...props }) {
             }
           >
             <KeyboardEventHandler isExclusive />
-            <Suspense
-              fallback={
-                <React.Fragment>
-                  <Backdrop invisible open={true}>
-                    <CircularProgress color="inherit" />
-                  </Backdrop>
-                  <CenteredTypography>Loading...</CenteredTypography>
-                </React.Fragment>
-              }
-            >
+            <Suspense fallback={<LoadingPlaceholder />}>
               {React.cloneElement(props.children[1], {
                 onClose: onWindowClose,
               })}

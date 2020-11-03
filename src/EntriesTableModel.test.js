@@ -2,7 +2,7 @@ import sinon from "sinon";
 import { TestingBackendMap } from "./TestingBackendMap";
 import { applyQuotaSavers } from "./BackendQuotaSavers";
 import { TestingGDriveAuthClient } from "./TestingGDriveAuthClient";
-import { EntriesTableModelImpl } from "./EntriesTableModel";
+import { EntriesTableModelImpl } from "./EntriesTableModelImpl";
 import { GDriveStates } from "./GDriveAuthClient.js";
 import { EntryModel, EntryStatus } from "./Entry";
 import _ from "lodash";

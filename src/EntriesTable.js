@@ -352,4 +352,4 @@ class EntriesTableRaw extends React.PureComponent {
     );
   }
 }
-export const EntriesTable = withStyles(styles)(EntriesTableRaw);
+export default withStyles(styles)(EntriesTableRaw);
