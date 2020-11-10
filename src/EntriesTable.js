@@ -164,7 +164,12 @@ class EntriesTableRaw extends React.PureComponent {
     if (key === "ctrl+z" || key === "cmd+z") {
       this.props.model.undo();
       e.preventDefault();
-    } else if (key === "ctrl+y" || key === "cmd+y") {
+    } else if (
+      key === "ctrl+y" ||
+      key === "cmd+y" ||
+      key === "ctrl+shift+z" ||
+      key === "cmd+shift+z"
+    ) {
       this.props.model.redo();
       e.preventDefault();
     } else if (key === "ctrl+enter" || key === "cmd+enter") {
@@ -257,6 +262,8 @@ class EntriesTableRaw extends React.PureComponent {
           handleKeys={[
             "ctrl+z",
             "cmd+z",
+            "ctrl+shift+z",
+            "cmd+shift+z",
             "ctrl+y",
             "cmd+y",
             "ctrl+enter",
