@@ -4,7 +4,7 @@ import { applyQuotaSavers } from "./BackendQuotaSavers";
 import { TestingGDriveAuthClient } from "./TestingGDriveAuthClient";
 import { EntriesTableModelImpl } from "./EntriesTableModelImpl";
 import { GDriveStates } from "./GDriveAuthClient.js";
-import { EntryModel, EntryStatus } from "./Entry";
+import { EntryModel, EntryStatus } from "./EntryModel";
 import _ from "lodash";
 
 // TESTING DATA

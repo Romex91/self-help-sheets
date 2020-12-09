@@ -1,7 +1,7 @@
 import { BackendMap } from "./BackendMap.js";
 import md5 from "md5";
 
-import { EntryModel } from "./Entry";
+import { EntryModel } from "./EntryModel";
 
 BackendMap.prototype.addEntry = async function (left, right) {
   let key = await this.createKey();
