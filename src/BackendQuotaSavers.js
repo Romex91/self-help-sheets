@@ -101,13 +101,12 @@ export class BackendMultiplexor extends BackendMap {
     let release = await this._changeKeysMutex.acquire();
     try {
       let newInnerKeys = await this._innerBackendMap.getAllKeys();
+      if (newInnerKeys == null) return null;
       let outerKeys = [];
       let newChunks = new Map();
-      let counter = 0;
 
       newInnerKeys.forEach((innerKey) => {
         let outdated = true;
-        let isFirstChunk = counter++ === 0;
 
         if (this._chunks.has(innerKey.id)) {
           let chunk = this._chunks.get(innerKey.id);
@@ -123,7 +122,6 @@ export class BackendMultiplexor extends BackendMap {
             new this._Chunk({
               connector: this._createChunkConnector(innerKey.id),
               serializedDescriptions: innerKey.description,
-              isFirstChunk,
               md5Checksum: innerKey.md5Checksum,
             })
           );
@@ -363,10 +361,11 @@ export class BackendMultiplexor extends BackendMap {
 
     _fetchValuesSynchronised = async () => {
       if (this._fetchPromise == null) {
-        this._fetchPromise = this._fetchValues();
+        this._fetchPromise = this._fetchValues().finally(() => {
+          this._fetchPromise = null;
+        });
       }
       await this._fetchPromise;
-      this._fetchPromise = null;
     };
     _fetchPromise = null;
     _fetchValues = async () => {
@@ -426,7 +425,7 @@ export class ErrorHandler extends BackendMap {
       try {
         return await callback();
       } catch (error) {
-        let secondsToNextRetry = 1 * 3 ** retriesCount++;
+        let secondsToNextRetry = 1 * 2 ** retriesCount++;
         console.error(
           `Failed running ${callback.name} : ${error.message}. Will try again after ${secondsToNextRetry} seconds.`
         );

@@ -135,6 +135,7 @@ export class EntriesTableModelImpl extends EntriesTableModel {
     }
 
     let keys = await this._backendMap.getAllKeys();
+    if (keys == null) return;
 
     let newEntries = new Map();
 
@@ -297,8 +298,6 @@ export class EntriesTableModelImpl extends EntriesTableModel {
 
     if (content === undefined) {
       console.error("Key " + key + " is missing");
-      this._entries.delete(key);
-      this._onEntriesChanged();
       return;
     }
 

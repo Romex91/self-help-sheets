@@ -180,25 +180,21 @@ async function download(fileId) {
 
 // returns file ids sorted by creation time
 async function find(query) {
-  try {
-    let ret = [];
-    let token;
-    do {
-      const resp = await prom(window.gapi.client.drive.files.list, {
-        spaces: "appDataFolder",
-        fields: "files(id, description, md5Checksum), nextPageToken",
-        pageSize: 1000,
-        pageToken: token,
-        orderBy: "createdTime",
-        q: query,
-      });
-      ret = ret.concat(resp.result.files);
-      token = resp.result.nextPageToken;
-    } while (token);
-    return ret;
-  } catch {
-    return [];
-  }
+  let ret = [];
+  let token;
+  do {
+    const resp = await prom(window.gapi.client.drive.files.list, {
+      spaces: "appDataFolder",
+      fields: "files(id, description, md5Checksum), nextPageToken",
+      pageSize: 1000,
+      pageToken: token,
+      orderBy: "createdTime",
+      q: query,
+    });
+    ret = ret.concat(resp.result.files);
+    token = resp.result.nextPageToken;
+  } while (token);
+  return ret;
 }
 
 async function deleteFile(fileId) {
