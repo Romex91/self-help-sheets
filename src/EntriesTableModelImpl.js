@@ -298,6 +298,10 @@ export class EntriesTableModelImpl extends EntriesTableModel {
 
     if (content === undefined) {
       console.error("Key " + key + " is missing");
+      if (!this._entries.get(key).isDataLoaded()) {
+        this._entries.delete(key);
+        this._onEntriesChanged();
+      }
       return;
     }
 
