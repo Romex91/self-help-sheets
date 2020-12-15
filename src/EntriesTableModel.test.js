@@ -1,6 +1,6 @@
 import sinon from "sinon";
 import { TestingBackendMap } from "./TestingBackendMap";
-import { applyQuotaSavers } from "./BackendQuotaSavers";
+import { applyQuotaSavers } from "./BackendQuotaSavers/BackendMultiplexor";
 import { TestingGDriveAuthClient } from "./TestingGDriveAuthClient";
 import { EntriesTableModelImpl } from "./EntriesTableModelImpl";
 import { GDriveStates } from "./GDriveAuthClient.js";

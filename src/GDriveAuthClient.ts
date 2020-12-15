@@ -1,40 +1,38 @@
 import isBot from "isbot";
 
 // PUBLIC SECTION
-export const GDriveStates = {
-  LOADING: "loading",
-  SIGNED_IN: "signed_in",
-  SIGNED_OUT: "signed_out",
-  FAILED: "failed",
+export enum GDriveStates {
+  LOADING= "loading",
+  SIGNED_IN= "signed_in",
+  SIGNED_OUT= "signed_out",
+  FAILED= "failed",
 };
-Object.freeze(GDriveStates);
 
-class GDriveAuthClient {
-  #state = GDriveStates.LOADING;
-  #stateListeners = new Set();
+interface StateListener {
+  (state: GDriveStates) : void
+}
+
+export class GDriveAuthClient {
+  _state: GDriveStates = GDriveStates.LOADING;
+  _stateListeners: Set<StateListener> = new Set();
 
   get state() {
-    return this.#state;
+    return this._state;
   }
 
-  addStateListener(listener) {
-    console.assert(typeof listener == "function");
-    console.assert(listener.length === 1);
-    console.assert(!this.#stateListeners.has(listener));
-
-    this.#stateListeners.add(listener);
+  addStateListener(listener:StateListener) {
+    console.assert(!this._stateListeners.has(listener));
+    this._stateListeners.add(listener);
   }
 
-  removeStateListener(listener) {
-    console.assert(typeof listener == "function");
-    console.assert(listener.length === 1);
-    console.assert(this.#stateListeners.has(listener));
-    this.#stateListeners.delete(listener);
+  removeStateListener(listener:StateListener) {
+    console.assert(this._stateListeners.has(listener));
+    this._stateListeners.delete(listener);
   }
 
   async waitForStateChange() {
     return await new Promise((resolve) => {
-      let listener = (state) => {
+      const listener = (state: GDriveStates) => {
         this.removeStateListener(listener);
         resolve(state);
       };
@@ -44,7 +42,7 @@ class GDriveAuthClient {
 
   constructor() {
     if (isBot(window.navigator.userAgent)) {
-      this.#state = GDriveStates.SIGNED_OUT;
+      this._state = GDriveStates.SIGNED_OUT;
       this._notifyStateChanged();
     }
 
@@ -54,7 +52,7 @@ class GDriveAuthClient {
           throw new Error("Failed loading GAPI");
         }
 
-        await new Promise((resolve) =>
+        await new Promise<void>((resolve) =>
           window.gapi.load("client:auth2", resolve)
         );
 
@@ -78,7 +76,7 @@ class GDriveAuthClient {
           .isSignedIn.listen(this._updateSignInState.bind(this));
       } catch (error) {
         console.log(error);
-        this.#state = GDriveStates.FAILED;
+        this._state = GDriveStates.FAILED;
         this._notifyStateChanged();
         return;
       }
@@ -87,7 +85,7 @@ class GDriveAuthClient {
 
   signIn() {
     console.assert(isGapiLoaded());
-    if (!!window.mocha) {
+    if ((window as unknown as {mocha: unknown}).mocha != undefined) {
       window.gapi.auth2.getAuthInstance().signIn();
     } else {
       window.gapi.auth2.getAuthInstance().signIn({
@@ -103,28 +101,27 @@ class GDriveAuthClient {
   }
 
   _notifyStateChanged() {
-    for (let listener of this.#stateListeners) {
-      listener(this.#state);
+    for (let listener of Array.from(this._stateListeners)) {
+      listener(this._state);
     }
   }
 
   _updateSignInState() {
-    console.assert(this.#state !== GDriveStates.FAILED);
+    console.assert(this._state !== GDriveStates.FAILED);
     let current_state = isSignedIn()
       ? GDriveStates.SIGNED_IN
       : GDriveStates.SIGNED_OUT;
-    if (this.#state !== current_state) {
-      this.#state = current_state;
+    if (this._state !== current_state) {
+      this._state = current_state;
       this._notifyStateChanged();
     }
   }
 }
 
 export const gdriveAuthClient = new GDriveAuthClient();
-Object.seal(gdriveAuthClient);
 
 // PRIVATE SECTION
-function loadGapi(ondone) {
+function loadGapi(ondone: ()=>void) {
   console.assert(typeof ondone == "function");
   console.assert(ondone.length === 0);
   var script = document.createElement("script");

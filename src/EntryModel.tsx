@@ -1,21 +1,53 @@
-export const EntryStatus = {
+export enum EntryStatus {
   // The http request for the text of the entry has been sent.
-  LOADING: "loading",
+  LOADING = "loading",
   // This entry has never been rendered because user never
   // scrolled to its position.
-  HIDDEN: "hidden",
+  HIDDEN = "hidden",
   // User pressed DELETE button.
-  DELETED: "deleted",
-};
+  DELETED = "deleted",
+}
 
-export const LastChange = {
-  EDIT_LEFT: "editLeft",
-  EDIT_RIGHT: "editRight",
-  NONE: "none",
-};
+export enum LastChange {
+  EDIT_LEFT,
+  EDIT_RIGHT,
+  NONE,
+}
+
+export interface EntryData {
+  left: string;
+  right: string;
+}
+
+function isEntryData(data: EntryData | EntryStatus): data is EntryData {
+  const entryData = data as EntryData;
+  return entryData.left !== undefined && entryData.right !== undefined;
+}
 
 // EntryModel is immutable. setLeft setRight delete and clear return a new copy.
 export class EntryModel {
+  _initiallyCollapsed;
+  _focused;
+
+  private _description: string = "";
+
+  // Cached values for performance. Gets recomputed only when setDescription is called.
+  private _emojiArrays: [number[], number[]] = [[], []];
+  private _creationTime?: Date;
+
+  private lastChange: LastChange = LastChange.NONE;
+
+  constructor(
+    private _key: string,
+    private _data: EntryData | EntryStatus,
+    description: string
+  ) {
+    this._initiallyCollapsed = false;
+    this._focused = false;
+
+    this._setDescriptionImpl(description);
+  }
+
   isDataLoaded() {
     return (
       this._data !== EntryStatus.LOADING && this._data !== EntryStatus.HIDDEN
@@ -35,18 +67,18 @@ export class EntryModel {
     if (!this.isDataLoaded()) return "";
     return this._description;
   }
-  setDescription(description) {
+  setDescription(description: string) {
     const cloneModel = this.clone();
     cloneModel._setDescriptionImpl(description);
     return cloneModel;
   }
 
   get left() {
-    if (!this.isDataLoaded()) return "";
+    if (!isEntryData(this._data)) return "";
     return this._data.left;
   }
-  setLeft(left) {
-    if (!this.isDataLoaded()) {
+  setLeft(left: string) {
+    if (!isEntryData(this._data)) {
       console.error("bad status");
       return this;
     }
@@ -58,11 +90,11 @@ export class EntryModel {
   }
 
   get right() {
-    if (!this.isDataLoaded()) return "";
+    if (!isEntryData(this._data)) return "";
     return this._data.right;
   }
-  setRight(right) {
-    if (!this.isDataLoaded()) {
+  setRight(right: string) {
+    if (!isEntryData(this._data)) {
       console.error("bad status");
       return this;
     }
@@ -77,7 +109,7 @@ export class EntryModel {
     return this._emojiArrays;
   }
 
-  setEmojiLeft(left) {
+  setEmojiLeft(left: number[]) {
     let result = this.setDescription(
       EntryModel._generateDescription(
         left,
@@ -89,7 +121,7 @@ export class EntryModel {
     return result;
   }
 
-  setEmojiRight(right) {
+  setEmojiRight(right: number[]) {
     let result = this.setDescription(
       EntryModel._generateDescription(
         this._emojiArrays[0],
@@ -104,7 +136,7 @@ export class EntryModel {
   get creationTime() {
     return this._creationTime;
   }
-  setCreationTime(creationTime) {
+  setCreationTime(creationTime: Date) {
     return this.setDescription(
       EntryModel._generateDescription(
         this._emojiArrays[0],
@@ -117,7 +149,7 @@ export class EntryModel {
   get initiallyCollapsed() {
     return this._initiallyCollapsed;
   }
-  setInitiallyCollapsed(collapsed) {
+  setInitiallyCollapsed(collapsed: boolean) {
     const cloneModel = this.clone();
     cloneModel._initiallyCollapsed = collapsed;
     return cloneModel;
@@ -126,7 +158,7 @@ export class EntryModel {
   get focused() {
     return this._focused;
   }
-  setFocused(focused) {
+  setFocused(focused: boolean) {
     const cloneModel = this.clone();
     cloneModel._focused = focused;
     return cloneModel;
@@ -148,7 +180,7 @@ export class EntryModel {
 
   clone() {
     // this.data creates shallow copy of this._data
-    const cloneModel = new EntryModel(this._key, this.data);
+    const cloneModel = new EntryModel(this._key, this.data, "");
     cloneModel._emojiArrays = this._emojiArrays;
     cloneModel._creationTime = this._creationTime;
     cloneModel._description = this._description;
@@ -159,58 +191,39 @@ export class EntryModel {
     return cloneModel;
   }
 
-  constructor(key, data, description) {
-    this._data = data;
-    this._key = key;
-    this._initiallyCollapsed = false;
-    this._focused = false;
-    this.lastChange = LastChange.NONE;
-    this._setDescriptionImpl(description);
-  }
-
-  _data;
-  _description;
-  _key;
-
-  _initiallyCollapsed;
-  _focused;
-
-  // Cached values for performance. Got recomputed only when setDescription is called.
-  _emojiArrays;
-  _creationTime;
-
-  _setDescriptionImpl(description) {
+  _setDescriptionImpl(description: string) {
     this._emojiArrays = [[], []];
-    this._creationTime = null;
+    this._creationTime = undefined;
     this._description = description;
-    if (
-      typeof description === "string" &&
-      description.length > 0 &&
-      description !== EntryStatus.DELETED
-    ) {
+    if (description.length > 0 && description !== EntryStatus.DELETED) {
       const [serializedEmoji, serializedCreationTime] = description.split("-");
 
-      this._emojiArrays = serializedEmoji
+      const [leftEmoji = [], rightEmoji = []] = serializedEmoji
         .split(":")
         .map((x) => Array.from(x).map((y) => Number(y)));
-      if (this._emojiArrays.length !== 2) this._emojiArrays.push([]);
+
+      this._emojiArrays = [leftEmoji, rightEmoji];
 
       this._creationTime = new Date(Number(serializedCreationTime));
       if (isNaN(this._creationTime.getTime())) {
-        this._creationTime = null;
+        this._creationTime = undefined;
       }
     }
   }
 
-  static _generateDescription(left, right, creationTime) {
+  static _generateDescription(
+    leftEmoji: number[],
+    rightEmoji: number[],
+    creationTime?: Date
+  ) {
     let descrciption;
-    if (left.every((x) => x === 0) && right.every((x) => x === 0)) {
+    if (leftEmoji.every((x) => x === 0) && rightEmoji.every((x) => x === 0)) {
       descrciption = "";
     } else {
-      descrciption = left.join("") + ":" + right.join("");
+      descrciption = leftEmoji.join("") + ":" + rightEmoji.join("");
     }
 
-    if (creationTime != null)
+    if (creationTime != undefined)
       descrciption = descrciption + "-" + creationTime.getTime();
     return descrciption;
   }

@@ -1,4 +1,4 @@
-import { BackendMap } from "./BackendMap.js";
+import { BackendMap } from "./BackendMap";
 import md5 from "md5";
 
 import { EntryModel } from "./EntryModel";

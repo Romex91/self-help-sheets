@@ -9,7 +9,7 @@ const useStyles = makeStyles({
     alignItems: "center",
   },
 });
-export function CenteredTypography(props) {
+export function CenteredTypography(props: any) {
   const classes = useStyles();
   return (
     <div className={classes.container}>

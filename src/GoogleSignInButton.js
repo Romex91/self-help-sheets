@@ -1,6 +1,6 @@
 import React from "react";
 import Icon from "./googleIcon";
-import { GDriveStates } from "./GDriveAuthClient.js";
+import { GDriveStates } from "./GDriveAuthClient";
 import Popper from "@material-ui/core/Popper";
 import { Alert, AlertTitle } from "@material-ui/lab";
 

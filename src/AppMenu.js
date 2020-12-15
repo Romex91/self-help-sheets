@@ -16,9 +16,9 @@ import {
 } from "@material-ui/core";
 
 import { LoadingPlaceholder } from "./LoadingPlaceholder";
-import { gdriveAuthClient } from "./GDriveAuthClient.js";
-import { GoogleSignInButton } from "./GoogleSignInButton.js";
-import { HelpWindow } from "./HelpWindow.js";
+import { gdriveAuthClient } from "./GDriveAuthClient";
+import { GoogleSignInButton } from "./GoogleSignInButton";
+import { HelpWindow } from "./HelpWindow.tsx";
 import { CenteredTypography } from "./CenteredTypography";
 import isBot from "isbot";
 import KeyboardEventHandler from "react-keyboard-event-handler";

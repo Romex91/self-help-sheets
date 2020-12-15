@@ -57,7 +57,7 @@ realBrowserTest("GDrive.test.js", async () => {
   );
   let { TestingBackendMap } = await import("./TestingBackendMap.js");
   let { applyQuotaSavers, BackendMultiplexor } = await import(
-    "./BackendQuotaSavers.js"
+    "./BackendQuotaSavers/BackendMultiplexor.js"
   );
   let { gdriveMap: realGdriveMap } = await import("./GDriveMap.js");
 
@@ -309,7 +309,7 @@ realBrowserTest("GDrive.test.js", async () => {
     "./GDriveAuthClient.js"
   );
 
-  let { applyQuotaSavers } = await import("./BackendQuotaSavers.js");
+  let { applyQuotaSavers } = await import("./BackendQuotaSavers/BackendMultiplexor.js");
 
   let gdriveMap = applyQuotaSavers((await import("./GDriveMap.js")).gdriveMap);
 

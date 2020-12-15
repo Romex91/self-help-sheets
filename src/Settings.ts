@@ -1,6 +1,24 @@
-class Hint {
-  _isEnabled;
-  _text;
+import assert  from "assert";
+
+interface HintData {
+  isEnabled: boolean;
+  text: string;
+}
+
+interface EmojiItem {
+  codePoint: number;
+  text: string;
+}
+
+interface SettingsData {
+  emojiList: EmojiItem[];
+  leftHint: HintData;
+  rightHint: HintData;
+}
+
+class Hint implements HintData {
+  private _isEnabled: boolean = false;
+  private _text: string = "";
 
   get isEnabled() {
     return this._isEnabled;
@@ -9,32 +27,41 @@ class Hint {
     return this._text;
   }
 
-  setIsEnabled(isEnabled) {
+  setIsEnabled(isEnabled: boolean) {
     return new Hint({ isEnabled, text: this._text });
   }
 
-  setText(text) {
+  setText(text: string) {
     return new Hint({ text, isEnabled: this._isEnabled });
   }
 
-  constructor(data) {
-    if (typeof data === "string") data = JSON.parse(data);
+  // TODO: write tests with wrong settings format
 
-    if (typeof data.isEnabled !== "boolean" || typeof data.text !== "string")
+  constructor(data: HintData | string) {
+    if (typeof data === "string") data = JSON.parse(data) as HintData;
+    assert(typeof data !== "string");
+
+    if (
+      data == undefined ||
+      data.text == undefined ||
+      data.isEnabled == undefined
+    )
       throw new Error("Wrong hint data " + JSON.stringify(data));
+
     this._isEnabled = data.isEnabled;
     this._text = data.text;
   }
-
-  stringify() {
-    return JSON.stringify({ isEnabled: this._isEnabled, text: this._text });
-  }
 }
 
-export class Settings {
+export class Settings implements SettingsData {
+  _emojiList: EmojiItem[] = [];
+  _leftHint: HintData = { isEnabled: false, text: "" };
+  _rightHint: HintData = { isEnabled: false, text: "" };
+
   get emojiList() {
     return this._emojiList;
   }
+
   get leftHint() {
     return this._leftHint;
   }
@@ -42,14 +69,14 @@ export class Settings {
     return this._rightHint;
   }
 
-  setEmojiList(emojiList) {
+  setEmojiList(emojiList: EmojiItem[]) {
     return new Settings({
       emojiList,
       leftHint: this._leftHint,
       rightHint: this._rightHint,
     });
   }
-  setLeftHint(leftHint) {
+  setLeftHint(leftHint: HintData) {
     return new Settings({
       emojiList: this._emojiList,
       leftHint,
@@ -57,7 +84,7 @@ export class Settings {
     });
   }
 
-  setRightHint(rightHint) {
+  setRightHint(rightHint: HintData) {
     return new Settings({
       emojiList: this._emojiList,
       leftHint: this._leftHint,
@@ -68,14 +95,15 @@ export class Settings {
   stringify() {
     return JSON.stringify({
       emojiList: this._emojiList,
-      leftHint: this._leftHint.stringify(),
-      rightHint: this._rightHint.stringify(),
+      leftHint: JSON.stringify(this._leftHint),
+      rightHint: JSON.stringify(this._rightHint),
     });
   }
 
-  constructor(json) {
+  constructor(json: string | SettingsData) {
     try {
-      if (typeof json === "string") json = JSON.parse(json);
+      if (typeof json === "string") json = JSON.parse(json) as SettingsData;
+      assert(typeof json !== "string");
 
       if (
         !Array.isArray(json.emojiList) ||
@@ -120,8 +148,4 @@ export class Settings {
       { codePoint: 0x1f922, text: "disgust" },
     ];
   }
-
-  _emojiList;
-  _leftHint;
-  _rightHint;
 }

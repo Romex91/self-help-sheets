@@ -9,12 +9,20 @@ import {
 } from "@material-ui/core";
 import { blue, blueGrey } from "@material-ui/core/colors";
 
-import { AppMenu } from "./AppMenu.js";
-import { AppContent } from "./AppContent.js";
+import { AppMenu } from "./AppMenu";
+import { AppContent } from "./AppContent";
 import { gdriveMap } from "./GDriveMap";
 import { gdriveAuthClient, GDriveStates } from "./GDriveAuthClient";
+import { EntriesTableModel } from "./EntriesTableModel";
 
-import { applyQuotaSavers } from "./BackendQuotaSavers";
+import { applyQuotaSavers } from "./BackendQuotaSavers/BackendMultiplexor";
+
+// Widen MUI color pallete by adding |aside| to make typescript happy.
+declare module "@material-ui/core/styles/createPalette" {
+  interface TypeBackground {
+    aside: string;
+  }
+}
 
 function App() {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
@@ -44,7 +52,9 @@ function App() {
     setAppBarShown(true);
   }, []);
 
-  const [model, setModel] = React.useState(null);
+  const [model, setModel] = React.useState<EntriesTableModel | undefined>(
+    undefined
+  );
 
   React.useEffect(() => {
     const importPromise = import("./EntriesTableModelImpl");
@@ -60,7 +70,7 @@ function App() {
       } else {
         setModel((oldModel) => {
           if (!!oldModel) oldModel.dispose();
-          return null;
+          return undefined;
         });
       }
     });

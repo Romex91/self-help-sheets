@@ -1,18 +1,18 @@
 import React, { Suspense } from "react";
 import { IconButton, Button, makeStyles } from "@material-ui/core";
 import { Settings as SettingsIcon } from "@material-ui/icons";
-import { EntriesTableModel } from "./EntriesTableModel";
+import { EntriesTableModel, EntriesSubscription } from "./EntriesTableModel";
 import { EntryModel } from "./EntryModel";
 import { Settings } from "./Settings";
 import { LoadingPlaceholder } from "./LoadingPlaceholder";
 import classnames from "classnames";
 const EntriesTable = React.lazy(() => import("./EntriesTable"));
 
-export class ExampleModel extends EntriesTableModel {
-  subscribe(callback) {
+export class ExampleModel implements EntriesTableModel {
+  subscribe(callback: EntriesSubscription) {
     callback(
       [
-        new EntryModel(0)
+        new EntryModel("0", { left: "", right: "" }, "")
           .setLeft(
             "Mom is going to gift a cat to my beloved and not-at-all-annoying sister Ann. It's a disaster. My life is going to turn into a living nightmare!"
           )
@@ -23,7 +23,7 @@ export class ExampleModel extends EntriesTableModel {
           .setCreationTime(new Date(Date.now() - 901000000))
           .setEmojiLeft([3, 0, 0, 0, 3])
           .setEmojiRight([1, 0, 0, 0, 2]),
-        new EntryModel(1)
+        new EntryModel("1", { left: "", right: "" }, "")
           .setLeft(
             "I talked to Mom. She didn't believe me. Adults never repsect kids. I hate her for that! And what should I do now? I'm pissed off and scared at the same time."
           )
@@ -38,7 +38,7 @@ export class ExampleModel extends EntriesTableModel {
           .setCreationTime(new Date(Date.now() - 900000000))
           .setEmojiLeft([3, 0, 0, 0, 3, 0, 3])
           .setEmojiRight([1, 0, 0, 0, 2, 0, 0, 0]),
-        new EntryModel(2)
+        new EntryModel("2", { left: "", right: "" }, "")
           .setLeft(
             "Ann overheard my conversation with Mom and gossiped my fear of cats to my classmates.\n" +
               "They meow every time they see me. The crappiest part is their meowing scares me and I cannot hide it.\n" +
@@ -58,7 +58,7 @@ export class ExampleModel extends EntriesTableModel {
           .setCreationTime(new Date(Date.now() - 800000000))
           .setEmojiLeft([0, 3, 0, 3])
           .setEmojiRight([0, 0, 0, 0, 0, 0, 3]),
-        new EntryModel(3)
+        new EntryModel("3", { left: "", right: "" }, "")
           .setLeft(
             "Writing this diary takes time. I could have more fun if I stop writing it."
           )
@@ -69,7 +69,7 @@ export class ExampleModel extends EntriesTableModel {
           .setCreationTime(new Date(Date.now() - 1000000))
           .setEmojiLeft([1])
           .setEmojiRight([]),
-        new EntryModel(4)
+        new EntryModel("4", { left: "", right: "" }, "")
           .setLeft(
             "I worry I'll give up the diary because it is less entertaining than videogames or netflix. "
           )
@@ -86,7 +86,7 @@ export class ExampleModel extends EntriesTableModel {
           .setEmojiLeft([0, 2])
           .setEmojiRight([]),
       ],
-      new Settings(),
+      new Settings(""),
       { canRedo: false, canUndo: false }
     );
   }
@@ -99,6 +99,7 @@ export class ExampleModel extends EntriesTableModel {
   redo() {}
   addNewItemThrottled() {}
   sync() {}
+  dispose(): void {}
 }
 
 let useStyles = makeStyles((theme) => ({
@@ -177,7 +178,10 @@ let useStyles = makeStyles((theme) => ({
   },
 }));
 
-export const HelpWindow = React.forwardRef((props, ref) => {
+export const HelpWindow = React.forwardRef<
+  HTMLElement,
+  { onClose: () => void; onOpenSettings: () => void }
+>((props, ref) => {
   let classes = useStyles();
 
   return (
