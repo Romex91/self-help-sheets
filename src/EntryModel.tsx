@@ -29,13 +29,13 @@ export class EntryModel {
   _initiallyCollapsed;
   _focused;
 
-  private _description: string = "";
+  private _description = "";
 
   // Cached values for performance. Gets recomputed only when setDescription is called.
   private _emojiArrays: [number[], number[]] = [[], []];
   private _creationTime?: Date;
 
-  private lastChange: LastChange = LastChange.NONE;
+  public lastChange: LastChange = LastChange.NONE;
 
   constructor(
     private _key: string,
@@ -45,39 +45,39 @@ export class EntryModel {
     this._initiallyCollapsed = false;
     this._focused = false;
 
-    this._setDescriptionImpl(description);
+    this.setDescriptionImpl(description);
   }
 
-  isDataLoaded() {
+  isDataLoaded(): boolean {
     return (
       this._data !== EntryStatus.LOADING && this._data !== EntryStatus.HIDDEN
     );
   }
 
-  get data() {
+  get data(): EntryData | EntryStatus {
     if (this._data instanceof Object) return { ...this._data };
     return this._data;
   }
 
-  get key() {
+  get key(): string {
     return this._key;
   }
 
-  get description() {
+  get description(): string {
     if (!this.isDataLoaded()) return "";
     return this._description;
   }
-  setDescription(description: string) {
+  setDescription(description: string): EntryModel {
     const cloneModel = this.clone();
-    cloneModel._setDescriptionImpl(description);
+    cloneModel.setDescriptionImpl(description);
     return cloneModel;
   }
 
-  get left() {
+  get left(): string {
     if (!isEntryData(this._data)) return "";
     return this._data.left;
   }
-  setLeft(left: string) {
+  setLeft(left: string): EntryModel {
     if (!isEntryData(this._data)) {
       console.error("bad status");
       return this;
@@ -89,11 +89,11 @@ export class EntryModel {
     return cloneModel;
   }
 
-  get right() {
+  get right(): string {
     if (!isEntryData(this._data)) return "";
     return this._data.right;
   }
-  setRight(right: string) {
+  setRight(right: string): EntryModel {
     if (!isEntryData(this._data)) {
       console.error("bad status");
       return this;
@@ -105,12 +105,12 @@ export class EntryModel {
     return cloneModel;
   }
 
-  get emojiArrays() {
+  get emojiArrays(): [number[], number[]] {
     return this._emojiArrays;
   }
 
-  setEmojiLeft(left: number[]) {
-    let result = this.setDescription(
+  setEmojiLeft(left: number[]): EntryModel {
+    const result = this.setDescription(
       EntryModel._generateDescription(
         left,
         this._emojiArrays[1],
@@ -121,8 +121,8 @@ export class EntryModel {
     return result;
   }
 
-  setEmojiRight(right: number[]) {
-    let result = this.setDescription(
+  setEmojiRight(right: number[]): EntryModel {
+    const result = this.setDescription(
       EntryModel._generateDescription(
         this._emojiArrays[0],
         right,
@@ -133,10 +133,10 @@ export class EntryModel {
     return result;
   }
 
-  get creationTime() {
+  get creationTime(): Date | undefined {
     return this._creationTime;
   }
-  setCreationTime(creationTime: Date) {
+  setCreationTime(creationTime: Date): EntryModel {
     return this.setDescription(
       EntryModel._generateDescription(
         this._emojiArrays[0],
@@ -146,39 +146,39 @@ export class EntryModel {
     );
   }
 
-  get initiallyCollapsed() {
+  get initiallyCollapsed(): boolean {
     return this._initiallyCollapsed;
   }
-  setInitiallyCollapsed(collapsed: boolean) {
+  setInitiallyCollapsed(collapsed: boolean): EntryModel {
     const cloneModel = this.clone();
     cloneModel._initiallyCollapsed = collapsed;
     return cloneModel;
   }
 
-  get focused() {
+  get focused(): boolean {
     return this._focused;
   }
-  setFocused(focused: boolean) {
+  setFocused(focused: boolean): EntryModel {
     const cloneModel = this.clone();
     cloneModel._focused = focused;
     return cloneModel;
   }
 
-  delete() {
+  delete(): EntryModel {
     return new EntryModel(this._key, EntryStatus.DELETED, EntryStatus.DELETED);
   }
 
-  clear() {
+  clear(): EntryModel {
     return new EntryModel(this._key, { left: "", right: "" }, "");
   }
 
-  show() {
+  show(): EntryModel {
     if (this._data !== EntryStatus.HIDDEN)
       throw new Error("show() has been called for entry that is not hidden");
     return new EntryModel(this._key, EntryStatus.LOADING, this._description);
   }
 
-  clone() {
+  clone(): EntryModel {
     // this.data creates shallow copy of this._data
     const cloneModel = new EntryModel(this._key, this.data, "");
     cloneModel._emojiArrays = this._emojiArrays;
@@ -191,7 +191,7 @@ export class EntryModel {
     return cloneModel;
   }
 
-  _setDescriptionImpl(description: string) {
+  private setDescriptionImpl(description: string): void {
     this._emojiArrays = [[], []];
     this._creationTime = undefined;
     this._description = description;
@@ -215,7 +215,7 @@ export class EntryModel {
     leftEmoji: number[],
     rightEmoji: number[],
     creationTime?: Date
-  ) {
+  ): string {
     let descrciption;
     if (leftEmoji.every((x) => x === 0) && rightEmoji.every((x) => x === 0)) {
       descrciption = "";

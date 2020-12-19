@@ -9,7 +9,35 @@ import classnames from "classnames";
 const EntriesTable = React.lazy(() => import("./EntriesTable"));
 
 export class ExampleModel implements EntriesTableModel {
-  subscribe(callback: EntriesSubscription) {
+  unsubscribe(/*callback: EntriesSubscription*/): void {
+    // Does nothing.
+  }
+  onUpdate(/*entry: EntryModel, omitHistory: boolean*/): void {
+    // Does nothing.
+  }
+  onSettingsUpdate(/*settings: Settings*/): void {
+    // Does nothing.
+  }
+  addNewItem(): void {
+    // Does nothing.
+  }
+  addNewItemThrottled(): void {
+    // Does nothing.
+  }
+  undo(): void {
+    // Does nothing.
+  }
+  redo(): void {
+    // Does nothing.
+  }
+  sync(): void {
+    // Does nothing.
+  }
+  dispose(): void {
+    // Does nothing.
+  }
+
+  subscribe(callback: EntriesSubscription): void {
     callback(
       [
         new EntryModel("0", { left: "", right: "" }, "")
@@ -90,19 +118,9 @@ export class ExampleModel implements EntriesTableModel {
       { canRedo: false, canUndo: false }
     );
   }
-  unsubscribe() {}
-  onUpdate() {}
-  onSettingsUpdate() {}
-  setIgnoreKeys() {}
-  addNewItem() {}
-  undo() {}
-  redo() {}
-  addNewItemThrottled() {}
-  sync() {}
-  dispose(): void {}
 }
 
-let useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles((theme) => ({
   article: {
     display: "grid",
     gridTemplateColumns: "[first-line] 1fr [last-line]",
@@ -180,9 +198,9 @@ let useStyles = makeStyles((theme) => ({
 
 export const HelpWindow = React.forwardRef<
   HTMLElement,
-  { onClose: () => void; onOpenSettings: () => void }
+  { onClose?: () => void; onOpenSettings: () => void }
 >((props, ref) => {
-  let classes = useStyles();
+  const classes = useStyles();
 
   return (
     <article className={classes.article} ref={ref}>
@@ -278,7 +296,7 @@ export const HelpWindow = React.forwardRef<
         <h4>A fictional example of a boy struggling with his fear of cats:</h4>
 
         <Suspense fallback={<LoadingPlaceholder />}>
-          <EntriesTable example model={new ExampleModel()}></EntriesTable>
+          <EntriesTable model={new ExampleModel()} example></EntriesTable>
         </Suspense>
       </section>
 

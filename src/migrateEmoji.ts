@@ -1,3 +1,7 @@
+import {EntriesTableModel} from "./EntriesTableModel"
+import {EmojiItem} from "./Settings"
+import {EntryModel} from "./EntryModel"
+
 // Emoji values are stored as arrays of values in gdrive files description.
 // E.G.: 02003:31000. Each number is asociated with its index in
 // |settings.emojiList|.
@@ -9,13 +13,12 @@
 // The funny thing is I've ran out of time and I am not going to implement
 // the mood charts anyway. All this logic is redundant. So, let it be a lesson for me.
 export async function migrateEmoji(
-  entryTableModel,
-  oldEmojiList,
-  newEmojiList
-) {
-  // Some entries may be initially hidden. We should request data for them before proceeding.
-  const entries = await new Promise((resolve) => {
-    const onEntriesUpdate = (entries) => {
+  entryTableModel: EntriesTableModel,
+  oldEmojiList: EmojiItem[],
+  newEmojiList: EmojiItem[]
+): Promise<{someValuesAreDeleted: boolean, newEntries: EntryModel[]}> {
+  const entries: EntryModel[] = await new Promise((resolve) => {
+    const onEntriesUpdate = (entries: EntryModel[]) => {
       entryTableModel.unsubscribe(onEntriesUpdate);
       resolve(entries);
     };
@@ -39,7 +42,7 @@ export async function migrateEmoji(
   return { someValuesAreDeleted, newEntries };
 }
 
-function migrateEmojiValuesArray(emojiValuesArray, oldEmojiList, newEmojiList) {
+function migrateEmojiValuesArray(emojiValuesArray: number[], oldEmojiList: EmojiItem[], newEmojiList:EmojiItem[]) {
   const oldEmojiValues = new Map();
   for (let i = 0; i < oldEmojiList.length; i++) {
     oldEmojiValues.set(oldEmojiList[i].codePoint, emojiValuesArray[i]);

@@ -18,10 +18,11 @@ import {
 import { LoadingPlaceholder } from "./LoadingPlaceholder";
 import { gdriveAuthClient } from "./GDriveAuthClient";
 import { GoogleSignInButton } from "./GoogleSignInButton";
-import { HelpWindow } from "./HelpWindow.tsx";
+import { HelpWindow } from "./HelpWindow";
 import { CenteredTypography } from "./CenteredTypography";
 import isBot from "isbot";
 import KeyboardEventHandler from "react-keyboard-event-handler";
+import { EntriesTableModel } from "./EntriesTableModel";
 const SettingsWindow = React.lazy(() => import("./SettingsWindow"));
 
 const useStyles = makeStyles((theme) => ({
@@ -60,27 +61,38 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function ModalWindowButton({ setOpen, open, hash, ...props }) {
+interface ModalWindowButtonProps {
+  setOpen: (isOpen: boolean) => void;
+  open: boolean;
+  hashString: string;
+  edge?: "start";
+  children: [JSX.Element, JSX.Element];
+}
+
+function ModalWindowButton(
+  props: React.PropsWithChildren<ModalWindowButtonProps>
+) {
   const styles = useStyles();
   const onButtonClick = () => {
-    setOpen(true);
+    props.setOpen(true);
   };
 
   const onWindowClose = () => {
-    window.history.replaceState(null, null, " ");
-    setOpen(false);
+    //TODO: test history and rever in case if it doesn't work
+    window.history.replaceState(null, "", " ");
+    props.setOpen(false);
   };
 
-  if (open && window.location.hash !== "#" + hash) {
-    window.location.hash = hash;
+  if (props.open && window.location.hash !== "#" + props.hashString) {
+    window.location.hash = props.hashString;
   }
 
   return (
     <React.Fragment>
-      <IconButton {...props} onClick={onButtonClick}>
+      <IconButton edge={props.edge} onClick={onButtonClick}>
         {props.children[0]}
       </IconButton>
-      <Modal open={open} className={styles.modal} onClose={onWindowClose}>
+      <Modal open={props.open} className={styles.modal} onClose={onWindowClose}>
         <div className={styles.modalWindow}>
           <ErrorBoundary
             fallback={
@@ -104,7 +116,11 @@ function ModalWindowButton({ setOpen, open, hash, ...props }) {
   );
 }
 
-export function AppMenu(props) {
+interface AppMenuProps {
+  shown: boolean;
+  model?: EntriesTableModel;
+}
+export function AppMenu(props: AppMenuProps): JSX.Element {
   const [settingsOpen, setSettingsOpen] = React.useState(
     window.location.hash === "#settings"
   );
@@ -153,7 +169,7 @@ export function AppMenu(props) {
               </Grid>
               <Grid item className={classes.buttonsContainer} xs={8} sm={4}>
                 <ModalWindowButton
-                  hash="help"
+                  hashString="help"
                   open={helpOpen}
                   setOpen={setHelpOpen}
                 >
@@ -169,7 +185,7 @@ export function AppMenu(props) {
                 <ModalWindowButton
                   open={settingsOpen}
                   setOpen={setSettingsOpen}
-                  hash="settings"
+                  hashString="settings"
                   edge="start"
                 >
                   <SettingsIcon />

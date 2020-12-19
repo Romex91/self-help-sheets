@@ -14,12 +14,15 @@ import {
 import { Delete as DeleteIcon } from "@material-ui/icons";
 import Picker from "emoji-picker-react";
 
-import { gdriveAuthClient, GDriveStates } from "./GDriveAuthClient";
+import { gdriveAuthClient } from "./GDriveAuthClient";
 import { CenteredTypography } from "./CenteredTypography";
-import { Settings } from "./Settings";
+import { Settings, Hint } from "./Settings";
 import { LoadingPlaceholder } from "./LoadingPlaceholder";
 
 import { migrateEmoji } from "./migrateEmoji";
+import { EntriesSubscription, EntriesTableModel } from "./EntriesTableModel";
+import assert from "assert";
+import { AuthStates } from "./AuthClient";
 
 const MemoizedEmojiPicker = React.memo(Picker);
 
@@ -45,8 +48,14 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function HintControl(props) {
-  let classes = useStyles();
+interface HintControlProps {
+  value: Hint;
+  label: string;
+  onChange(chanedValue: Hint): void;
+}
+
+function HintControl(props: HintControlProps) {
+  const classes = useStyles();
 
   return (
     <div className={classes.hintContainer}>
@@ -76,29 +85,37 @@ function HintControl(props) {
   );
 }
 
-export default function SettingsWindow(props) {
+interface SettingsWindowProps {
+  model?: EntriesTableModel;
+  onClose?(): void;
+}
+export default function SettingsWindow(
+  props: SettingsWindowProps
+): JSX.Element {
   const classes = useStyles();
 
   const [signInState, setSignInState] = React.useState(gdriveAuthClient.state);
-  const [settings, setSettings] = React.useState(null);
+  const [settings, setSettings] = React.useState<Settings | undefined>(
+    undefined
+  );
 
   React.useEffect(() => {
     gdriveAuthClient.addStateListener(setSignInState);
   }, []);
 
   React.useEffect(() => {
-    let onUpdate = (entries, settings) => {
+    const onUpdate: EntriesSubscription = (entries, settings) => {
       setSettings((oldSettings) => {
-        return oldSettings == null ? settings : oldSettings;
+        return oldSettings == undefined ? settings : oldSettings;
       });
     };
 
-    if (props.model != null) {
+    if (props.model != undefined) {
       props.model.subscribe(onUpdate);
     }
 
     return () => {
-      if (props.model != null) {
+      if (props.model != undefined) {
         props.model.unsubscribe(onUpdate);
       }
     };
@@ -106,7 +123,8 @@ export default function SettingsWindow(props) {
 
   const onEmojiClick = React.useCallback(
     (_event, emoji) => {
-      setSettings((oldSettings) => {
+      setSettings((oldSettings?: Settings) => {
+        if (!oldSettings) return oldSettings;
         const codePoint = emoji.emoji.codePointAt(0);
         const text =
           emoji.names.length > 0 ? emoji.names[emoji.names.length - 1] : "";
@@ -120,7 +138,7 @@ export default function SettingsWindow(props) {
           const listClone = [...oldSettings.emojiList];
           listClone.push({ codePoint, text });
           const newSettings = oldSettings.setEmojiList(listClone);
-          props.model.onSettingsUpdate(newSettings);
+          props.model?.onSettingsUpdate(newSettings);
           setSettings(newSettings);
         }
       });
@@ -128,22 +146,23 @@ export default function SettingsWindow(props) {
     [props.model]
   );
 
-  if (signInState === GDriveStates.SIGNED_OUT) {
+  if (signInState === AuthStates.SIGNED_OUT) {
     return <CenteredTypography>Sign in to proceed...</CenteredTypography>;
   } else if (
-    signInState === GDriveStates.LOADING ||
+    signInState === AuthStates.LOADING ||
     settings == null ||
     props.model == null
   ) {
     return <LoadingPlaceholder />;
   }
 
-  const onDeleteEmoji = async (codePoint) => {
+  const onDeleteEmoji = async (codePoint: number) => {
     const listClone = [...settings.emojiList];
     const index = listClone.findIndex((y) => y.codePoint === codePoint);
     if (index === -1) return;
     listClone.splice(index, 1);
 
+    assert(props.model);
     const { someValuesAreDeleted, newEntries } = await migrateEmoji(
       props.model,
       settings.emojiList,
@@ -160,7 +179,7 @@ export default function SettingsWindow(props) {
     }
 
     newEntries.forEach((entry) => {
-      props.model.onUpdate(entry);
+      props.model?.onUpdate(entry, true);
     });
 
     const newSettings = settings.setEmojiList(listClone);
@@ -169,21 +188,22 @@ export default function SettingsWindow(props) {
   };
 
   const resetDefaults = async () => {
-    let newSettings = new Settings();
+    const newSettings = new Settings("");
 
+    assert(props.model);
     const { someValuesAreDeleted, newEntries } = await migrateEmoji(
       props.model,
       settings.emojiList,
       newSettings.emojiList
     );
 
-    let consent = someValuesAreDeleted
+    const consent = someValuesAreDeleted
       ? "This will delete some moods from some entries. Reset settings?"
       : "Reset settings?";
 
     if (window.confirm(consent)) {
       newEntries.forEach((entry) => {
-        props.model.onUpdate(entry);
+        props.model?.onUpdate(entry, true);
       });
       props.model.onSettingsUpdate(newSettings);
       setSettings(newSettings);
@@ -208,8 +228,8 @@ export default function SettingsWindow(props) {
             label="Left"
             value={settings.leftHint}
             onChange={(value) => {
-              let newSettings = settings.setLeftHint(value);
-              props.model.onSettingsUpdate(newSettings);
+              const newSettings = settings.setLeftHint(value);
+              props.model?.onSettingsUpdate(newSettings);
               setSettings(newSettings);
             }}
           ></HintControl>
@@ -219,8 +239,8 @@ export default function SettingsWindow(props) {
             label="Right"
             value={settings.rightHint}
             onChange={(value) => {
-              let newSettings = settings.setRightHint(value);
-              props.model.onSettingsUpdate(newSettings);
+              const newSettings = settings.setRightHint(value);
+              props.model?.onSettingsUpdate(newSettings);
               setSettings(newSettings);
             }}
           ></HintControl>

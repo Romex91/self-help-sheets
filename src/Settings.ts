@@ -1,11 +1,11 @@
 import assert  from "assert";
 
-interface HintData {
+export interface HintData {
   isEnabled: boolean;
   text: string;
 }
-
-interface EmojiItem {
+ 
+export interface EmojiItem {
   codePoint: number;
   text: string;
 }
@@ -16,30 +16,38 @@ interface SettingsData {
   rightHint: HintData;
 }
 
-class Hint implements HintData {
-  private _isEnabled: boolean = false;
-  private _text: string = "";
+export class Hint implements HintData {
+  private _isEnabled = false;
+  private _text = "";
 
-  get isEnabled() {
+  get isEnabled() : boolean {
     return this._isEnabled;
   }
-  get text() {
+  get text(): string {
     return this._text;
   }
 
-  setIsEnabled(isEnabled: boolean) {
+  setIsEnabled(isEnabled: boolean): Hint {
     return new Hint({ isEnabled, text: this._text });
   }
 
-  setText(text: string) {
+  setText(text: string): Hint {
     return new Hint({ text, isEnabled: this._isEnabled });
+  }
+
+  stringify(): string {
+    const hintData : HintData = {isEnabled : this.isEnabled, text: this.text};
+    return JSON.stringify(hintData);
   }
 
   // TODO: write tests with wrong settings format
 
   constructor(data: HintData | string) {
-    if (typeof data === "string") data = JSON.parse(data) as HintData;
-    assert(typeof data !== "string");
+    if (typeof data === "string") {
+      if (data.length === 0)
+        return;
+      data = JSON.parse(data) as HintData;
+    } 
 
     if (
       data == undefined ||
@@ -54,29 +62,29 @@ class Hint implements HintData {
 }
 
 export class Settings implements SettingsData {
-  _emojiList: EmojiItem[] = [];
-  _leftHint: HintData = { isEnabled: false, text: "" };
-  _rightHint: HintData = { isEnabled: false, text: "" };
+  private _emojiList: EmojiItem[] = [];
+  private _leftHint = new Hint("");
+  private _rightHint = new Hint("");
 
-  get emojiList() {
+  get emojiList(): EmojiItem[] {
     return this._emojiList;
   }
 
-  get leftHint() {
+  get leftHint():Hint {
     return this._leftHint;
   }
-  get rightHint() {
+  get rightHint():Hint {
     return this._rightHint;
   }
 
-  setEmojiList(emojiList: EmojiItem[]) {
+  setEmojiList(emojiList: EmojiItem[]): Settings {
     return new Settings({
       emojiList,
       leftHint: this._leftHint,
       rightHint: this._rightHint,
     });
   }
-  setLeftHint(leftHint: HintData) {
+  setLeftHint(leftHint: HintData): Settings {
     return new Settings({
       emojiList: this._emojiList,
       leftHint,
@@ -84,7 +92,7 @@ export class Settings implements SettingsData {
     });
   }
 
-  setRightHint(rightHint: HintData) {
+  setRightHint(rightHint: HintData): Settings {
     return new Settings({
       emojiList: this._emojiList,
       leftHint: this._leftHint,
@@ -92,11 +100,11 @@ export class Settings implements SettingsData {
     });
   }
 
-  stringify() {
+  stringify():string {
     return JSON.stringify({
       emojiList: this._emojiList,
-      leftHint: JSON.stringify(this._leftHint),
-      rightHint: JSON.stringify(this._rightHint),
+      leftHint: this._leftHint.stringify(),
+      rightHint: this._rightHint.stringify(),
     });
   }
 
@@ -118,12 +126,12 @@ export class Settings implements SettingsData {
       this._leftHint = new Hint(json.leftHint);
       this._rightHint = new Hint(json.rightHint);
     } catch (error) {
-      if (!!json) console.error("Settings format error:" + error.message);
-      this._mutateToDefaults();
+      if (json) console.error("Settings format error:" + error.message);
+      this.mutateToDefaults();
     }
   }
 
-  _mutateToDefaults() {
+  private mutateToDefaults() :void {
     this._leftHint = new Hint({
       isEnabled: true,
       text: "What happened?\nWhat were your immediate thoughts?",

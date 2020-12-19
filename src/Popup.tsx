@@ -22,17 +22,17 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export const Popup = React.forwardRef((props, ref) => {
+export const Popup = React.forwardRef<
+  HTMLDivElement,
+  { children: JSX.Element | JSX.Element[]; in: boolean }
+>((props, ref) => {
   const classes = useStyles();
+  if (!props.in) return null;
   return (
-    props.in && (
-      <div className={classes.outer}>
-        <Zoom in={props.in}>
-          <div ref={ref} className={classes.popup}>
-            {props.children}
-          </div>
-        </Zoom>
-      </div>
-    )
+    <div ref={ref} className={classes.outer}>
+      <Zoom in={props.in}>
+        <div className={classes.popup}>{props.children}</div>
+      </Zoom>
+    </div>
   );
 });

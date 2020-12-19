@@ -12,10 +12,12 @@ import { blue, blueGrey } from "@material-ui/core/colors";
 import { AppMenu } from "./AppMenu";
 import { AppContent } from "./AppContent";
 import { gdriveMap } from "./GDriveMap";
-import { gdriveAuthClient, GDriveStates } from "./GDriveAuthClient";
+import { gdriveAuthClient } from "./GDriveAuthClient";
+
 import { EntriesTableModel } from "./EntriesTableModel";
 
 import { applyQuotaSavers } from "./BackendQuotaSavers/BackendMultiplexor";
+import { AuthStates } from "./AuthClient";
 
 // Widen MUI color pallete by adding |aside| to make typescript happy.
 declare module "@material-ui/core/styles/createPalette" {
@@ -24,7 +26,7 @@ declare module "@material-ui/core/styles/createPalette" {
   }
 }
 
-function App() {
+function App(): JSX.Element {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
 
   const theme = React.useMemo(
@@ -42,13 +44,13 @@ function App() {
     [prefersDarkMode]
   );
   const [appBarShown, setAppBarShown] = React.useState(true);
-  const onTableEntryFocus = React.useCallback((arg) => {
+  const onTableEntryFocus = React.useCallback(() => {
     if (window.innerHeight < 700) {
       setAppBarShown(false);
     }
   }, []);
 
-  const showAppBar = React.useCallback((arg) => {
+  const onShowAppBar = React.useCallback(() => {
     setAppBarShown(true);
   }, []);
 
@@ -59,7 +61,7 @@ function App() {
   React.useEffect(() => {
     const importPromise = import("./EntriesTableModelImpl");
     gdriveAuthClient.addStateListener(async (newState) => {
-      if (newState === GDriveStates.SIGNED_IN) {
+      if (newState === AuthStates.SIGNED_IN) {
         const { EntriesTableModelImpl } = await importPromise;
         setModel(
           new EntriesTableModelImpl(
@@ -69,23 +71,28 @@ function App() {
         );
       } else {
         setModel((oldModel) => {
-          if (!!oldModel) oldModel.dispose();
+          if (oldModel) oldModel.dispose();
           return undefined;
         });
       }
     });
   }, []);
 
+  const tableProps = model
+    ? {
+        model,
+        appBarShown,
+        onShowAppBar,
+        example: false,
+        onFocus: onTableEntryFocus,
+      }
+    : undefined;
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AppMenu shown={appBarShown} model={model}></AppMenu>
-      <AppContent
-        onFocus={onTableEntryFocus}
-        appBarShown={appBarShown}
-        onShowAppBar={showAppBar}
-        model={model}
-      />
+      <AppContent tableProps={tableProps} />
     </ThemeProvider>
   );
 }

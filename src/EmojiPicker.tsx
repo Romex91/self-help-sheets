@@ -1,6 +1,7 @@
 import React from "react";
 import { Typography, makeStyles, SvgIcon } from "@material-ui/core";
 import { Popup } from "./Popup";
+import { MoodItem } from "./Entry";
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -41,92 +42,128 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function EmojiItem({ emoji, text, ...props }) {
+function EmojiItem(
+  props: MoodItem & {
+    onClick?(): void;
+  }
+) {
   const classes = useStyles(props.value);
   return (
-    <span className={classes.emoji} role="img" aria-label={text} {...props}>
-      {String.fromCodePoint(emoji)}
+    <span
+      onClick={props.onClick}
+      className={classes.emoji}
+      role="img"
+      aria-label={props.text}
+    >
+      {String.fromCodePoint(props.codePoint)}
     </span>
   );
 }
 
-function RadioIcon({ selectedValue, value, ...props }) {
-  const classes = useStyles(selectedValue === value);
+function RadioIcon(props: {
+  onClick(): void;
+  selectedValue: number;
+  value: number;
+}) {
+  const classes = useStyles(props.selectedValue === props.value);
 
-  let height = 5 * (3 - value) + 1;
+  const height = 5 * (3 - props.value) + 1;
   return (
-    <SvgIcon className={classes.icon} viewBox="1 1 7 15" {...props}>
+    <SvgIcon
+      className={classes.icon}
+      viewBox="1 1 7 15"
+      onClick={props.onClick}
+    >
       <rect
         y={height}
         width="9"
         height={16 - height}
-        fill={value <= selectedValue ? "red" : "lightGray"}
+        fill={props.value <= props.selectedValue ? "red" : "lightGray"}
       />
     </SvgIcon>
   );
 }
 
-function EmojiSetupItem({ value, isActive, ...props }) {
-  const classes = useStyles(isActive);
+function EmojiSetupItem(
+  props: MoodItem & {
+    onChange(value: number): void;
+    isActive: boolean;
+  }
+) {
+  const classes = useStyles(props.isActive);
   return (
     <div className={classes.setupItem}>
       <EmojiItem
-        {...props}
         value={3}
-        onClick={() => props.onChange((value + 1) % 4)}
+        codePoint={props.codePoint}
+        text={props.text}
+        onClick={() => props.onChange((props.value + 1) % 4)}
       />
       <RadioIcon
         onClick={() => props.onChange(0)}
-        selectedValue={value}
+        selectedValue={props.value}
         value={0}
       />
       <RadioIcon
         onClick={() => props.onChange(1)}
-        selectedValue={value}
+        selectedValue={props.value}
         value={1}
       />
       <RadioIcon
         onClick={() => props.onChange(2)}
-        selectedValue={value}
+        selectedValue={props.value}
         value={2}
       />
       <RadioIcon
         onClick={() => props.onChange(3)}
-        selectedValue={value}
+        selectedValue={props.value}
         value={3}
       />
     </div>
   );
 }
 
-export function EmojiPicker(props) {
+export function EmojiPicker(props: {
+  emojiArray: MoodItem[];
+  onEmojiArrayChange(newArray: MoodItem[]): void;
+  onFocus(): void;
+  onBlur(): void;
+  inputRef: React.RefObject<HTMLInputElement>;
+  text: string;
+}): JSX.Element | null {
   const [focused, setFocus] = React.useState(false);
+
+  // eslint-disable-next-line prefer-const
   let [selectedRow, setSelectedRow] = React.useState(-1);
 
-  const popupRef = React.useRef();
+  // TODO: Handele Emoji focus
+  const popupRef = React.useRef<HTMLDivElement>(null);
   const classes = useStyles(focused);
 
-  let onClick = (event) => {
+  const onClick = (event: React.MouseEvent) => {
     event.stopPropagation();
   };
 
-  let onFocus = (event) => {
-    props.onFocus(event);
+  const onFocus = () => {
+    props.onFocus();
     setFocus(true);
   };
 
-  let onBlur = (event) => {
-    if (!popupRef.current.contains(document.activeElement)) {
+  const onBlur = () => {
+    if (
+      popupRef.current &&
+      !popupRef.current.contains(document.activeElement)
+    ) {
       setFocus(false);
-      props.onBlur(event);
+      props.onBlur();
     }
   };
 
-  let onKeyDown = (event) => {
+  const onKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === "ArrowLeft") {
       if (selectedRow < 0) setSelectedRow((selectedRow = 0));
       if (selectedRow < props.emojiArray.length) {
-        let clone = [...props.emojiArray];
+        const clone = [...props.emojiArray];
         clone[selectedRow].value--;
         if (clone[selectedRow].value < 0) {
           clone[selectedRow].value = 3;
@@ -136,7 +173,7 @@ export function EmojiPicker(props) {
     } else if (event.key === "ArrowRight") {
       if (selectedRow < 0) setSelectedRow((selectedRow = 0));
       if (selectedRow < props.emojiArray.length) {
-        let clone = [...props.emojiArray];
+        const clone = [...props.emojiArray];
         clone[selectedRow].value++;
         if (clone[selectedRow].value > 3) {
           clone[selectedRow].value = 0;
@@ -156,7 +193,7 @@ export function EmojiPicker(props) {
       }
       setSelectedRow(selectedRow);
     } else if (event.key === "Escape" || event.key === "Enter") {
-      props.inputRef.current.focus();
+      props.inputRef.current?.focus();
     } else {
       return;
     }
@@ -166,7 +203,7 @@ export function EmojiPicker(props) {
 
   if (props.emojiArray.length === 0) return null;
 
-  let activeEmojiArray = props.emojiArray.filter((x) => x.value > 0);
+  const activeEmojiArray = props.emojiArray.filter((x) => x.value > 0);
 
   let rowCounter = 0;
 
@@ -184,7 +221,7 @@ export function EmojiPicker(props) {
           activeEmojiArray.map((x) => (
             <EmojiItem
               key={x.codePoint}
-              emoji={x.codePoint}
+              codePoint={x.codePoint}
               text={x.text}
               value={x.value}
             />
@@ -198,23 +235,24 @@ export function EmojiPicker(props) {
           <Typography align="center" variant="body1">
             {props.text}
           </Typography>
-          {props.emojiArray.map((x) => (
-            <EmojiSetupItem
-              key={x.codePoint}
-              isActive={rowCounter++ === selectedRow}
-              emoji={x.codePoint}
-              text={x.text}
-              value={x.value}
-              onChange={(value) => {
-                props.onEmojiArrayChange(
-                  props.emojiArray.map((y) =>
-                    y.codePoint === x.codePoint ? { ...y, value } : y
-                  )
-                );
-              }}
-            />
-          ))}
-
+          <React.Fragment>
+            {props.emojiArray.map((x) => (
+              <EmojiSetupItem
+                key={x.codePoint}
+                isActive={rowCounter++ === selectedRow}
+                codePoint={x.codePoint}
+                text={x.text}
+                value={x.value}
+                onChange={(value) => {
+                  props.onEmojiArrayChange(
+                    props.emojiArray.map((y) =>
+                      y.codePoint === x.codePoint ? { ...y, value } : y
+                    )
+                  );
+                }}
+              />
+            ))}
+          </React.Fragment>
           <Typography align="center" variant="caption">
             Use arrow keys.
           </Typography>

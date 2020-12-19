@@ -5,7 +5,7 @@ import { assert } from "chai";
 import md5 from "md5";
 
 realBrowserTest("GDrive.test.js", async () => {
-  let { gdriveAuthClient, GDriveStates } = await import(
+  let { gdriveAuthClient, AuthStates } = await import(
     "./GDriveAuthClient.js"
   );
 
@@ -13,37 +13,37 @@ realBrowserTest("GDrive.test.js", async () => {
     this.timeout(6000000);
 
     it("has correct status on signIn and signOut", async () => {
-      assert.equal(gdriveAuthClient.state, GDriveStates.LOADING);
+      assert.equal(gdriveAuthClient.state, AuthStates.LOADING);
       assert.notEqual(
         await gdriveAuthClient.waitForStateChange(),
-        GDriveStates.LOADING
+        AuthStates.LOADING
       );
 
-      assert.notEqual(gdriveAuthClient.state, GDriveStates.LOADING);
-      assert.notEqual(gdriveAuthClient.state, GDriveStates.FAILED);
+      assert.notEqual(gdriveAuthClient.state, AuthStates.LOADING);
+      assert.notEqual(gdriveAuthClient.state, AuthStates.FAILED);
 
-      if (gdriveAuthClient.state === GDriveStates.SIGNED_IN) {
+      if (gdriveAuthClient.state === AuthStates.SIGNED_IN) {
         let signed_out_promise = gdriveAuthClient.waitForStateChange();
         gdriveAuthClient.signOut();
-        assert.equal(await signed_out_promise, GDriveStates.SIGNED_OUT);
+        assert.equal(await signed_out_promise, AuthStates.SIGNED_OUT);
       }
 
       {
         let signed_in_promise = gdriveAuthClient.waitForStateChange();
         gdriveAuthClient.signIn();
-        assert.equal(await signed_in_promise, GDriveStates.SIGNED_IN);
+        assert.equal(await signed_in_promise, AuthStates.SIGNED_IN);
       }
 
       {
         let signed_out_promise = gdriveAuthClient.waitForStateChange();
         gdriveAuthClient.signOut();
-        assert.equal(await signed_out_promise, GDriveStates.SIGNED_OUT);
+        assert.equal(await signed_out_promise, AuthStates.SIGNED_OUT);
       }
 
       {
         let signed_in_promise = gdriveAuthClient.waitForStateChange();
         gdriveAuthClient.signIn();
-        assert.equal(await signed_in_promise, GDriveStates.SIGNED_IN);
+        assert.equal(await signed_in_promise, AuthStates.SIGNED_IN);
       }
     });
   });
@@ -52,7 +52,7 @@ realBrowserTest("GDrive.test.js", async () => {
 realBrowserTest("GDrive.test.js", async () => {
   let before = window.before;
 
-  let { gdriveAuthClient, GDriveStates } = await import(
+  let { gdriveAuthClient, AuthStates } = await import(
     "./GDriveAuthClient.js"
   );
   let { TestingBackendMap } = await import("./TestingBackendMap.js");
@@ -75,11 +75,11 @@ realBrowserTest("GDrive.test.js", async () => {
         if (gdriveMap === realGdriveMap) {
           before(async () => {
             await gdriveAuthClient.waitForStateChange();
-            if (gdriveAuthClient.state !== GDriveStates.SIGNED_IN) {
+            if (gdriveAuthClient.state !== AuthStates.SIGNED_IN) {
               gdriveAuthClient.signIn();
               assert.equal(
                 await gdriveAuthClient.waitForStateChange(),
-                GDriveStates.SIGNED_IN
+                AuthStates.SIGNED_IN
               );
             }
           });
@@ -214,7 +214,7 @@ realBrowserTest("GDrive.test.js", async () => {
           if (gdriveMap === realGdriveMap) {
             gdriveAuthClient.signOut();
             assert(
-              GDriveStates.SIGNED_OUT,
+              AuthStates.SIGNED_OUT,
               await gdriveAuthClient.waitForStateChange()
             );
 
@@ -246,7 +246,7 @@ realBrowserTest("GDrive.test.js", async () => {
 
             gdriveAuthClient.signIn();
             assert(
-              GDriveStates.SIGNED_IN,
+              AuthStates.SIGNED_IN,
               await gdriveAuthClient.waitForStateChange()
             );
           }
@@ -305,7 +305,7 @@ realBrowserTest("GDrive.test.js", async () => {
 
 realBrowserTest("GDrive.test.js", async () => {
   let before = window.before;
-  let { gdriveAuthClient, GDriveStates } = await import(
+  let { gdriveAuthClient, AuthStates } = await import(
     "./GDriveAuthClient.js"
   );
 
@@ -318,11 +318,11 @@ realBrowserTest("GDrive.test.js", async () => {
 
     before(async () => {
       await gdriveAuthClient.waitForStateChange();
-      if (gdriveAuthClient.state !== GDriveStates.SIGNED_IN) {
+      if (gdriveAuthClient.state !== AuthStates.SIGNED_IN) {
         gdriveAuthClient.signIn();
         assert.equal(
           await gdriveAuthClient.waitForStateChange(),
-          GDriveStates.SIGNED_IN
+          AuthStates.SIGNED_IN
         );
       }
     });

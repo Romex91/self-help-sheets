@@ -1,5 +1,7 @@
-import { gdriveAuthClient, GDriveStates } from "./GDriveAuthClient";
+import { gdriveAuthClient } from "./GDriveAuthClient";
 import { BackendMap, BackendKeyMeta } from "./BackendMap";
+import { AuthStates } from "./AuthClient";
+import assert from "assert";
 
 class GDriveMap implements BackendMap {
   private settings_key: string | null = null;
@@ -62,7 +64,9 @@ class GDriveMap implements BackendMap {
 
   async getSettings() {
     throwIfNotSignedIn();
-    return await download(await this._getSettingsKey());
+    const settingsContent = await download(await this._getSettingsKey());
+    assert (settingsContent != undefined);
+    return settingsContent;
   }
 
   async setSettings(settingsContent: string) {
@@ -83,7 +87,7 @@ Object.seal(gdriveMap);
 // Borrowed from here: https://habr.com/ru/post/440844/
 
 function throwIfNotSignedIn() {
-  if (gdriveAuthClient.state !== GDriveStates.SIGNED_IN)
+  if (gdriveAuthClient.state !== AuthStates.SIGNED_IN)
     throw new Error("Incorrect state. Sign in to continue.");
 }
 
@@ -119,8 +123,6 @@ async function createEmptyFile(name: string) {
 }
 
 async function patchDescription(fileId: string, description: string) {
-  console.assert(typeof description === "string");
-
   const boundary = "-------314159265358979323846";
   const delimiter = "\r\n--" + boundary + "\r\n";
   const close_delim = "\r\n--" + boundary + "--";
@@ -145,7 +147,6 @@ async function patchDescription(fileId: string, description: string) {
 }
 
 async function upload(fileId: string, content: string) {
-  console.assert(typeof content === "string");
   await checkHttpStatus(
     window.gapi.client.request({
       path: `/upload/drive/v3/files/${fileId}`,

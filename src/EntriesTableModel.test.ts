@@ -3,7 +3,7 @@ import { TestingBackendMap } from "./TestingBackendMap";
 import { applyQuotaSavers } from "./BackendQuotaSavers/BackendMultiplexor";
 import { TestingGDriveAuthClient } from "./TestingGDriveAuthClient";
 import { EntriesTableModelImpl } from "./EntriesTableModelImpl";
-import { GDriveStates } from "./GDriveAuthClient.js";
+import { AuthStates } from "./GDriveAuthClient.js";
 import { EntryModel, EntryStatus } from "./EntryModel";
 import _ from "lodash";
 
@@ -109,7 +109,7 @@ async function expectNewModelToHaveEntries(entries) {
 
 beforeEach(async () => {
   testingAuthClient = new TestingGDriveAuthClient();
-  testingAuthClient.setStateFromTest(GDriveStates.SIGNED_IN);
+  testingAuthClient.setStateFromTest(AuthStates.SIGNED_IN);
 
   testingBackendMapRaw = new TestingBackendMap();
   testingBackendMap = sinon.spy(applyQuotaSavers(testingBackendMapRaw));
@@ -127,7 +127,7 @@ test("EntriesTableModel waits for sign in", async () => {
     lastEntries = entries;
   };
 
-  testingAuthClient.setStateFromTest(GDriveStates.LOADING);
+  testingAuthClient.setStateFromTest(AuthStates.LOADING);
 
   fillTestingBackendMap(10);
 
@@ -137,7 +137,7 @@ test("EntriesTableModel waits for sign in", async () => {
   await sleep(50);
   expect(lastEntries).toBe(null);
 
-  testingAuthClient.setStateFromTest(GDriveStates.SIGNED_IN);
+  testingAuthClient.setStateFromTest(AuthStates.SIGNED_IN);
   await new Promise((resolve) => {
     model.subscribe(resolve);
   });

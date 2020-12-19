@@ -1,5 +1,5 @@
 import { BackendMultiplexor } from "./BackendQuotaSavers/BackendMultiplexor";
-import { GDriveStates, GDriveAuthClient } from "./GDriveAuthClient";
+import { AuthStates, AuthClient } from "./AuthClient";
 import { Settings } from "./Settings";
 import { EntryStatus, EntryModel } from "./EntryModel";
 import _ from "lodash";
@@ -13,8 +13,8 @@ interface HistoryItem {
 }
 
 export class EntriesTableModelImpl implements EntriesTableModel {
-  private _disposed: boolean = false;
-  private _historyIndex: number = 0;
+  private _disposed = false;
+  private _historyIndex = 0;
   private _history: HistoryItem[] = [];
   private _addNewItemMutex = new Mutex();
 
@@ -22,26 +22,26 @@ export class EntriesTableModelImpl implements EntriesTableModel {
   // It is natural for |Map| to add new items to the end, but
   // in |EntriesTable| new items belong to the top.
   private _entries: Map<string, EntryModel> = new Map();
-  private _isCreatingNewEntry: boolean = false;
+  private _isCreatingNewEntry = false;
 
   private _settings?: Settings;
-  private _serializedSettings: string = "";
+  private _serializedSettings = "";
   private _descriptions: Map<string, string> = new Map();
   private _subscriptions: Set<EntriesSubscription> = new Set();
 
   constructor(
     private _backendMap: BackendMultiplexor,
-    private _authClient: GDriveAuthClient
+    private _authClient: AuthClient
   ) {
     this._syncLoop();
   }
 
-  dispose() {
+  dispose(): void {
     this._disposed = true;
     this._subscriptions = new Set();
   }
 
-  subscribe(callback: EntriesSubscription) {
+  subscribe(callback: EntriesSubscription): void {
     this._subscriptions.add(callback);
     if (this._entries.size > 0)
       callback(this._getFilteredEntriesArray(), this._settings, {
@@ -50,7 +50,7 @@ export class EntriesTableModelImpl implements EntriesTableModel {
       });
   }
 
-  unsubscribe(callback: EntriesSubscription) {
+  unsubscribe(callback: EntriesSubscription): void {
     this._subscriptions.delete(callback);
   }
 
@@ -58,8 +58,8 @@ export class EntriesTableModelImpl implements EntriesTableModel {
     this.addNewItem();
   }, 500);
 
-  addNewItem = async (omitHistory = false) => {
-    let release = await this._addNewItemMutex.acquire();
+  addNewItem = async (omitHistory = false): Promise<void> => {
+    const release = await this._addNewItemMutex.acquire();
 
     const entry = this._tryFindVacantEntry() || (await this._createNewEntry());
 
@@ -100,19 +100,19 @@ export class EntriesTableModelImpl implements EntriesTableModel {
     }
     this._isCreatingNewEntry = true;
 
-    let newKey = await this._backendMap.createKey();
+    const newKey = await this._backendMap.createKey();
 
     assert(this._isCreatingNewEntry);
     this._isCreatingNewEntry = false;
 
-    let newEntry = new EntryModel(newKey, EntryStatus.DELETED, "");
+    const newEntry = new EntryModel(newKey, EntryStatus.DELETED, "");
     this._entries.set(newKey, newEntry);
     await this._sendEntryToBackend(newEntry);
 
     return newEntry;
   }
 
-  undo = () => {
+  undo(): void {
     if (this._historyIndex === 0) return;
 
     this._historyIndex--;
@@ -128,12 +128,12 @@ export class EntriesTableModelImpl implements EntriesTableModel {
     this._entries.set(entry.key, entry);
     this._sendEntryToBackend(entry);
     this._onEntriesChanged();
-  };
+  }
 
-  redo = () => {
+  redo(): void {
     if (this._historyIndex >= this._history.length) return;
 
-    let historyItem = this._history[this._historyIndex++];
+    const historyItem = this._history[this._historyIndex++];
     let entry = historyItem.new;
     if (entry.data !== EntryStatus.DELETED) {
       entry = entry.setFocused(true);
@@ -145,19 +145,19 @@ export class EntriesTableModelImpl implements EntriesTableModel {
     this._entries.set(entry.key, entry);
     this._sendEntryToBackend(entry);
     this._onEntriesChanged();
-  };
+  }
 
-  sync = async () => {
+  sync = async (): Promise<void> => {
     if (this._disposed) return;
 
-    while (this._authClient.state !== GDriveStates.SIGNED_IN) {
+    while (this._authClient.state !== AuthStates.SIGNED_IN) {
       await this._authClient.waitForStateChange();
     }
 
-    let keys = await this._backendMap.getAllKeys();
+    const keys = await this._backendMap.getAllKeys();
     if (keys == null) return;
 
-    let newEntries = new Map();
+    const newEntries = new Map();
 
     keys.forEach((x) => {
       let entry;
@@ -186,8 +186,8 @@ export class EntriesTableModelImpl implements EntriesTableModel {
       newEntries.set(x.id, entry);
     });
 
-    let promises = [];
-    if (this._settings == null) promises.push(this._fetchSettings());
+    const promises: Promise<void>[] = [];
+    if (this._settings == undefined) promises.push(this._fetchSettings());
 
     keys.reverse().forEach((x) => {
       if (x.outdated && newEntries.get(x.id).data !== EntryStatus.HIDDEN) {
@@ -213,10 +213,10 @@ export class EntriesTableModelImpl implements EntriesTableModel {
     this._backendMap.setSettings(settings.stringify());
   }, 1000);
 
-  onUpdate = (entry: EntryModel, omitHistory = false) => {
+  onUpdate = (entry: EntryModel, omitHistory = false): void => {
     if (!this._entries.has(entry.key)) return;
 
-    let prevEntry = this._entries.get(entry.key);
+    const prevEntry = this._entries.get(entry.key);
     assert(!!prevEntry);
 
     if (entry.data === EntryStatus.LOADING) {
@@ -234,12 +234,12 @@ export class EntriesTableModelImpl implements EntriesTableModel {
     this._onEntriesChanged();
   };
 
-  _syncLoop = async () => {
+  _syncLoop = async (): Promise<void> => {
     await this.sync();
     setTimeout(this._syncLoop, 15000);
   };
 
-  _addHistoryItem(newEntry: EntryModel) {
+  _addHistoryItem(newEntry: EntryModel): void {
     const oldEntry = this._entries.get(newEntry.key);
     if (oldEntry == undefined || !oldEntry.isDataLoaded()) {
       return;
@@ -252,7 +252,7 @@ export class EntriesTableModelImpl implements EntriesTableModel {
     this._historyIndex = this._history.length;
   }
 
-  async _sendEntryToBackend(entry: EntryModel) {
+  async _sendEntryToBackend(entry: EntryModel): Promise<void> {
     let descriptionPromise = null;
     if (entry.description !== this._descriptions.get(entry.key)) {
       descriptionPromise = this._backendMap.setDescription(
@@ -269,10 +269,10 @@ export class EntriesTableModelImpl implements EntriesTableModel {
     await Promise.all([descriptionPromise, dataPromise]);
   }
 
-  async _fetchSettings() {
+  async _fetchSettings(): Promise<void> {
     const serializedSettings = await this._backendMap.getSettings();
 
-    if (serializedSettings == undefined) {
+    if (serializedSettings == "") {
       this.onSettingsUpdate(new Settings(""));
       return;
     }
@@ -283,8 +283,8 @@ export class EntriesTableModelImpl implements EntriesTableModel {
     this._onEntriesChanged();
   }
 
-  _fetch = async (key: string) => {
-    let content = await this._backendMap.get(key);
+  _fetch = async (key: string): Promise<void> => {
+    const content = await this._backendMap.get(key);
 
     if (!this._entries.has(key)) {
       console.error("Entry for fetch doesn't exist anymore. " + key);
@@ -303,7 +303,7 @@ export class EntriesTableModelImpl implements EntriesTableModel {
 
     try {
       if (content === "") {
-        let entry = new EntryModel(key, EntryStatus.DELETED, "");
+        const entry = new EntryModel(key, EntryStatus.DELETED, "");
         this._addHistoryItem(entry);
         this._entries.set(key, entry);
       } else {
@@ -323,7 +323,7 @@ export class EntriesTableModelImpl implements EntriesTableModel {
           this._backendMap.setDescription(key, EntryStatus.DELETED);
         }
 
-        let entry = new EntryModel(
+        const entry = new EntryModel(
           key,
           data,
           this._descriptions.get(key) ?? ""
@@ -345,13 +345,13 @@ export class EntriesTableModelImpl implements EntriesTableModel {
     this._onEntriesChanged();
   };
 
-  _getFilteredEntriesArray() {
+  _getFilteredEntriesArray(): EntryModel[] {
     return Array.from(this._entries.values())
       .reverse()
       .filter((x) => x.data !== EntryStatus.DELETED && x.key !== null);
   }
 
-  _onEntriesChanged() {
+  _onEntriesChanged(): void {
     const entries = this._getFilteredEntriesArray();
     this._subscriptions.forEach((callback) => {
       callback(entries, this._settings, {

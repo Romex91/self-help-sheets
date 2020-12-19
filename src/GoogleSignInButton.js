@@ -1,6 +1,6 @@
 import React from "react";
 import Icon from "./googleIcon";
-import { GDriveStates } from "./GDriveAuthClient";
+import { AuthStates } from "./AuthClient";
 import Popper from "@material-ui/core/Popper";
 import { Alert, AlertTitle } from "@material-ui/lab";
 
@@ -66,8 +66,8 @@ export class GoogleSignInButton extends React.PureComponent {
 
   #getButtonStyle = () => {
     if (
-      this.state.authState === GDriveStates.FAILED ||
-      this.state.authState === GDriveStates.LOADING
+      this.state.authState === AuthStates.FAILED ||
+      this.state.authState === AuthStates.LOADING
     ) {
       return Object.assign({}, buttonStyle, disabledStyle);
     }
@@ -76,16 +76,16 @@ export class GoogleSignInButton extends React.PureComponent {
   };
 
   #onClick = async () => {
-    if (this.state.authState === GDriveStates.SIGNED_IN) {
+    if (this.state.authState === AuthStates.SIGNED_IN) {
       this.props.gdriveAuthClient.signOut();
-    } else if (this.state.authState === GDriveStates.SIGNED_OUT) {
+    } else if (this.state.authState === AuthStates.SIGNED_OUT) {
       this.props.gdriveAuthClient.signIn();
     }
   };
 
   render() {
     let alertElement = (() => {
-      if (this.state.authState === GDriveStates.FAILED) {
+      if (this.state.authState === AuthStates.FAILED) {
         return (
           <Alert severity="error">
             Failed connecting to google. Check your connection and try reloading
@@ -94,8 +94,8 @@ export class GoogleSignInButton extends React.PureComponent {
         );
       }
 
-      if (this.state.authState === GDriveStates.SIGNED_OUT) {
-        if (this.state.prevAuthState === GDriveStates.SIGNED_IN) {
+      if (this.state.authState === AuthStates.SIGNED_OUT) {
+        if (this.state.prevAuthState === AuthStates.SIGNED_IN) {
           return (
             <Alert severity="warning">
               <AlertTitle>Privacy note!</AlertTitle>
@@ -112,7 +112,7 @@ export class GoogleSignInButton extends React.PureComponent {
               </ol>
             </Alert>
           );
-        } else if (this.state.prevAuthState === GDriveStates.LOADING) {
+        } else if (this.state.prevAuthState === AuthStates.LOADING) {
           return (
             <Alert severity="info">
               This site stores data in a hidden Google Drive folder. <br />
@@ -133,7 +133,7 @@ export class GoogleSignInButton extends React.PureComponent {
       >
         <Icon key={0} active={this.state.active} />
         <ButtonContent key={2}>
-          {this.state.authState === GDriveStates.SIGNED_IN
+          {this.state.authState === AuthStates.SIGNED_IN
             ? "Sign Out"
             : "Sign In "}
         </ButtonContent>

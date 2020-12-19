@@ -1,49 +1,13 @@
 import isBot from "isbot";
+import {AuthClient, AuthStates} from "./AuthClient"
 
-// PUBLIC SECTION
-export enum GDriveStates {
-  LOADING= "loading",
-  SIGNED_IN= "signed_in",
-  SIGNED_OUT= "signed_out",
-  FAILED= "failed",
-};
-
-interface StateListener {
-  (state: GDriveStates) : void
-}
-
-export class GDriveAuthClient {
-  _state: GDriveStates = GDriveStates.LOADING;
-  _stateListeners: Set<StateListener> = new Set();
-
-  get state() {
-    return this._state;
-  }
-
-  addStateListener(listener:StateListener) {
-    console.assert(!this._stateListeners.has(listener));
-    this._stateListeners.add(listener);
-  }
-
-  removeStateListener(listener:StateListener) {
-    console.assert(this._stateListeners.has(listener));
-    this._stateListeners.delete(listener);
-  }
-
-  async waitForStateChange() {
-    return await new Promise((resolve) => {
-      const listener = (state: GDriveStates) => {
-        this.removeStateListener(listener);
-        resolve(state);
-      };
-      this.addStateListener(listener);
-    });
-  }
-
+export class GDriveAuthClient extends AuthClient {
   constructor() {
+    super();
     if (isBot(window.navigator.userAgent)) {
-      this._state = GDriveStates.SIGNED_OUT;
-      this._notifyStateChanged();
+      this._state = AuthStates.SIGNED_OUT;
+      this.notifyStateChanged();
+      return;
     }
 
     loadGapi(async () => {
@@ -76,14 +40,14 @@ export class GDriveAuthClient {
           .isSignedIn.listen(this._updateSignInState.bind(this));
       } catch (error) {
         console.log(error);
-        this._state = GDriveStates.FAILED;
-        this._notifyStateChanged();
+        this._state = AuthStates.FAILED;
+        this.notifyStateChanged();
         return;
       }
     });
   }
 
-  signIn() {
+  signIn(): void {
     console.assert(isGapiLoaded());
     if ((window as unknown as {mocha: unknown}).mocha != undefined) {
       window.gapi.auth2.getAuthInstance().signIn();
@@ -94,26 +58,20 @@ export class GDriveAuthClient {
     }
   }
 
-  signOut() {
+  signOut(): void {
     console.assert(isGapiLoaded());
-    let auth_instance = window.gapi.auth2.getAuthInstance();
+    const auth_instance = window.gapi.auth2.getAuthInstance();
     auth_instance.signOut();
   }
 
-  _notifyStateChanged() {
-    for (let listener of Array.from(this._stateListeners)) {
-      listener(this._state);
-    }
-  }
-
-  _updateSignInState() {
-    console.assert(this._state !== GDriveStates.FAILED);
-    let current_state = isSignedIn()
-      ? GDriveStates.SIGNED_IN
-      : GDriveStates.SIGNED_OUT;
+  private _updateSignInState(): void {
+    console.assert(this._state !== AuthStates.FAILED);
+    const current_state = isSignedIn()
+      ? AuthStates.SIGNED_IN
+      : AuthStates.SIGNED_OUT;
     if (this._state !== current_state) {
       this._state = current_state;
-      this._notifyStateChanged();
+      this.notifyStateChanged();
     }
   }
 }
@@ -124,7 +82,7 @@ export const gdriveAuthClient = new GDriveAuthClient();
 function loadGapi(ondone: ()=>void) {
   console.assert(typeof ondone == "function");
   console.assert(ondone.length === 0);
-  var script = document.createElement("script");
+  const script = document.createElement("script");
   script.async = true;
   script.src = "https://apis.google.com/js/api.js";
   document.body.appendChild(script);
