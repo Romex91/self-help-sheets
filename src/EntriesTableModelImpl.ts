@@ -4,7 +4,10 @@ import { Settings } from "./Settings";
 import { EntryStatus, EntryModel } from "./EntryModel";
 import _ from "lodash";
 import { Mutex } from "async-mutex";
-import { EntriesTableModel, EntriesSubscription } from "./EntriesTableModel";
+import {
+  EntriesTableModel,
+  EntriesSubscriptionCallback,
+} from "./EntriesTableModel";
 import assert from "assert";
 
 interface HistoryItem {
@@ -27,7 +30,7 @@ export class EntriesTableModelImpl implements EntriesTableModel {
   private _settings?: Settings;
   private _serializedSettings = "";
   private _descriptions: Map<string, string> = new Map();
-  private _subscriptions: Set<EntriesSubscription> = new Set();
+  private _subscriptions: Set<EntriesSubscriptionCallback> = new Set();
 
   constructor(
     private _backendMap: BackendMultiplexor,
@@ -41,7 +44,7 @@ export class EntriesTableModelImpl implements EntriesTableModel {
     this._subscriptions = new Set();
   }
 
-  subscribe(callback: EntriesSubscription): void {
+  subscribe(callback: EntriesSubscriptionCallback): void {
     this._subscriptions.add(callback);
     if (this._entries.size > 0)
       callback(this._getFilteredEntriesArray(), this._settings, {
@@ -50,7 +53,7 @@ export class EntriesTableModelImpl implements EntriesTableModel {
       });
   }
 
-  unsubscribe(callback: EntriesSubscription): void {
+  unsubscribe(callback: EntriesSubscriptionCallback): void {
     this._subscriptions.delete(callback);
   }
 
@@ -155,11 +158,10 @@ export class EntriesTableModelImpl implements EntriesTableModel {
     }
 
     const keys = await this._backendMap.getAllKeys();
-    if (keys == null) return;
 
     const newEntries = new Map();
 
-    keys.forEach((x) => {
+    Array.from(keys).forEach((x) => {
       let entry;
       if (this._entries.has(x.id)) {
         entry = this._entries.get(x.id);
@@ -235,6 +237,7 @@ export class EntriesTableModelImpl implements EntriesTableModel {
   };
 
   _syncLoop = async (): Promise<void> => {
+    if (this._disposed) return;
     await this.sync();
     setTimeout(this._syncLoop, 15000);
   };
@@ -245,6 +248,7 @@ export class EntriesTableModelImpl implements EntriesTableModel {
       return;
     }
 
+    this._history = this._history.slice(0, this._historyIndex);
     this._history.push({
       old: oldEntry,
       new: newEntry,

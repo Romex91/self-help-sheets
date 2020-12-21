@@ -19,11 +19,6 @@ export interface EntryData {
   right: string;
 }
 
-function isEntryData(data: EntryData | EntryStatus): data is EntryData {
-  const entryData = data as EntryData;
-  return entryData.left !== undefined && entryData.right !== undefined;
-}
-
 // EntryModel is immutable. setLeft setRight delete and clear return a new copy.
 export class EntryModel {
   _initiallyCollapsed;
@@ -36,6 +31,11 @@ export class EntryModel {
   private _creationTime?: Date;
 
   public lastChange: LastChange = LastChange.NONE;
+
+  static isEntryData(data: EntryData | EntryStatus): data is EntryData {
+    const entryData = data as EntryData;
+    return entryData.left !== undefined && entryData.right !== undefined;
+  }
 
   constructor(
     private _key: string,
@@ -74,11 +74,11 @@ export class EntryModel {
   }
 
   get left(): string {
-    if (!isEntryData(this._data)) return "";
+    if (!EntryModel.isEntryData(this._data)) return "";
     return this._data.left;
   }
   setLeft(left: string): EntryModel {
-    if (!isEntryData(this._data)) {
+    if (!EntryModel.isEntryData(this._data)) {
       console.error("bad status");
       return this;
     }
@@ -90,11 +90,11 @@ export class EntryModel {
   }
 
   get right(): string {
-    if (!isEntryData(this._data)) return "";
+    if (!EntryModel.isEntryData(this._data)) return "";
     return this._data.right;
   }
   setRight(right: string): EntryModel {
-    if (!isEntryData(this._data)) {
+    if (!EntryModel.isEntryData(this._data)) {
       console.error("bad status");
       return this;
     }

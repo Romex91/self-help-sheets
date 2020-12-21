@@ -1,10 +1,10 @@
-import assert  from "assert";
+import assert from "assert";
 
 export interface HintData {
   isEnabled: boolean;
   text: string;
 }
- 
+
 export interface EmojiItem {
   codePoint: number;
   text: string;
@@ -20,7 +20,7 @@ export class Hint implements HintData {
   private _isEnabled = false;
   private _text = "";
 
-  get isEnabled() : boolean {
+  get isEnabled(): boolean {
     return this._isEnabled;
   }
   get text(): string {
@@ -36,7 +36,7 @@ export class Hint implements HintData {
   }
 
   stringify(): string {
-    const hintData : HintData = {isEnabled : this.isEnabled, text: this.text};
+    const hintData: HintData = { isEnabled: this.isEnabled, text: this.text };
     return JSON.stringify(hintData);
   }
 
@@ -44,10 +44,9 @@ export class Hint implements HintData {
 
   constructor(data: HintData | string) {
     if (typeof data === "string") {
-      if (data.length === 0)
-        return;
+      if (data.length === 0) return;
       data = JSON.parse(data) as HintData;
-    } 
+    }
 
     if (
       data == undefined ||
@@ -70,10 +69,10 @@ export class Settings implements SettingsData {
     return this._emojiList;
   }
 
-  get leftHint():Hint {
+  get leftHint(): Hint {
     return this._leftHint;
   }
-  get rightHint():Hint {
+  get rightHint(): Hint {
     return this._rightHint;
   }
 
@@ -100,7 +99,7 @@ export class Settings implements SettingsData {
     });
   }
 
-  stringify():string {
+  stringify(): string {
     return JSON.stringify({
       emojiList: this._emojiList,
       leftHint: this._leftHint.stringify(),
@@ -126,12 +125,12 @@ export class Settings implements SettingsData {
       this._leftHint = new Hint(json.leftHint);
       this._rightHint = new Hint(json.rightHint);
     } catch (error) {
-      if (json) console.error("Settings format error:" + error.message);
+      if (json != "") console.error("Settings format error: " + error.message);
       this.mutateToDefaults();
     }
   }
 
-  private mutateToDefaults() :void {
+  private mutateToDefaults(): void {
     this._leftHint = new Hint({
       isEnabled: true,
       text: "What happened?\nWhat were your immediate thoughts?",

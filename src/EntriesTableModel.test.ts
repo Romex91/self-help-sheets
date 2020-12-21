@@ -1,72 +1,101 @@
-import sinon from "sinon";
-import { TestingBackendMap } from "./TestingBackendMap";
-import { applyQuotaSavers } from "./BackendQuotaSavers/BackendMultiplexor";
+import { anyString, verify, spy } from "ts-mockito";
+import { TestingBackendMap, addEntry } from "./TestingBackendMap";
+import {
+  applyQuotaSavers,
+  BackendMultiplexor,
+} from "./BackendQuotaSavers/BackendMultiplexor";
 import { TestingGDriveAuthClient } from "./TestingGDriveAuthClient";
+
+import {
+  EntriesTableModel,
+  EntriesSubscriptionCallback,
+} from "./EntriesTableModel";
 import { EntriesTableModelImpl } from "./EntriesTableModelImpl";
-import { AuthStates } from "./GDriveAuthClient.js";
+import { AuthStates } from "./AuthClient";
 import { EntryModel, EntryStatus } from "./EntryModel";
 import _ from "lodash";
+import { BackendMap } from "./BackendMap";
+import { Settings } from "./Settings";
 
 // TESTING DATA
-let testingBackendMap;
-let testingBackendMapRaw;
-let testingAuthClient;
+function initTestingData(): {
+  testingBackendMap: BackendMultiplexor;
+  testingBackendMapRaw: BackendMap;
+  testingAuthClient: TestingGDriveAuthClient;
+} {
+  const testingBackendMapRaw = new TestingBackendMap();
+  const testingBackendMap = applyQuotaSavers(testingBackendMapRaw);
+  const testingAuthClient = new TestingGDriveAuthClient();
 
-function EntriesSubscription(model) {
-  let callback = null;
+  testingAuthClient.setStateFromTest(AuthStates.SIGNED_IN);
+  return { testingBackendMapRaw, testingBackendMap, testingAuthClient };
+}
+let {
+  testingBackendMap,
+  testingBackendMapRaw,
+  testingAuthClient,
+} = initTestingData();
 
-  this.currentEntries = [];
-  this.callCount = 0;
+class EntriesSubscription {
+  private callback?: EntriesSubscriptionCallback;
+  constructor(private model: EntriesTableModel) {
+    model.subscribe((entries, settings, historyInfo) => {
+      // Some model methods notify subscriptions immediately.
+      // |setTimeout| allows checking wether it happened.
+      //
+      // e.g.:
+      // model.onUpdate(modifiedEntry);
+      // await subsciption.waitForNewEntries();
+      //
+      // without |setTimeout| such a code will freeze waiting for subscription
+      // update.
+      setTimeout(() => {
+        this.currentEntries = entries;
+        this.callCount++;
+        if (this.callback) this.callback(entries, settings, historyInfo);
+      });
+    });
+  }
 
-  this.waitForNewEntries = () => {
+  public currentEntries: EntryModel[] = [];
+  public callCount = 0;
+
+  public waitForNewEntries(): Promise<{
+    entries: EntryModel[];
+    settings: Settings | undefined;
+    historyInfo: { canRedo: boolean; canUndo: boolean };
+  }> {
     return new Promise((resolve) => {
-      expect(callback).toBe(null);
-      callback = (entries, settings) => {
-        resolve({ entries, settings });
-        callback = null;
+      expect(this.callback).toBe(undefined);
+      this.callback = (entries, settings, historyInfo) => {
+        resolve({ entries, settings, historyInfo });
+        this.callback = undefined;
       };
     });
-  };
-
-  model.subscribe((entries, settings) => {
-    // Some model methods notify subscriptions immediately.
-    // |setTimeout| allows checking wether it happened.
-    //
-    // e.g.:
-    // model.onUpdate(modifiedEntry);
-    // await subsciption.waitForNewEntries();
-    //
-    // without |setTimeout| such a code will freeze waiting for subscription
-    // update.
-    setTimeout(() => {
-      this.currentEntries = entries;
-      this.callCount++;
-      if (!!callback) callback(entries, settings);
-    });
-  });
+  }
 }
 
 async function fillTestingBackendMap(
-  entriesCount,
-  backendMap = testingBackendMap
+  entriesCount: number,
+  backendMap: BackendMap = testingBackendMap
 ) {
   await Promise.all(
     _.range(0, entriesCount)
       .reverse()
-      .map((id) => backendMap.addEntry("lorem ipsum " + id, "dolores " + id))
+      .map((id) => addEntry(backendMap, "lorem ipsum " + id, "dolores " + id))
   );
 }
 
-async function waitForModelFullyLoad(model) {
+async function waitForModelFullyLoad(model: EntriesTableModel) {
   const subscription = new EntriesSubscription(model);
-  let entries = null;
-  let settings = null;
-  while (true) {
+  let entries: EntryModel[] = [];
+  let settings: Settings | undefined = undefined;
+  for (;;) {
     ({ entries, settings } = await subscription.waitForNewEntries());
 
     for (let i = 0; i < entries.length; i++) {
       if (entries[i].data === EntryStatus.HIDDEN) {
-        model.onUpdate(entries[i].show());
+        model.onUpdate(entries[i].show(), true);
         break;
       }
     }
@@ -88,42 +117,59 @@ function createModel() {
   return { model, subscription };
 }
 
-async function expectModelToHaveEntries({ model, entries }) {
-  let newEntries = await waitForModelFullyLoad(model);
+async function expectModelToHaveEntries(args: {
+  model: EntriesTableModel;
+  entries: EntryModel[];
+}) {
+  const newEntries = await waitForModelFullyLoad(args.model);
 
-  expect(newEntries.length).toBe(entries.length);
+  expect(newEntries.length).toBe(args.entries.length);
 
-  for (let i = 0; i < entries.length; i++) {
-    expect(newEntries[i].left).toBe(entries[i].left);
-    expect(newEntries[i].right).toBe(entries[i].right);
+  for (let i = 0; i < args.entries.length; i++) {
+    expect(newEntries[i].left).toBe(args.entries[i].left);
+    expect(newEntries[i].right).toBe(args.entries[i].right);
     expect(JSON.stringify(newEntries[i].data)).toBe(
-      JSON.stringify(entries[i].data)
+      JSON.stringify(args.entries[i].data)
     );
   }
 }
 
-async function expectNewModelToHaveEntries(entries) {
+async function expectNewModelToHaveEntries(entries: EntryModel[]) {
   const { model } = createModel();
   await expectModelToHaveEntries({ model, entries });
+  model.dispose();
 }
 
 beforeEach(async () => {
-  testingAuthClient = new TestingGDriveAuthClient();
-  testingAuthClient.setStateFromTest(AuthStates.SIGNED_IN);
-
-  testingBackendMapRaw = new TestingBackendMap();
-  testingBackendMap = sinon.spy(applyQuotaSavers(testingBackendMapRaw));
+  ({
+    testingBackendMap,
+    testingBackendMapRaw,
+    testingAuthClient,
+  } = initTestingData());
 
   await testingBackendMap.getAllKeys();
 });
 
-function print(entries) {
-  console.log(entries.map((x) => ({ key: x.key, ...x.data })));
+function print(entries: EntryModel[]): void {
+  console.log(
+    entries.map((x) => {
+      if (EntryModel.isEntryData(x.data))
+        return {
+          key: x.key,
+          ...x.data,
+        };
+      else
+        return {
+          key: x.key,
+          status: x.data,
+        };
+    })
+  );
 }
 
 test("EntriesTableModel waits for sign in", async () => {
-  let lastEntries = null;
-  const onEntries = (entries) => {
+  let lastEntries: EntryModel[] | undefined = undefined;
+  const onEntries = (entries: EntryModel[]) => {
     lastEntries = entries;
   };
 
@@ -135,14 +181,14 @@ test("EntriesTableModel waits for sign in", async () => {
   model.subscribe(onEntries);
 
   await sleep(50);
-  expect(lastEntries).toBe(null);
+  expect(lastEntries).toBe(undefined);
 
   testingAuthClient.setStateFromTest(AuthStates.SIGNED_IN);
   await new Promise((resolve) => {
     model.subscribe(resolve);
   });
 
-  expect(lastEntries.length).toBe(10);
+  expect(lastEntries ? lastEntries.length : 0).toBe(10);
 });
 
 test("EntriesTableModel basic", async () => {
@@ -150,8 +196,8 @@ test("EntriesTableModel basic", async () => {
 
   const { subscription } = createModel();
 
-  while (true) {
-    let entries = (await subscription.waitForNewEntries()).entries;
+  for (;;) {
+    const entries = (await subscription.waitForNewEntries()).entries;
     if (
       entries.length === 10 &&
       entries.every((entry) => entry.isDataLoaded()) &&
@@ -454,7 +500,7 @@ test("EntriesTableModel can delete all items without explosion", async () => {
   await fillTestingBackendMap(16);
 
   const { model, subscription } = createModel();
-  let entries = await waitForModelFullyLoad(model);
+  const entries = await waitForModelFullyLoad(model);
 
   model.onUpdate(entries[0].delete());
   model.onUpdate(entries[1].delete());
@@ -498,8 +544,8 @@ test("EntriesTableModel can delete all items without explosion", async () => {
 test("EntriesTableModel has at least one item", async () => {
   const { subscription } = createModel();
 
-  while (true) {
-    let entries = (await subscription.waitForNewEntries()).entries;
+  for (;;) {
+    const entries = (await subscription.waitForNewEntries()).entries;
     if (
       entries.length === 1 &&
       entries[0].isDataLoaded() &&
@@ -527,7 +573,7 @@ test("EntriesTableModel loads only 30 entries at start", async () => {
     expect(entries[i].data).toBe(EntryStatus.HIDDEN);
   }
 
-  while (true) {
+  for (;;) {
     entries = (await subscription.waitForNewEntries()).entries;
     if (entries.slice(0, 30).every((x) => x.isDataLoaded() && x.key !== null))
       break;
@@ -544,7 +590,7 @@ test("EntriesTableModel loads only 30 entries at start", async () => {
     model.onUpdate(entries[i].show());
   }
 
-  while (true) {
+  for (;;) {
     entries = (await subscription.waitForNewEntries()).entries;
     if (entries.slice(0, 40).every((x) => x.isDataLoaded() && x.key !== null))
       break;
@@ -559,21 +605,29 @@ test("EntriesTableModel loads only 30 entries at start", async () => {
 });
 
 test("EntriesTableModel deletes poorly formatted entries", async () => {
+  const spiedJestConsole = jest
+    .spyOn(console, "error")
+    .mockImplementation(() => {
+      // Does nothing;
+    });
+
+  const mapSpy = spy(testingBackendMap);
+
   await fillTestingBackendMap(10);
-  let keys = (await testingBackendMap.getAllKeys()).reverse();
+  const keys = (await testingBackendMap.getAllKeys()).reverse();
 
   await testingBackendMap.set(keys[3].id, "\\");
   await testingBackendMap.set(keys[7].id, "{");
 
   await testingBackendMap.set(keys[9].id, "{dirty}");
 
-  const { subscription } = createModel();
+  const { model, subscription } = createModel();
 
   let entries = (await subscription.waitForNewEntries()).entries;
   expect(entries.length).toBe(10);
   expect(entries.every((x) => !x.isDataLoaded())).toBe(true);
 
-  while (true) {
+  for (;;) {
     entries = (await subscription.waitForNewEntries()).entries;
     if (
       entries.length === 7 &&
@@ -591,41 +645,41 @@ test("EntriesTableModel deletes poorly formatted entries", async () => {
     }
   }
 
-  expect(testingBackendMap.delete.withArgs(keys[0].id).notCalled).toBe(true);
-  expect(testingBackendMap.delete.withArgs(keys[1].id).notCalled).toBe(true);
-  expect(testingBackendMap.delete.withArgs(keys[2].id).notCalled).toBe(true);
-  expect(testingBackendMap.delete.withArgs(keys[4].id).notCalled).toBe(true);
-  expect(testingBackendMap.delete.withArgs(keys[5].id).notCalled).toBe(true);
-  expect(testingBackendMap.delete.withArgs(keys[6].id).notCalled).toBe(true);
-  expect(testingBackendMap.delete.withArgs(keys[8].id).notCalled).toBe(true);
-
-  expect(testingBackendMap.delete.withArgs(keys[3].id).calledOnce).toBe(true);
-  expect(testingBackendMap.delete.withArgs(keys[7].id).calledOnce).toBe(true);
-  expect(testingBackendMap.delete.withArgs(keys[9].id).calledOnce).toBe(true);
-
-  await expectNewModelToHaveEntries(entries);
+  verify(mapSpy.delete(anyString())).never();
+  expect(spiedJestConsole.mock.calls.length).toEqual(2 * 3); // 3 errors 2 times.
+  model.dispose();
+  spiedJestConsole.mockRestore();
 });
 
 test("EntriesTableModel deletes non existing entries", async () => {
+  const spiedJestConsole = jest
+    .spyOn(console, "error")
+    .mockImplementation(() => {
+      // Does nothing;
+    });
+
+  const mapSpy = spy(testingBackendMap);
   await fillTestingBackendMap(10);
-  let keys = (await testingBackendMap.getAllKeys()).reverse();
+  const keys = (await testingBackendMap.getAllKeys()).reverse();
   {
-    let prevGet = testingBackendMap.get.bind(testingBackendMap);
+    const prevGet = testingBackendMap.get.bind(testingBackendMap);
     testingBackendMap.get = (key) => {
       if (key === keys[3].id || key === keys[7].id || key === keys[9].id) {
-        return undefined;
+        return new Promise((resolve) => {
+          resolve(undefined);
+        });
       }
       return prevGet(key);
     };
   }
 
-  const { subscription } = createModel();
+  const { model, subscription } = createModel();
 
   let entries = (await subscription.waitForNewEntries()).entries;
   expect(entries.length).toBe(10);
   expect(entries.every((x) => !x.isDataLoaded())).toBe(true);
 
-  while (true) {
+  for (;;) {
     entries = (await subscription.waitForNewEntries()).entries;
     if (
       entries.length === 7 &&
@@ -643,7 +697,10 @@ test("EntriesTableModel deletes non existing entries", async () => {
     }
   }
 
-  expect(testingBackendMap.delete.notCalled).toBe(true);
+  verify(mapSpy.delete(anyString())).never();
+  expect(spiedJestConsole.mock.calls.length).toEqual(2 * 3); // 3 errors 2 times.
+  model.dispose();
+  spiedJestConsole.mockRestore();
 });
 
 test("EntriesTableModel creates items in map", async () => {
@@ -761,7 +818,7 @@ test("EntriesTableModel updates item in map", async () => {
   );
 
   expect(await testingBackendMap.get(entries[0].key)).toBe(
-    JSON.stringify(new EntryModel(null).clear().data)
+    JSON.stringify(new EntryModel("", EntryStatus.DELETED, "").clear().data)
   );
 
   await expectNewModelToHaveEntries(entries);
@@ -791,7 +848,7 @@ test("EntriesTableModel deletes items in map", async () => {
   );
 
   expect(await testingBackendMap.get(entries[0].key)).toBe(
-    JSON.stringify(new EntryModel(null).clear().data)
+    JSON.stringify(new EntryModel("", EntryStatus.DELETED, "").clear().data)
   );
 
   entries.splice(10, 1);
@@ -843,8 +900,13 @@ test("async set/delete doesn't explode", async () => {
 });
 
 test("BackendMultiplexor handles incorrect data", async () => {
-  console.log("-----------------------------------------------");
-  let testingBackendMap = new TestingBackendMap();
+  const spiedJestConsole = jest
+    .spyOn(console, "error")
+    .mockImplementation(() => {
+      // Does nothing;
+    });
+
+  const testingBackendMap = new TestingBackendMap();
   fillTestingBackendMap(50, testingBackendMap);
 
   await testingBackendMap.getAllKeys();
@@ -886,7 +948,10 @@ test("BackendMultiplexor handles incorrect data", async () => {
   await testingBackendMap.setDescription("13", ",null,");
 
   // values is array of nulls (should be deleted)
-  await testingBackendMap.set("20", JSON.stringify([null, null, null]));
+  await testingBackendMap.set(
+    "20",
+    JSON.stringify([undefined, undefined, undefined])
+  );
   await testingBackendMap.setDescription("20", ",null,");
 
   // with empty values (should be deleted)
@@ -910,11 +975,11 @@ test("BackendMultiplexor handles incorrect data", async () => {
   );
   await testingBackendMap.setDescription("30", ",,,,,,,,");
 
-  let model = new EntriesTableModelImpl(
+  const model = new EntriesTableModelImpl(
     applyQuotaSavers(testingBackendMap),
     testingAuthClient
   );
-  let subscription = new EntriesSubscription(model);
+  const subscription = new EntriesSubscription(model);
   let entries = await waitForModelFullyLoad(model);
 
   model.addNewItem();
@@ -942,25 +1007,28 @@ test("BackendMultiplexor handles incorrect data", async () => {
   }
 
   await sleep(1500);
-  expect((await testingBackendMap.getAllKeys()).length).toBe(4);
 
-  let anotherModel = new EntriesTableModelImpl(
+  expect((await testingBackendMap.getAllKeys()).length).toBe(6);
+
+  const anotherModel = new EntriesTableModelImpl(
     applyQuotaSavers(testingBackendMap),
     testingAuthClient
   );
 
   await expectModelToHaveEntries({ model: anotherModel, entries });
-  console.log("-----------------------------------------------");
+  model.dispose();
+  anotherModel.dispose();
+  spiedJestConsole.mockRestore();
 }, 10000);
 
-async function createSyncedModels(itemsNumber) {
-  let testingMap = new TestingBackendMap();
-  let withQuotaSavers = applyQuotaSavers(testingMap);
+async function createSyncedModels(itemsNumber: number) {
+  const testingMap = new TestingBackendMap();
+  const withQuotaSavers = applyQuotaSavers(testingMap);
   await withQuotaSavers.getAllKeys();
   await fillTestingBackendMap(itemsNumber, withQuotaSavers);
   await sleep(1500);
 
-  let model1 = new EntriesTableModelImpl(
+  const model1 = new EntriesTableModelImpl(
     applyQuotaSavers(testingMap),
     testingAuthClient
   );
@@ -969,7 +1037,7 @@ async function createSyncedModels(itemsNumber) {
 
   await sleep(1200);
 
-  let model2 = new EntriesTableModelImpl(
+  const model2 = new EntriesTableModelImpl(
     applyQuotaSavers(testingMap),
     testingAuthClient
   );
@@ -978,9 +1046,9 @@ async function createSyncedModels(itemsNumber) {
 }
 
 test("sync hides deleted entries (without changing other entries)", async () => {
-  let [model1, model2] = await createSyncedModels(10);
-  let subscription1 = new EntriesSubscription(model1);
-  let subscription2 = new EntriesSubscription(model2);
+  const [model1, model2] = await createSyncedModels(10);
+  const subscription1 = new EntriesSubscription(model1);
+  const subscription2 = new EntriesSubscription(model2);
 
   let entries1 = await waitForModelFullyLoad(model1);
   let entries2 = await waitForModelFullyLoad(model2);
@@ -1053,9 +1121,9 @@ test("sync hides deleted entries (without changing other entries)", async () => 
 }, 10000);
 
 test("sync updates changed entries (without changing other entries)", async () => {
-  let [model1, model2] = await createSyncedModels(10);
-  let subscription1 = new EntriesSubscription(model1);
-  let subscription2 = new EntriesSubscription(model2);
+  const [model1, model2] = await createSyncedModels(10);
+  const subscription1 = new EntriesSubscription(model1);
+  const subscription2 = new EntriesSubscription(model2);
 
   let entries1 = await waitForModelFullyLoad(model1);
   let entries2 = await waitForModelFullyLoad(model2);
@@ -1147,9 +1215,9 @@ test("sync updates changed entries (without changing other entries)", async () =
 }, 10000);
 
 test("without sync new entries overwrite previous items in chunk", async () => {
-  let [model1, model2] = await createSyncedModels(4);
-  let subscription1 = new EntriesSubscription(model1);
-  let subscription2 = new EntriesSubscription(model2);
+  const [model1, model2] = await createSyncedModels(4);
+  const subscription1 = new EntriesSubscription(model1);
+  const subscription2 = new EntriesSubscription(model2);
 
   let entries1 = await waitForModelFullyLoad(model1);
   await waitForModelFullyLoad(model2);
@@ -1158,11 +1226,15 @@ test("without sync new entries overwrite previous items in chunk", async () => {
 
   expect(entries1.length).toBe(4);
 
-  let addItem = async (model, subscription, left) => {
+  const addItem = async (
+    model: EntriesTableModel,
+    subscription: EntriesSubscription,
+    left: string
+  ) => {
     model.addNewItem();
     await subscription.waitForNewEntries();
 
-    model.onUpdate(subscription.currentEntries[0].setLeft(left));
+    model.onUpdate(subscription.currentEntries[0].setLeft(left), false);
     while (subscription.currentEntries[0].left !== left) {
       await subscription.waitForNewEntries();
     }
@@ -1213,9 +1285,9 @@ test("without sync new entries overwrite previous items in chunk", async () => {
 }, 10000);
 
 test("with sync new entries adds up to previous items in chunk", async () => {
-  let [model1, model2] = await createSyncedModels(4);
-  let subscription1 = new EntriesSubscription(model1);
-  let subscription2 = new EntriesSubscription(model2);
+  const [model1, model2] = await createSyncedModels(4);
+  const subscription1 = new EntriesSubscription(model1);
+  const subscription2 = new EntriesSubscription(model2);
 
   let entries1 = await waitForModelFullyLoad(model1);
   await waitForModelFullyLoad(model2);
@@ -1224,11 +1296,15 @@ test("with sync new entries adds up to previous items in chunk", async () => {
 
   expect(entries1.length).toBe(4);
 
-  let addItem = async (model, subscription, left) => {
+  const addItem = async (
+    model: EntriesTableModel,
+    subscription: EntriesSubscription,
+    left: string
+  ) => {
     model.addNewItem();
     await subscription.waitForNewEntries();
 
-    model.onUpdate(subscription.currentEntries[0].setLeft(left));
+    model.onUpdate(subscription.currentEntries[0].setLeft(left), false);
     while (subscription.currentEntries[0].left !== left) {
       await subscription.waitForNewEntries();
     }
@@ -1284,7 +1360,7 @@ test("undo/redo", async () => {
   await fillTestingBackendMap(160);
 
   const { model, subscription } = createModel();
-  let initialEntries = await waitForModelFullyLoad(model);
+  const initialEntries = await waitForModelFullyLoad(model);
 
   for (let i = 0; i < 159; i++) model.onUpdate(initialEntries[i].delete());
   await sleep(100);
@@ -1323,7 +1399,7 @@ test("undo/redo", async () => {
     await sleep(10);
   }
 
-  let entries1 = subscription.currentEntries;
+  const entries1 = subscription.currentEntries;
 
   expect(entries1[0].left).toBe("lorem ipsum 144");
   expect(entries1[1].left).toBe("lorem ipsum 145");
@@ -1345,7 +1421,7 @@ test("undo/redo", async () => {
   // redo delete
   model.redo();
   await sleep(10);
-  let entries2 = subscription.currentEntries;
+  const entries2 = subscription.currentEntries;
 
   expect(entries2[0].left).toBe("lorem ipsum 145");
   expect(entries2[1].left).toBe("lorem ipsum 146");
@@ -1369,7 +1445,7 @@ test("undo/redo", async () => {
   model.onUpdate(entries2[13].setLeft("changed 13"));
 
   await sleep(10);
-  let entries3 = subscription.currentEntries;
+  const entries3 = subscription.currentEntries;
 
   expect(entries3[0].left).toBe("lorem ipsum 145");
   expect(entries3[1].left).toBe("changed 1");
@@ -1396,7 +1472,7 @@ test("undo/redo", async () => {
   model.onUpdate(entries3[3].setLeft("changed again 3"));
   model.onUpdate(entries3[13].setLeft("changed again 13"));
   await sleep(10);
-  let entries4 = subscription.currentEntries;
+  const entries4 = subscription.currentEntries;
   expect(entries4[0].left).toBe("lorem ipsum 145");
   expect(entries4[1].left).toBe("changed 1");
   expect(entries4[2].left).toBe("lorem ipsum 147");
@@ -1424,10 +1500,12 @@ test("undo/redo", async () => {
 
   for (let i = 0; i < 4; i++) model.undo();
   await sleep(10);
+
   await expectModelToHaveEntries({ model, entries: entries2 });
 
   model.undo();
   await sleep(10);
+
   await expectModelToHaveEntries({ model, entries: entries1 });
 
   for (let i = 0; i <= 160; i++) model.undo();
@@ -1446,7 +1524,7 @@ test("undo/redo", async () => {
 test("can add new item as early as possible", async () => {
   await fillTestingBackendMap(10);
   await sleep(1200);
-  testingBackendMap = sinon.spy(applyQuotaSavers(testingBackendMapRaw));
+  testingBackendMap = applyQuotaSavers(testingBackendMapRaw);
   const { model } = createModel();
   model.addNewItem();
 
@@ -1482,8 +1560,9 @@ test("can add new item when model is paritally loaded", async () => {
   await sleep(1200);
   model.dispose();
 
-  testingBackendMap = sinon.spy(applyQuotaSavers(testingBackendMapRaw));
+  testingBackendMap = applyQuotaSavers(testingBackendMapRaw);
   let subscription;
+  // eslint-disable-next-line prefer-const
   ({ model, subscription } = createModel());
   entries = (await subscription.waitForNewEntries()).entries;
 
@@ -1542,6 +1621,6 @@ test("can add new items asynchroniously", async () => {
   expect(entries[11].left).toBe("lorem ipsum 8");
 });
 
-function sleep(ms) {
+function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }

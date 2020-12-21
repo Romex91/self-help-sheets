@@ -12,6 +12,7 @@ export interface BackendMap {
   getMd5(key: string): Promise<string>;
   getAllKeys(): Promise<BackendKeyMeta[]>;
   getSettings(): Promise<string>;
+
   setSettings(settings: string): Promise<void>;
   setDescription(key: string, description: string): Promise<void>;
 }

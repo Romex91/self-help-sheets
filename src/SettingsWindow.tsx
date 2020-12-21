@@ -20,7 +20,10 @@ import { Settings, Hint } from "./Settings";
 import { LoadingPlaceholder } from "./LoadingPlaceholder";
 
 import { migrateEmoji } from "./migrateEmoji";
-import { EntriesSubscription, EntriesTableModel } from "./EntriesTableModel";
+import {
+  EntriesSubscriptionCallback,
+  EntriesTableModel,
+} from "./EntriesTableModel";
 import assert from "assert";
 import { AuthStates } from "./AuthClient";
 
@@ -104,7 +107,7 @@ export default function SettingsWindow(
   }, []);
 
   React.useEffect(() => {
-    const onUpdate: EntriesSubscription = (entries, settings) => {
+    const onUpdate: EntriesSubscriptionCallback = (entries, settings) => {
       setSettings((oldSettings) => {
         return oldSettings == undefined ? settings : oldSettings;
       });

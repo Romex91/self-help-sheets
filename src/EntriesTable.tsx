@@ -18,7 +18,10 @@ import { VirtualizedList } from "./VirtualizedList";
 import KeyboardEventHandler from "react-keyboard-event-handler";
 import { ArrowDropDown as ArrowIcon } from "@material-ui/icons";
 
-import { EntriesTableModel, EntriesSubscription } from "./EntriesTableModel";
+import {
+  EntriesTableModel,
+  EntriesSubscriptionCallback,
+} from "./EntriesTableModel";
 import { EntryModel } from "./EntryModel";
 import { Settings } from "./Settings";
 import assert from "assert";
@@ -131,7 +134,7 @@ const EntriesTable = withStyles(styles)(
       canUndo: false,
     };
 
-    private onEntriesChanged: EntriesSubscription = (
+    private onEntriesChanged: EntriesSubscriptionCallback = (
       entries,
       settings,
       { canRedo, canUndo }

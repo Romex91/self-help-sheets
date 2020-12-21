@@ -49,10 +49,11 @@ export class BackendMultiplexor implements BackendMap {
         this._chunks.get(getLastInnerKey()).isFull()
       ) {
         const newInnerKey = await this._innerBackendMap.createKey();
+
         this._innerKeys.push(newInnerKey);
         this._chunks.set(
           newInnerKey,
-          new Chunk(this._createChunkConnector(newInnerKey), undefined, "")
+          new Chunk(this.createChunkConnector(newInnerKey), undefined, "")
         );
       }
 
@@ -76,7 +77,7 @@ export class BackendMultiplexor implements BackendMap {
     }
   }
 
-  async set(key: string, value: string) : Promise<void> {
+  async set(key: string, value: string): Promise<void> {
     const { prefixKey, innerKey } = this.splitOuterKey(key);
     if (!this._chunks.has(innerKey)) return;
     this._chunks.get(innerKey).setValue(prefixKey, value);
@@ -119,7 +120,7 @@ export class BackendMultiplexor implements BackendMap {
           newChunks.set(
             innerKey.id,
             new Chunk(
-              this._createChunkConnector(innerKey.id),
+              this.createChunkConnector(innerKey.id),
               innerKey.description,
               innerKey.md5Checksum ?? ""
             )
@@ -144,23 +145,23 @@ export class BackendMultiplexor implements BackendMap {
     }
   }
 
-  async getSettings() : Promise<string> {
+  async getSettings(): Promise<string> {
     return await this._innerBackendMap.getSettings();
   }
 
-  async setSettings(settingsContent: string) : Promise<void> {
+  async setSettings(settingsContent: string): Promise<void> {
     const release = await this._changeKeysMutex.acquire();
     await this._innerBackendMap.setSettings(settingsContent);
     release();
   }
 
-  async setDescription(key: string, description: string) : Promise<void>{
+  async setDescription(key: string, description: string): Promise<void> {
     const { prefixKey, innerKey } = this.splitOuterKey(key);
     if (!this._chunks.has(innerKey)) return;
     this._chunks.get(innerKey).setDescription(prefixKey, description);
   }
 
-  _createChunkConnector = (innerkey: string): ChunkConnector => {
+  private createChunkConnector(innerkey: string): ChunkConnector {
     return {
       setValue: (serializedValue) => {
         this._innerBackendMap.set(innerkey, serializedValue);
@@ -178,9 +179,11 @@ export class BackendMultiplexor implements BackendMap {
         return await this._innerBackendMap.delete(innerkey);
       },
     };
-  };
+  }
 
-  private splitOuterKey(outerKey: string) : {prefixKey : number, innerKey: string} {
+  private splitOuterKey(
+    outerKey: string
+  ): { prefixKey: number; innerKey: string } {
     const separator = outerKey.indexOf("-");
     const prefixKey = Number(outerKey.substring(0, separator));
     const innerKey = outerKey.substring(separator + 1);
@@ -271,6 +274,7 @@ class Chunk {
   async delete(subkey: number) {
     if (this._descriptions[subkey] == undefined)
       throw new Error("item is already deleted");
+
     if (this._descriptions.filter((x) => x != undefined).length === 1)
       await this._connector.delete();
     else this.setDescription(subkey, undefined);
@@ -405,6 +409,7 @@ class Chunk {
         this._serializedValues = undefined;
         this.onValueSet();
       } else {
+        // TODO: spare poorly formatted data to be able to recover data in case of fuckup.
         this._connector.delete();
       }
     }

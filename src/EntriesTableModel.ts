@@ -1,7 +1,7 @@
 import { EntryModel } from "./EntryModel";
 import { Settings } from "./Settings";
 
-export interface EntriesSubscription {
+export interface EntriesSubscriptionCallback {
   (
     entries: EntryModel[],
     settings: Settings | undefined,
@@ -10,8 +10,8 @@ export interface EntriesSubscription {
 }
 
 export interface EntriesTableModel {
-  subscribe(callback: EntriesSubscription): void;
-  unsubscribe(callback: EntriesSubscription): void;
+  subscribe(callback: EntriesSubscriptionCallback): void;
+  unsubscribe(callback: EntriesSubscriptionCallback): void;
 
   onUpdate(entry: EntryModel, omitHistory: boolean): void;
   onSettingsUpdate(settings: Settings): void;

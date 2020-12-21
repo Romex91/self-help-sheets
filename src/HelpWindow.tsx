@@ -1,7 +1,10 @@
 import React, { Suspense } from "react";
 import { IconButton, Button, makeStyles } from "@material-ui/core";
 import { Settings as SettingsIcon } from "@material-ui/icons";
-import { EntriesTableModel, EntriesSubscription } from "./EntriesTableModel";
+import {
+  EntriesTableModel,
+  EntriesSubscriptionCallback,
+} from "./EntriesTableModel";
 import { EntryModel } from "./EntryModel";
 import { Settings } from "./Settings";
 import { LoadingPlaceholder } from "./LoadingPlaceholder";
@@ -37,7 +40,7 @@ export class ExampleModel implements EntriesTableModel {
     // Does nothing.
   }
 
-  subscribe(callback: EntriesSubscription): void {
+  subscribe(callback: EntriesSubscriptionCallback): void {
     callback(
       [
         new EntryModel("0", { left: "", right: "" }, "")
