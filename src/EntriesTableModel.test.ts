@@ -1009,7 +1009,8 @@ test("BackendMultiplexor handles incorrect data", async () => {
 
   await sleep(1500);
 
-  expect((await testingBackendMap.getAllKeys()).length).toBe(6);
+  // The model keeps poorly formatted entries for diagnostics.
+  expect((await testingBackendMap.getAllKeys()).length).toBe(50);
 
   const anotherModel = new EntriesTableModelImpl(
     applyQuotaSavers(testingBackendMap),

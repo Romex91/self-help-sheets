@@ -220,8 +220,6 @@ class Chunk {
   // equal to md5(this._serializedValues).
   private _isDirty: boolean;
 
-  private _shouldKeepOnFormatError = false;
-
   constructor(
     private _connector: ChunkConnector,
     private _serializedDescriptions: string | undefined,
@@ -251,24 +249,18 @@ class Chunk {
   }
 
   async createSubKey() {
-    this._shouldKeepOnFormatError = true;
+    if (this._values == undefined) await this._fetchValuesSynchronised();
+    if (this._values == undefined) return undefined;
 
-    try {
-      if (this._values == undefined) await this._fetchValuesSynchronised();
-      if (this._values == undefined) return undefined;
+    if (this.isFull())
+      throw new Error("Do not call createSubKey for full chunks");
 
-      if (this.isFull())
-        throw new Error("Do not call createSubKey for full chunks");
+    const subkey = this._descriptions.length;
+    this._descriptions.push("");
+    // Just to set correct state;
+    this.setDescription(subkey, "");
 
-      const subkey = this._descriptions.length;
-      this._descriptions.push("");
-      // Just to set correct state;
-      this.setDescription(subkey, "");
-
-      return subkey;
-    } finally {
-      this._shouldKeepOnFormatError = false;
-    }
+    return subkey;
   }
 
   async delete(subkey: number) {
@@ -403,14 +395,14 @@ class Chunk {
       console.error(
         "Bad response from server:" + error.message + " " + serializedValues
       );
-      if (this._shouldKeepOnFormatError) {
-        this._values = Array(chunkSize).fill("");
-        this._isDirty = true;
-        this._serializedValues = undefined;
-        this.onValueSet();
-      } else {
-        // TODO: spare poorly formatted data to be able to recover data in case of fuckup.
-        this._connector.delete();
+
+      if (this._values == undefined) {
+        this._isDirty = false;
+        this._values = Array(chunkSize).fill(undefined);
+        this._serializedValues = serializedValues;
+        this._initialMd5Checksum = serializedValues
+          ? md5(serializedValues)
+          : "";
       }
     }
   }
