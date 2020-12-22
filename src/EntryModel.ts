@@ -27,7 +27,7 @@ export class EntryModel {
   private _description = "";
 
   // Cached values for performance. Gets recomputed only when setDescription is called.
-  private _emojiArrays: [number[], number[]] = [[], []];
+  private _moodArrays: [number[], number[]] = [[], []];
   private _creationTime?: Date;
 
   public lastChange: LastChange = LastChange.NONE;
@@ -105,15 +105,15 @@ export class EntryModel {
     return cloneModel;
   }
 
-  get emojiArrays(): [number[], number[]] {
-    return this._emojiArrays;
+  get moodArrays(): [number[], number[]] {
+    return this._moodArrays;
   }
 
-  setEmojiLeft(left: number[]): EntryModel {
+  setMoodsLeft(left: number[]): EntryModel {
     const result = this.setDescription(
       EntryModel._generateDescription(
         left,
-        this._emojiArrays[1],
+        this._moodArrays[1],
         this._creationTime
       )
     );
@@ -121,10 +121,10 @@ export class EntryModel {
     return result;
   }
 
-  setEmojiRight(right: number[]): EntryModel {
+  setMoodsRight(right: number[]): EntryModel {
     const result = this.setDescription(
       EntryModel._generateDescription(
-        this._emojiArrays[0],
+        this._moodArrays[0],
         right,
         this._creationTime
       )
@@ -139,8 +139,8 @@ export class EntryModel {
   setCreationTime(creationTime: Date): EntryModel {
     return this.setDescription(
       EntryModel._generateDescription(
-        this._emojiArrays[0],
-        this._emojiArrays[1],
+        this._moodArrays[0],
+        this._moodArrays[1],
         creationTime
       )
     );
@@ -181,7 +181,7 @@ export class EntryModel {
   clone(): EntryModel {
     // this.data creates shallow copy of this._data
     const cloneModel = new EntryModel(this._key, this.data, "");
-    cloneModel._emojiArrays = this._emojiArrays;
+    cloneModel._moodArrays = this._moodArrays;
     cloneModel._creationTime = this._creationTime;
     cloneModel._description = this._description;
     cloneModel._initiallyCollapsed = this._initiallyCollapsed;
@@ -192,17 +192,17 @@ export class EntryModel {
   }
 
   private setDescriptionImpl(description: string): void {
-    this._emojiArrays = [[], []];
+    this._moodArrays = [[], []];
     this._creationTime = undefined;
     this._description = description;
     if (description.length > 0 && description !== EntryStatus.DELETED) {
-      const [serializedEmoji, serializedCreationTime] = description.split("-");
+      const [serializedMoods, serializedCreationTime] = description.split("-");
 
-      const [leftEmoji = [], rightEmoji = []] = serializedEmoji
+      const [leftMoods = [], rightMoods = []] = serializedMoods
         .split(":")
         .map((x) => Array.from(x).map((y) => Number(y)));
 
-      this._emojiArrays = [leftEmoji, rightEmoji];
+      this._moodArrays = [leftMoods, rightMoods];
 
       this._creationTime = new Date(Number(serializedCreationTime));
       if (isNaN(this._creationTime.getTime())) {
@@ -212,15 +212,15 @@ export class EntryModel {
   }
 
   static _generateDescription(
-    leftEmoji: number[],
-    rightEmoji: number[],
+    leftMoods: number[],
+    rightMoods: number[],
     creationTime?: Date
   ): string {
     let descrciption;
-    if (leftEmoji.every((x) => x === 0) && rightEmoji.every((x) => x === 0)) {
+    if (leftMoods.every((x) => x === 0) && rightMoods.every((x) => x === 0)) {
       descrciption = "";
     } else {
-      descrciption = leftEmoji.join("") + ":" + rightEmoji.join("");
+      descrciption = leftMoods.join("") + ":" + rightMoods.join("");
     }
 
     if (creationTime != undefined)

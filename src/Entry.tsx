@@ -11,12 +11,11 @@ import {
 import { Skeleton } from "@material-ui/lab";
 import DeleteIcon from "@material-ui/icons/Delete";
 import moment from "moment";
-import { EmojiPicker } from "./EmojiPicker";
+import { MoodPicker } from "./MoodPicker";
 import { Popup } from "./Popup";
 import { EntryModel, EntryStatus, LastChange } from "./EntryModel";
 import { Settings, EmojiItem, HintData } from "./Settings";
 
-// TODO: emoji->mood
 export type MoodItem = EmojiItem & {
   value: number;
 };
@@ -24,7 +23,7 @@ export type MoodItem = EmojiItem & {
 interface StyleOptions {
   focused: boolean;
   hasCreationTime: boolean;
-  hasEmoji: boolean;
+  hasMoods: boolean;
 }
 
 const paperStyle = (theme: Theme) => ({
@@ -52,7 +51,7 @@ const useStyles = makeStyles((theme) => ({
   input: {
     padding: "0px 7px",
     marginTop: (options: StyleOptions) => (options.hasCreationTime ? 0 : 19),
-    minHeight: (options: StyleOptions) => (options.hasEmoji ? 76 : 76 + 28),
+    minHeight: (options: StyleOptions) => (options.hasMoods ? 76 : 76 + 28),
     alignItems: "flex-start",
   },
   outer: {
@@ -74,11 +73,11 @@ const useStyles = makeStyles((theme) => ({
 
 interface SubItemProps {
   onFocus(alreadyFocused: boolean): void;
-  emojiText: string;
-  emojiArray: MoodItem[];
+  moodsText: string;
+  moodsArray: MoodItem[];
   onDelete(): void;
   creationTime?: Date;
-  onEmojiArrayChange(emojiArray: MoodItem[]): void;
+  onMoodsArrayChange(moodsArray: MoodItem[]): void;
   onCollapseExited?: (node: HTMLElement) => void;
   collapsed: boolean;
   example: boolean;
@@ -92,7 +91,7 @@ interface SubItemProps {
 
 function SubItem(props: SubItemProps) {
   const [focused, setFocused] = React.useState(false);
-  const [emojiFocused, setEmojiFocused] = React.useState(false);
+  const [moodPickerFocused, setMoodPickerFocused] = React.useState(false);
 
   React.useEffect(() => {
     if (focused) {
@@ -102,8 +101,8 @@ function SubItem(props: SubItemProps) {
 
   const classes = useStyles({
     hasCreationTime: props.creationTime != undefined,
-    hasEmoji: props.emojiArray.length > 0,
-    focused: focused || emojiFocused,
+    hasMoods: props.moodsArray.length > 0,
+    focused: focused || moodPickerFocused,
   });
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -116,13 +115,13 @@ function SubItem(props: SubItemProps) {
     setFocused(false);
   };
 
-  const onEmojiFocused = () => {
+  const onMoodPickerFocused = () => {
     props.onFocus(false);
-    setEmojiFocused(true);
+    setMoodPickerFocused(true);
   };
 
-  const onEmojiBlur = () => {
-    setEmojiFocused(false);
+  const onMoodPickerBlur = () => {
+    setMoodPickerFocused(false);
   };
 
   React.useEffect(() => {
@@ -167,14 +166,14 @@ function SubItem(props: SubItemProps) {
             value={props.value}
             onChange={props.onChange}
           />
-          <EmojiPicker
-            text={props.emojiText}
-            onEmojiArrayChange={props.onEmojiArrayChange}
-            emojiArray={props.emojiArray}
+          <MoodPicker
+            text={props.moodsText}
+            onMoodArrayChange={props.onMoodsArrayChange}
+            moodsArray={props.moodsArray}
             inputRef={inputRef}
-            onFocus={onEmojiFocused}
-            onBlur={onEmojiBlur}
-          ></EmojiPicker>
+            onFocus={onMoodPickerFocused}
+            onBlur={onMoodPickerBlur}
+          ></MoodPicker>
           {props.hint != null &&
             props.hint.isEnabled &&
             props.value.length > 0 && (
@@ -231,7 +230,7 @@ export const Entry = React.forwardRef<HTMLTableRowElement, EntryProps>(
     const classes = useStyles({
       focused: false,
       hasCreationTime: false,
-      hasEmoji: false,
+      hasMoods: false,
     });
 
     const initiallyCollapsed: boolean =
@@ -270,23 +269,23 @@ export const Entry = React.forwardRef<HTMLTableRowElement, EntryProps>(
         props.onUpdate(entryModel.show(), true);
     });
 
-    const emojiLeft: MoodItem[] = [];
-    const emojiRight: MoodItem[] = [];
+    const moodsLeft: MoodItem[] = [];
+    const moodsRight: MoodItem[] = [];
 
     if (props.settings != null) {
       for (let i = 0; i < props.settings.emojiList.length; i++) {
-        emojiLeft.push({
+        moodsLeft.push({
           value:
-            entryModel.emojiArrays[0][i] == null
+            entryModel.moodArrays[0][i] == null
               ? 0
-              : entryModel.emojiArrays[0][i],
+              : entryModel.moodArrays[0][i],
           ...props.settings.emojiList[i],
         });
-        emojiRight.push({
+        moodsRight.push({
           value:
-            entryModel.emojiArrays[1][i] == null
+            entryModel.moodArrays[1][i] == null
               ? 0
-              : entryModel.emojiArrays[1][i],
+              : entryModel.moodArrays[1][i],
           ...props.settings.emojiList[i],
         });
       }
@@ -324,11 +323,11 @@ export const Entry = React.forwardRef<HTMLTableRowElement, EntryProps>(
               example={props.example}
               collapsed={collapsed}
               hint={props.settings?.leftHint}
-              emojiText="How do you feel now?"
-              emojiArray={emojiLeft}
-              onEmojiArrayChange={(newLeftEmojiArray: MoodItem[]) =>
+              moodsText="How do you feel now?"
+              moodsArray={moodsLeft}
+              onMoodsArrayChange={(newLeftMoodArray: MoodItem[]) =>
                 onEntryChanged(
-                  entryModel.setEmojiLeft(newLeftEmojiArray.map((x) => x.value))
+                  entryModel.setMoodsLeft(newLeftMoodArray.map((x) => x.value))
                 )
               }
             ></SubItem>
@@ -360,12 +359,12 @@ export const Entry = React.forwardRef<HTMLTableRowElement, EntryProps>(
                 props.onUpdate(entryModel.delete(), false)
               }
               hint={props.settings?.rightHint}
-              emojiText="How do you feel after writing resolution?"
-              emojiArray={emojiRight}
-              onEmojiArrayChange={(newRightEmojiArray: MoodItem[]) =>
+              moodsText="How do you feel after writing resolution?"
+              moodsArray={moodsRight}
+              onMoodsArrayChange={(newRightMoodArray: MoodItem[]) =>
                 onEntryChanged(
-                  entryModel.setEmojiRight(
-                    newRightEmojiArray.map((x) => x.value)
+                  entryModel.setMoodsRight(
+                    newRightMoodArray.map((x) => x.value)
                   )
                 )
               }

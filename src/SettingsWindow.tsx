@@ -19,7 +19,7 @@ import { CenteredTypography } from "./CenteredTypography";
 import { Settings, Hint } from "./Settings";
 import { LoadingPlaceholder } from "./LoadingPlaceholder";
 
-import { migrateEmoji } from "./migrateEmoji";
+import { migrateMoods } from "./migrateMoods";
 import {
   EntriesSubscriptionCallback,
   EntriesTableModel,
@@ -166,7 +166,7 @@ export default function SettingsWindow(
     listClone.splice(index, 1);
 
     assert(props.model);
-    const { someValuesAreDeleted, newEntries } = await migrateEmoji(
+    const { someValuesAreDeleted, newEntries } = await migrateMoods(
       props.model,
       settings.emojiList,
       listClone
@@ -194,7 +194,7 @@ export default function SettingsWindow(
     const newSettings = new Settings("");
 
     assert(props.model);
-    const { someValuesAreDeleted, newEntries } = await migrateEmoji(
+    const { someValuesAreDeleted, newEntries } = await migrateMoods(
       props.model,
       settings.emojiList,
       newSettings.emojiList

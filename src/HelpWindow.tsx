@@ -52,8 +52,8 @@ export class ExampleModel implements EntriesTableModel {
               "It's not that bad.  I just need to overcome my shame of this fear and talk to Mom. I think I trust Mom about that. I'll calm down a little and talk to her."
           )
           .setCreationTime(new Date(Date.now() - 901000000))
-          .setEmojiLeft([3, 0, 0, 0, 3])
-          .setEmojiRight([1, 0, 0, 0, 2]),
+          .setMoodsLeft([3, 0, 0, 0, 3])
+          .setMoodsRight([1, 0, 0, 0, 2]),
         new EntryModel("1", { left: "", right: "" }, "")
           .setLeft(
             "I talked to Mom. She didn't believe me. Adults never repsect kids. I hate her for that! And what should I do now? I'm pissed off and scared at the same time."
@@ -67,8 +67,8 @@ export class ExampleModel implements EntriesTableModel {
               "If I fail I can flee to Gran's house anytime."
           )
           .setCreationTime(new Date(Date.now() - 900000000))
-          .setEmojiLeft([3, 0, 0, 0, 3, 0, 3])
-          .setEmojiRight([1, 0, 0, 0, 2, 0, 0, 0]),
+          .setMoodsLeft([3, 0, 0, 0, 3, 0, 3])
+          .setMoodsRight([1, 0, 0, 0, 2, 0, 0, 0]),
         new EntryModel("2", { left: "", right: "" }, "")
           .setLeft(
             "Ann overheard my conversation with Mom and gossiped my fear of cats to my classmates.\n" +
@@ -87,8 +87,8 @@ export class ExampleModel implements EntriesTableModel {
               "I should stop thinking about my intelligence and focus on something constructive. I have to utterly destroy my sister!"
           )
           .setCreationTime(new Date(Date.now() - 800000000))
-          .setEmojiLeft([0, 3, 0, 3])
-          .setEmojiRight([0, 0, 0, 0, 0, 0, 3]),
+          .setMoodsLeft([0, 3, 0, 3])
+          .setMoodsRight([0, 0, 0, 0, 0, 0, 3]),
         new EntryModel("3", { left: "", right: "" }, "")
           .setLeft(
             "Writing this diary takes time. I could have more fun if I stop writing it."
@@ -98,8 +98,8 @@ export class ExampleModel implements EntriesTableModel {
               "It doesn't waste my time, to the contrary, it helps me to avoid wasting my time thinking the same thought again and again. And I actually like the process of writing the diary. Why bother?"
           )
           .setCreationTime(new Date(Date.now() - 1000000))
-          .setEmojiLeft([1])
-          .setEmojiRight([]),
+          .setMoodsLeft([1])
+          .setMoodsRight([]),
         new EntryModel("4", { left: "", right: "" }, "")
           .setLeft(
             "I worry I'll give up the diary because it is less entertaining than videogames or netflix. "
@@ -114,8 +114,8 @@ export class ExampleModel implements EntriesTableModel {
               " It is great that I write the diary regularly. Yes, I procrastinate sometimes, but this is not a problem! The main thing is sometimes I DON'T procrastinate. Great job!"
           )
           .setCreationTime(new Date(Date.now()))
-          .setEmojiLeft([0, 2])
-          .setEmojiRight([]),
+          .setMoodsLeft([0, 2])
+          .setMoodsRight([]),
       ],
       new Settings(""),
       { canRedo: false, canUndo: false }

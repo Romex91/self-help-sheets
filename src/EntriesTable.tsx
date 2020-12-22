@@ -55,7 +55,7 @@ const styles = (theme: Theme) =>
         padding: 2,
         verticalAlign: "top",
         borderLeft: "5px solid #0000",
-        // ColumnResizer sets it to "hidden". This cuts emoji popups.
+        // ColumnResizer sets it to "hidden". This cuts MoodPicker popups.
         overflow: "inherit !important",
       },
       "& td:nth-child(odd)": {
