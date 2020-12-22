@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * @jest-environment node
  */
@@ -55,6 +56,7 @@ export async function realBrowserTest(testFile, testBody) {
       page.goto(`localhost:3000/realBrowserTest.html`);
       page.on("load", async () => {
         await runWebpack(testFile);
+        console.log("compilation finished");
         const { total, failures } = await injectTestsToPage(page, testFile, id);
         if (failures === 0 && total > 0) {
           setTimeout(resolve, 500);
@@ -104,7 +106,7 @@ async function injectTestsToPage(page, testFile, id) {
         window.realBrowserTest_TestId = id;
 
         var test_script = document.createElement("script");
-        test_script.src = testFile;
+        test_script.src = testFile.substr(0, testFile.lastIndexOf(".")) + ".js";
         test_script.type = "module";
         document.body.appendChild(test_script);
 
@@ -158,7 +160,7 @@ async function runWebpack(testFile) {
         entry: path.resolve(__dirname, testFile),
         output: {
           path: path.resolve(__dirname, "../", "tmp"),
-          filename: testFile,
+          filename: testFile.substr(0, testFile.lastIndexOf(".")) + ".js",
         },
         target: "web",
         plugins: [
@@ -177,33 +179,31 @@ async function runWebpack(testFile) {
         module: {
           rules: [
             {
-              test: /\.m?js$/,
+              test: /\.m?ts$/,
               exclude: /(node_modules)/,
-              use: {
-                loader: "babel-loader",
-                options: {
-                  presets: [
-                    [
-                      "@babel/preset-env",
-                      {
-                        targets: { browsers: ["last 2 chrome versions"] },
-                      },
-                    ],
-                  ],
-                  plugins: [
-                    "@babel/plugin-proposal-class-properties",
-                    "@babel/plugin-transform-react-jsx",
-                  ],
+              loader: "ts-loader",
+              options: {
+                compilerOptions: {
+                  noEmit: false,
                 },
               },
             },
           ],
         },
+        resolve: {
+          extensions: [".tsx", ".ts", ".js"],
+        },
       },
       (err, stats) => {
-        if (err || stats.hasErrors()) {
-          reject(err || stats.compilation.errors);
+        if (stats.hasErrors()) {
+          console.log(stats.compilation.errors);
         }
+
+        if (err) {
+          reject(err);
+          return;
+        }
+
         resolve();
       }
     );

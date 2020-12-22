@@ -4,12 +4,13 @@ import { realBrowserTest } from "./realBrowserTest.js";
 import { assert } from "chai";
 import md5 from "md5";
 
-realBrowserTest("GDrive.test.js", async () => {
-  let { gdriveAuthClient, AuthStates } = await import(
-    "./GDriveAuthClient.js"
-  );
+realBrowserTest("GDrive.test.ts", async () => {
+  const { AuthStates } = await import("./AuthClient");
+  const { gdriveAuthClient } = await import("./GDriveAuthClient");
 
-  describe("Google drive auth client", function () {
+  describe("Google drive auth client", function (this: {
+    timeout: (n: number) => void;
+  }) {
     this.timeout(6000000);
 
     it("has correct status on signIn and signOut", async () => {
@@ -23,25 +24,25 @@ realBrowserTest("GDrive.test.js", async () => {
       assert.notEqual(gdriveAuthClient.state, AuthStates.FAILED);
 
       if (gdriveAuthClient.state === AuthStates.SIGNED_IN) {
-        let signed_out_promise = gdriveAuthClient.waitForStateChange();
+        const signed_out_promise = gdriveAuthClient.waitForStateChange();
         gdriveAuthClient.signOut();
         assert.equal(await signed_out_promise, AuthStates.SIGNED_OUT);
       }
 
       {
-        let signed_in_promise = gdriveAuthClient.waitForStateChange();
+        const signed_in_promise = gdriveAuthClient.waitForStateChange();
         gdriveAuthClient.signIn();
         assert.equal(await signed_in_promise, AuthStates.SIGNED_IN);
       }
 
       {
-        let signed_out_promise = gdriveAuthClient.waitForStateChange();
+        const signed_out_promise = gdriveAuthClient.waitForStateChange();
         gdriveAuthClient.signOut();
         assert.equal(await signed_out_promise, AuthStates.SIGNED_OUT);
       }
 
       {
-        let signed_in_promise = gdriveAuthClient.waitForStateChange();
+        const signed_in_promise = gdriveAuthClient.waitForStateChange();
         gdriveAuthClient.signIn();
         assert.equal(await signed_in_promise, AuthStates.SIGNED_IN);
       }
@@ -49,28 +50,27 @@ realBrowserTest("GDrive.test.js", async () => {
   });
 });
 
-realBrowserTest("GDrive.test.js", async () => {
-  let before = window.before;
+realBrowserTest("GDrive.test.ts", async () => {
+  const before = window.before;
 
-  let { gdriveAuthClient, AuthStates } = await import(
-    "./GDriveAuthClient.js"
+  const { AuthStates } = await import("./AuthClient");
+  const { gdriveAuthClient } = await import("./GDriveAuthClient");
+  const { TestingBackendMap } = await import("./TestingBackendMap");
+  const { applyQuotaSavers, BackendMultiplexor } = await import(
+    "./BackendQuotaSavers/BackendMultiplexor"
   );
-  let { TestingBackendMap } = await import("./TestingBackendMap.js");
-  let { applyQuotaSavers, BackendMultiplexor } = await import(
-    "./BackendQuotaSavers/BackendMultiplexor.js"
-  );
-  let { gdriveMap: realGdriveMap } = await import("./GDriveMap.js");
+  const { gdriveMap: realGdriveMap } = await import("./GDriveMap");
 
-  for (let gdriveMap of [
+  for (const gdriveMap of [
     realGdriveMap,
     applyQuotaSavers(realGdriveMap),
     new TestingBackendMap(),
   ]) {
-    let keys = [];
+    let keys: string[] = [];
 
     describe(
       "Google drive map PART1 " + gdriveMap.constructor.name,
-      function () {
+      function (this: { timeout: (n: number) => void }) {
         this.timeout(6000000);
         if (gdriveMap === realGdriveMap) {
           before(async () => {
@@ -113,11 +113,11 @@ realBrowserTest("GDrive.test.js", async () => {
           }
 
           // keys are equal before change
-          let allKeysBefore = await gdriveMap.getAllKeys();
-          let md5Before = await gdriveMap.getMd5(keys[0]);
+          const allKeysBefore = await gdriveMap.getAllKeys();
+          const md5Before = await gdriveMap.getMd5(keys[0]);
           assert.equal(
             md5Before,
-            allKeysBefore.find((x) => x.id === keys[0]).md5Checksum
+            allKeysBefore.find((x) => x.id === keys[0])?.md5Checksum
           );
 
           assert.equal(md5("bar"), md5Before);
@@ -126,14 +126,14 @@ realBrowserTest("GDrive.test.js", async () => {
 
           await gdriveMap.set(keys[0], "barbor");
 
-          let md5after = await gdriveMap.getMd5(keys[0]);
+          const md5after = await gdriveMap.getMd5(keys[0]);
           assert.equal(md5("barbor"), md5after);
 
           assert.notEqual(md5Before, md5after);
-          let allKeysAfter = await gdriveMap.getAllKeys();
+          const allKeysAfter = await gdriveMap.getAllKeys();
           assert.equal(
             md5after,
-            allKeysAfter.find((x) => x.id === keys[0]).md5Checksum
+            allKeysAfter.find((x) => x.id === keys[0])?.md5Checksum
           );
         });
 
@@ -145,13 +145,13 @@ realBrowserTest("GDrive.test.js", async () => {
           keys = (await gdriveMap.getAllKeys()).map((x) => x.id);
 
           assert.isAtLeast(keys.length, 2);
-          let delete_promises = [];
-          for (let key of keys) {
+          const delete_promises = [];
+          for (const key of keys) {
             assert(typeof key === "string");
             delete_promises.push(gdriveMap.delete(key));
           }
           await Promise.all(delete_promises);
-          for (let key of keys) {
+          for (const key of keys) {
             assert((await gdriveMap.get(key)) === undefined);
           }
 
@@ -200,7 +200,7 @@ realBrowserTest("GDrive.test.js", async () => {
           assert.equal(await gdriveMap.getSettings(), "settings");
         });
 
-        async function throwsError(f) {
+        async function throwsError(f: () => Promise<unknown>) {
           let rejected = false;
           try {
             await f();
@@ -220,7 +220,7 @@ realBrowserTest("GDrive.test.js", async () => {
 
             assert(
               await throwsError(() => {
-                return gdriveMap.get(0);
+                return gdriveMap.get("0");
               })
             );
             assert(
@@ -230,7 +230,7 @@ realBrowserTest("GDrive.test.js", async () => {
             );
             assert(
               await throwsError(() => {
-                return gdriveMap.delete(0);
+                return gdriveMap.delete("0");
               })
             );
             assert(
@@ -277,7 +277,7 @@ realBrowserTest("GDrive.test.js", async () => {
           if (gdriveMap instanceof BackendMultiplexor) {
             await gdriveMap.setDescription(keys[0], "01321");
           } else {
-            let md5 = await gdriveMap.getMd5(keys[0]);
+            const md5 = await gdriveMap.getMd5(keys[0]);
             await gdriveMap.setDescription(keys[0], "01321");
             assert.equal(md5, await gdriveMap.getMd5(keys[0]));
           }
@@ -303,17 +303,20 @@ realBrowserTest("GDrive.test.js", async () => {
   }
 });
 
-realBrowserTest("GDrive.test.js", async () => {
-  let before = window.before;
-  let { gdriveAuthClient, AuthStates } = await import(
-    "./GDriveAuthClient.js"
+realBrowserTest("GDrive.test.ts", async () => {
+  const before = window.before;
+  const { AuthStates } = await import("./AuthClient");
+  const { gdriveAuthClient } = await import("./GDriveAuthClient");
+
+  const { applyQuotaSavers } = await import(
+    "./BackendQuotaSavers/BackendMultiplexor"
   );
 
-  let { applyQuotaSavers } = await import("./BackendQuotaSavers/BackendMultiplexor.js");
+  const gdriveMap = applyQuotaSavers((await import("./GDriveMap")).gdriveMap);
 
-  let gdriveMap = applyQuotaSavers((await import("./GDriveMap.js")).gdriveMap);
-
-  describe("Google drive map PART2", function () {
+  describe("Google drive map PART2", function (this: {
+    timeout: (n: number) => void;
+  }) {
     this.timeout(6000000);
 
     before(async () => {
@@ -348,14 +351,14 @@ realBrowserTest("GDrive.test.js", async () => {
       let keys = (await gdriveMap.getAllKeys()).map((x) => x.id);
 
       assert.equal(keys.length, 9);
-      let delete_promises = [];
-      for (let key of keys) {
+      const delete_promises = [];
+      for (const key of keys) {
         assert(typeof key === "string");
         assert(!!(await gdriveMap.get(key)));
         delete_promises.push(gdriveMap.delete(key));
       }
       await Promise.all(delete_promises);
-      for (let key of keys) {
+      for (const key of keys) {
         assert((await gdriveMap.get(key)) === undefined);
       }
       keys = (await gdriveMap.getAllKeys()).map((x) => x.id);

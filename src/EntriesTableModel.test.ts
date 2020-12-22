@@ -150,6 +150,7 @@ beforeEach(async () => {
   await testingBackendMap.getAllKeys();
 });
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function print(entries: EntryModel[]): void {
   console.log(
     entries.map((x) => {
@@ -168,7 +169,7 @@ function print(entries: EntryModel[]): void {
 }
 
 test("EntriesTableModel waits for sign in", async () => {
-  let lastEntries: EntryModel[] | undefined = undefined;
+  let lastEntries = undefined as EntryModel[] | undefined;
   const onEntries = (entries: EntryModel[]) => {
     lastEntries = entries;
   };

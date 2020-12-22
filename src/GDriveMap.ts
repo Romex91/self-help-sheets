@@ -27,28 +27,28 @@ class GDriveMap implements BackendMap {
     return firstKey.id;
   }
 
-  async createKey() {
+  async createKey(): Promise<string> {
     throwIfNotSignedIn();
     return await createEmptyFile("item.json");
   }
 
-  async delete(key: string) {
+  async delete(key: string): Promise<boolean> {
     throwIfNotSignedIn();
     return await deleteFile(key);
   }
 
-  async set(key: string, value: string) {
+  async set(key: string, value: string): Promise<void> {
     throwIfNotSignedIn();
     return await upload(key, value);
   }
 
-  async get(key: string) {
+  async get(key: string): Promise<string | undefined> {
     throwIfNotSignedIn();
     const result = await download(key);
     return result;
   }
 
-  async getMd5(key: string) {
+  async getMd5(key: string): Promise<string> {
     throwIfNotSignedIn();
     return await getMd5(key);
   }
@@ -65,7 +65,7 @@ class GDriveMap implements BackendMap {
   async getSettings() {
     throwIfNotSignedIn();
     const settingsContent = await download(await this._getSettingsKey());
-    assert (settingsContent != undefined);
+    assert(settingsContent != undefined);
     return settingsContent;
   }
 
