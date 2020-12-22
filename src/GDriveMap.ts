@@ -180,9 +180,6 @@ async function download(fileId: string) {
 
     return resp.body;
   } catch (e) {
-    // TODO: test if it actually works in GDriveTests.
-    // checkHttpStatus should throw an error for bad status. 404 is OK for this method.
-    // It should be covered in tests, but it is never bad to doublecheck.
     if (e.status !== 404) throw e;
     return undefined;
   }

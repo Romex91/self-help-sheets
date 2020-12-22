@@ -193,7 +193,10 @@ const EntriesTable = withStyles(styles)(
       });
     }
 
-    private onKeyPress(key: string, e: React.KeyboardEvent): void {
+    private onKeyPress: (key: string, e: React.KeyboardEvent) => void = (
+      key,
+      e
+    ) => {
       if (key === "ctrl+z" || key === "cmd+z") {
         this.props.model.undo();
         e.preventDefault();
@@ -214,8 +217,9 @@ const EntriesTable = withStyles(styles)(
         // |scrollableContainer|.
         // The code below is a workaround for that.
 
-        // TODO: WHAT THE HELL IS THAT LINE FOR?
-        // if (e.target.tabIndex === 0) return;
+        // Since |target| is focusable it is not |document.body|, hence this dirty workaround is
+        // unnecessary.
+        if ((e.target as HTMLElement).tabIndex === 0) return;
 
         if (key === "pageup") {
           this.scrollBy(-window.innerHeight * 0.8);
@@ -231,7 +235,7 @@ const EntriesTable = withStyles(styles)(
           e.preventDefault();
         }
       }
-    }
+    };
 
     private _tableRef = React.createRef<HTMLTableElement>();
     private _scrollableContainerRef = React.createRef<HTMLDivElement>();
@@ -376,14 +380,12 @@ const EntriesTable = withStyles(styles)(
                 </tr>
               </thead>
 
-              {/* TODO: make sure react pureness is not broken */}
               <tbody>
                 <VirtualizedList
                   entries={this.state.entries}
                   ItemComponent={Entry}
                   PlaceholderComponent={Placeholder}
                   scrollableContainerRef={this._scrollableContainerRef}
-                  // Additional props for Entry
                   componentProps={{
                     onUpdate: this.props.model.onUpdate,
                     onFocus: this.props.onFocus,

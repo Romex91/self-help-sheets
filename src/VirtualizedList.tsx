@@ -78,7 +78,7 @@ export function VirtualizedList<
 
   const memoisedComponentProps = React.useMemo(
     () => ({ ...props.componentProps }),
-    [Object.values(props.componentProps)]
+    Object.values(props.componentProps)
   );
 
   const onHeightChanged = React.useCallback((entry, height) => {

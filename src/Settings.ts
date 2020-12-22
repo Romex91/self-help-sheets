@@ -40,8 +40,6 @@ export class Hint implements HintData {
     return JSON.stringify(hintData);
   }
 
-  // TODO: write tests with wrong settings format
-
   constructor(data: HintData | string) {
     if (typeof data === "string") {
       if (data.length === 0) return;
@@ -122,6 +120,7 @@ export class Settings implements SettingsData {
       }
 
       this._emojiList = json.emojiList;
+
       this._leftHint = new Hint(json.leftHint);
       this._rightHint = new Hint(json.rightHint);
     } catch (error) {

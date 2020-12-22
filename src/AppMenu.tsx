@@ -78,7 +78,6 @@ function ModalWindowButton(
   };
 
   const onWindowClose = () => {
-    //TODO: test history and rever in case if it doesn't work
     window.history.replaceState(null, "", " ");
     props.setOpen(false);
   };
