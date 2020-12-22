@@ -7,8 +7,8 @@
     "static/js/2.4ab7ea33.chunk.js": "/self-help-sheets/static/js/2.4ab7ea33.chunk.js",
     "static/js/2.4ab7ea33.chunk.js.map": "/self-help-sheets/static/js/2.4ab7ea33.chunk.js.map",
     "main.css": "/self-help-sheets/static/css/main.7dc070a3.chunk.css",
-    "main.js": "/self-help-sheets/static/js/main.a3fbb1ab.chunk.js",
-    "main.js.map": "/self-help-sheets/static/js/main.a3fbb1ab.chunk.js.map",
+    "main.js": "/self-help-sheets/static/js/main.3057b49e.chunk.js",
+    "main.js.map": "/self-help-sheets/static/js/main.3057b49e.chunk.js.map",
     "runtime-main.js": "/self-help-sheets/static/js/runtime-main.5dee8bcb.js",
     "runtime-main.js.map": "/self-help-sheets/static/js/runtime-main.5dee8bcb.js.map",
     "static/css/5.5ee10e35.chunk.css": "/self-help-sheets/static/css/5.5ee10e35.chunk.css",
@@ -21,6 +21,8 @@
     "static/js/8.01ec5b33.chunk.js": "/self-help-sheets/static/js/8.01ec5b33.chunk.js",
     "static/js/8.01ec5b33.chunk.js.map": "/self-help-sheets/static/js/8.01ec5b33.chunk.js.map",
     "index.html": "/self-help-sheets/index.html",
+    "service-worker.js": "/self-help-sheets/service-worker.js",
+    "service-worker.js.map": "/self-help-sheets/service-worker.js.map",
     "static/css/5.5ee10e35.chunk.css.map": "/self-help-sheets/static/css/5.5ee10e35.chunk.css.map",
     "static/css/main.7dc070a3.chunk.css.map": "/self-help-sheets/static/css/main.7dc070a3.chunk.css.map",
     "static/js/1.94f7f62c.chunk.js.LICENSE.txt": "/self-help-sheets/static/js/1.94f7f62c.chunk.js.LICENSE.txt",
@@ -32,6 +34,6 @@
     "static/css/5.5ee10e35.chunk.css",
     "static/js/5.6d954b50.chunk.js",
     "static/css/main.7dc070a3.chunk.css",
-    "static/js/main.a3fbb1ab.chunk.js"
+    "static/js/main.3057b49e.chunk.js"
   ]
 }
