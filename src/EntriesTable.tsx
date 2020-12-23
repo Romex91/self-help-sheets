@@ -11,6 +11,7 @@ import {
   IconButton,
   Grid,
   Theme,
+  Tooltip,
 } from "@material-ui/core";
 
 import { VirtualizedList } from "./VirtualizedList";
@@ -296,6 +297,10 @@ const EntriesTable = withStyles(styles)(
         this._resizeObserver?.unobserve(this._tableRef.current);
     }
 
+    private isMacintosh() {
+      return navigator.platform.indexOf("Mac") > -1;
+    }
+
     render() {
       return (
         <React.Fragment>
@@ -332,32 +337,44 @@ const EntriesTable = withStyles(styles)(
                 )}
               </Grid>
               <Grid className={this.props.classes.buttons} item xs={6} sm={3}>
-                <Button
-                  size="small"
-                  onClick={() => {
-                    this.props.model.addNewItemThrottled();
-                  }}
+                <Tooltip
+                  title={this.isMacintosh() ? "Cmd + Enter" : "Ctrl + Enter"}
                 >
-                  Add new item
-                </Button>
+                  <Button
+                    size="small"
+                    onClick={() => {
+                      this.props.model.addNewItemThrottled();
+                    }}
+                  >
+                    Add new item
+                  </Button>
+                </Tooltip>
               </Grid>
               <Grid className={this.props.classes.buttons} item xs={5} sm={2}>
-                <Button
-                  fullWidth
-                  size="small"
-                  onClick={this.props.model.undo}
-                  disabled={!this.state.canUndo}
+                <Tooltip title={this.isMacintosh() ? "Cmd + Z" : "Ctrl + Z"}>
+                  <Button
+                    fullWidth
+                    size="small"
+                    onClick={this.props.model.undo}
+                    disabled={!this.state.canUndo}
+                  >
+                    Undo
+                  </Button>
+                </Tooltip>
+                <Tooltip
+                  title={
+                    this.isMacintosh() ? "Cmd + Shift + Z" : "Ctrl + Shift + Z"
+                  }
                 >
-                  Undo
-                </Button>
-                <Button
-                  fullWidth
-                  size="small"
-                  disabled={!this.state.canRedo}
-                  onClick={this.props.model.redo}
-                >
-                  Redo
-                </Button>
+                  <Button
+                    fullWidth
+                    size="small"
+                    disabled={!this.state.canRedo}
+                    onClick={this.props.model.redo}
+                  >
+                    Redo
+                  </Button>
+                </Tooltip>
               </Grid>
             </Grid>
           )}
