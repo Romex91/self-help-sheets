@@ -144,14 +144,15 @@ export class Settings implements SettingsData {
     });
 
     this._emojiList = [
+      { codePoint: 0x1f44d, text: "approval" },
       { codePoint: 0x1f44e, text: "discontent" },
+      { codePoint: 0x1F602, text: "joy" },
       { codePoint: 0x1f628, text: "fear" },
       { codePoint: 0x1f622, text: "sadness" },
+      { codePoint: 0x1F92a, text: "frolic" },
       { codePoint: 0x1f62d, text: "grief" },
-      { codePoint: 0x1f631, text: "horror" },
-      { codePoint: 0x1f616, text: "pain" },
+      { codePoint: 0x1f60e, text: "confidence" },
       { codePoint: 0x1f621, text: "anger" },
-      { codePoint: 0x1f922, text: "disgust" },
     ];
   }
 }
