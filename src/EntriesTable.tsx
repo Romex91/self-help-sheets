@@ -340,40 +340,46 @@ const EntriesTable = withStyles(styles)(
                 <Tooltip
                   title={this.isMacintosh() ? "Cmd + Enter" : "Ctrl + Enter"}
                 >
-                  <Button
-                    size="small"
-                    onClick={() => {
-                      this.props.model.addNewItemThrottled();
-                    }}
-                  >
-                    Add new item
-                  </Button>
+                  <span>
+                    <Button
+                      size="small"
+                      onClick={() => {
+                        this.props.model.addNewItemThrottled();
+                      }}
+                    >
+                      Add new item
+                    </Button>
+                  </span>
                 </Tooltip>
               </Grid>
               <Grid className={this.props.classes.buttons} item xs={5} sm={2}>
                 <Tooltip title={this.isMacintosh() ? "Cmd + Z" : "Ctrl + Z"}>
-                  <Button
-                    fullWidth
-                    size="small"
-                    onClick={this.props.model.undo}
-                    disabled={!this.state.canUndo}
-                  >
-                    Undo
-                  </Button>
+                  <span>
+                    <Button
+                      fullWidth
+                      size="small"
+                      onClick={this.props.model.undo}
+                      disabled={!this.state.canUndo}
+                    >
+                      Undo
+                    </Button>
+                  </span>
                 </Tooltip>
                 <Tooltip
                   title={
                     this.isMacintosh() ? "Cmd + Shift + Z" : "Ctrl + Shift + Z"
                   }
                 >
-                  <Button
-                    fullWidth
-                    size="small"
-                    disabled={!this.state.canRedo}
-                    onClick={this.props.model.redo}
-                  >
-                    Redo
-                  </Button>
+                  <span>
+                    <Button
+                      fullWidth
+                      size="small"
+                      disabled={!this.state.canRedo}
+                      onClick={this.props.model.redo}
+                    >
+                      Redo
+                    </Button>
+                  </span>
                 </Tooltip>
               </Grid>
             </Grid>

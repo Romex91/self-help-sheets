@@ -115,7 +115,7 @@ export class EntriesTableModelImpl implements EntriesTableModel {
     return newEntry;
   }
 
-  undo(): void {
+  undo = (): void => {
     if (this._historyIndex === 0) return;
 
     this._historyIndex--;
@@ -133,7 +133,7 @@ export class EntriesTableModelImpl implements EntriesTableModel {
     this._onEntriesChanged();
   }
 
-  redo(): void {
+  redo = (): void => {
     if (this._historyIndex >= this._history.length) return;
 
     const historyItem = this._history[this._historyIndex++];
