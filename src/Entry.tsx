@@ -7,9 +7,11 @@ import {
   Collapse,
   Hidden,
   Theme,
+  Button,
 } from "@material-ui/core";
 import { Skeleton } from "@material-ui/lab";
 import DeleteIcon from "@material-ui/icons/Delete";
+import EditIcon from '@material-ui/icons/Edit';
 import moment from "moment";
 import { MoodPicker } from "./MoodPicker";
 import { Popup } from "./Popup";
@@ -66,6 +68,9 @@ const useStyles = makeStyles((theme) => ({
     paddingBottom: "0px !important",
   },
   hint: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
     backgroundColor: theme.palette.background.paper,
     whiteSpace: "pre-line",
   },
@@ -180,6 +185,7 @@ function SubItem(props: SubItemProps) {
               <Popup in={focused}>
                 <Typography className={classes.hint} color="textSecondary">
                   {props.hint?.text}
+                  <IconButton size="small" onMouseDown={() => { window.location.hash = "settings" }}><EditIcon /></IconButton>
                 </Typography>
               </Popup>
             )}
