@@ -140,8 +140,8 @@ const EntriesTable = withStyles(styles)(
       settings,
       { canRedo, canUndo }
     ) => {
+      const entriesWithDates: (EntryModel | DateEntry)[] = [...entries];
       if (entries.length > 0) {
-        const entriesWithDates: (EntryModel | DateEntry)[] = [...entries];
 
         let dateToInsert = entries[entries.length - 1].creationTime;
         for (let i = entries.length - 2; i >= 0; i--) {
@@ -178,7 +178,7 @@ const EntriesTable = withStyles(styles)(
         }
       }
 
-      this.setState({ entries, settings, canRedo, canUndo });
+      this.setState({ entries: entriesWithDates, settings, canRedo, canUndo });
     };
 
     private scrollBy(top: number) {
